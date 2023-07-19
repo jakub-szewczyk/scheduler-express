@@ -1,16 +1,19 @@
+import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node'
+import bodyParser from 'body-parser'
+import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
 import routes from './routes/routes'
-import cors from 'cors'
-import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node'
 
 dotenv.config()
+
+const PORT = process.env.PORT
 
 const app = express()
 
 app.use(cors())
 
-const PORT = process.env.PORT
+app.use(bodyParser.json())
 
 app.use('/api', ClerkExpressRequireAuth(), routes)
 
