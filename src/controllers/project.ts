@@ -28,15 +28,6 @@ export const createProjectController = async (
   if (!result.isEmpty())
     return res.status(400).json({ message: result.array()[0].msg })
   try {
-    const count = await prismaClient.project.count({
-      where: {
-        name: req.body.name,
-      },
-    })
-    if (count > 0)
-      return res.status(400).json({
-        message: 'This name has already been used by one of your projects',
-      })
     const project = await prismaClient.project.create({
       data: {
         name: req.body.name,
