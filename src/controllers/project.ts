@@ -1,23 +1,58 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
 import { PrismaClient, Project } from '@prisma/client'
 import { Request, Response } from 'express'
+import { validationResult } from 'express-validator'
 
 const prismaClient = new PrismaClient()
 
-export const createProjectController = async (
-  req: WithAuthProp<Request<void, void, Pick<Project, 'name'>>>,
+export const getProjectsController = async (
+  req: WithAuthProp<Request>,
   res: Response
 ) => {
   try {
+    const projects = await prismaClient.project.findMany({
+      orderBy: { createdAt: 'desc' },
+    })
+    return res.json(projects)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
+
+export const createProjectController = async (
+  req: WithAuthProp<Request<{}, {}, Pick<Project, 'name' | 'description'>>>,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const count = await prismaClient.project.count({
+      where: {
+        name: req.body.name,
+      },
+    })
+    if (count > 0)
+      return res.status(400).json({
+        message: 'This name has already been used by one of your projects',
+      })
     const project = await prismaClient.project.create({
       data: {
         name: req.body.name,
+        description: req.body.description,
         authorId: req.auth.userId!,
       },
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        description: true,
+      },
     })
-    res.status(201).json(project)
+    return res.status(201).json(project)
   } catch (error) {
     console.error(error)
-    res.status(500).end()
+    return res.status(500).end()
   }
 }

@@ -8,11 +8,12 @@ datasource db {
 }
 
 model Project {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  name      String
-  authorId  String
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  description String?
+  authorId    String
 
   @@unique([authorId, name])
 }

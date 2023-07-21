@@ -1,8 +1,14 @@
 import { Router } from 'express'
-import { createProjectController } from '../controllers/project'
+import {
+  createProjectController,
+  getProjectsController,
+} from '../controllers/project'
+import { createProjectValidator } from '../validators/project'
 
 const router = Router()
 
-router.post('/', createProjectController)
+router.get('/', getProjectsController)
+
+router.post('/', createProjectValidator, createProjectController)
 
 export default router
