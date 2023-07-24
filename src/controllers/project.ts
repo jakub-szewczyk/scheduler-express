@@ -64,10 +64,37 @@ export const updateProjectController = async (
     const project = await prismaClient.project.update({
       where: {
         id: req.params.projectId,
+        authorId: req.auth.userId!,
       },
       data: {
         name: req.body.name,
         description: req.body.description || null,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        description: true,
+      },
+    })
+    return res.status(200).json(project)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
+
+export const deleteProjectController = async (
+  req: WithAuthProp<Request<{ projectId: string }, {}, {}>>,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const project = await prismaClient.project.delete({
+      where: {
+        id: req.params.projectId,
         authorId: req.auth.userId!,
       },
       select: {

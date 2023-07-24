@@ -57,3 +57,18 @@ export const updateProjectValidator = [
     }),
   body('description').trim().optional(),
 ]
+
+export const deleteProjectValidator = param('projectId')
+  .notEmpty()
+  .custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
+        where: {
+          id: projectId,
+          authorId: req.auth.userId,
+        },
+      })
+    } catch (error) {
+      throw new Error("Cannot update a project that doesn't exist")
+    }
+  })
