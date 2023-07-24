@@ -11,6 +11,9 @@ export const getProjectsController = async (
 ) => {
   try {
     const projects = await prismaClient.project.findMany({
+      where: {
+        authorId: req.auth.userId!,
+      },
       orderBy: { createdAt: 'desc' },
     })
     return res.json(projects)
@@ -42,6 +45,39 @@ export const createProjectController = async (
       },
     })
     return res.status(201).json(project)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
+
+export const updateProjectController = async (
+  req: WithAuthProp<
+    Request<{ projectId: string }, {}, Pick<Project, 'name' | 'description'>>
+  >,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const project = await prismaClient.project.update({
+      where: {
+        id: req.params.projectId,
+      },
+      data: {
+        name: req.body.name,
+        description: req.body.description || null,
+        authorId: req.auth.userId!,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        description: true,
+      },
+    })
+    return res.status(200).json(project)
   } catch (error) {
     console.error(error)
     return res.status(500).end()
