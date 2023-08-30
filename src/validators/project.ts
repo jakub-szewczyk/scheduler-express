@@ -72,3 +72,11 @@ export const deleteProjectValidator = param('projectId')
       throw new Error("Cannot update a project that doesn't exist")
     }
   })
+  .custom(async (projectId: string, { req }) => {
+    const projectCount = await prismaClient.project.count({
+      where: {
+        authorId: req.auth.userId,
+      },
+    })
+    if (projectCount === 1) throw new Error('At least one project is required')
+  })

@@ -16,6 +16,23 @@ export const getProjectsController = async (
       },
       orderBy: { createdAt: 'desc' },
     })
+    if (projects.length === 0) {
+      const project = await prismaClient.project.create({
+        data: {
+          name: 'Project #1',
+          description:
+            "Edit your project's title and description. Manage your notes, boards and schedules within it.",
+          authorId: req.auth.userId!,
+        },
+        select: {
+          id: true,
+          createdAt: true,
+          name: true,
+          description: true,
+        },
+      })
+      return res.json([project])
+    }
     return res.json(projects)
   } catch (error) {
     console.error(error)
