@@ -10,7 +10,7 @@ export const createProjectValidator = [
     .custom(async (name: string, { req }) => {
       const project = await prismaClient.project.findUnique({
         where: {
-          authorId_name: {
+          name_authorId: {
             name,
             authorId: req.auth.userId,
           },
@@ -69,7 +69,7 @@ export const deleteProjectValidator = param('projectId')
         },
       })
     } catch (error) {
-      throw new Error("Cannot update a project that doesn't exist")
+      throw new Error("Cannot delete a project that doesn't exist")
     }
   })
   .custom(async (projectId: string, { req }) => {

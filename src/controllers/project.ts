@@ -75,6 +75,22 @@ export const createProjectController = async (
         name: req.body.name,
         description: req.body.description,
         authorId: req.auth.userId!,
+        schedules: {
+          create: {
+            name: 'Schedule #1',
+            rows: {
+              createMany: {
+                data: [
+                  { day: 'Monday' },
+                  { day: 'Tuesday' },
+                  { day: 'Wednesday' },
+                  { day: 'Thursday' },
+                  { day: 'Friday' },
+                ],
+              },
+            },
+          },
+        },
       },
       select: {
         id: true,
