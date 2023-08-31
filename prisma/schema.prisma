@@ -8,12 +8,60 @@ datasource db {
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   name        String
   description String?
   authorId    String
+  schedules   Schedule[]
 
-  @@unique([authorId, name])
+  @@unique([name, authorId])
+}
+
+model Schedule {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  rows      Row[]
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  @@unique([name, projectId])
+}
+
+model Row {
+  id           String        @id @default(cuid())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  rowId        String?
+  day          Day?
+  starts       DateTime?
+  ends         DateTime?
+  room         String?
+  subject      String?
+  notification Notification?
+  schedule     Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  scheduleId   String
+
+  @@unique([day, scheduleId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  time      DateTime
+  active    Boolean  @default(false)
+  row       Row      @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  rowId     String   @unique
+}
+
+enum Day {
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
 }

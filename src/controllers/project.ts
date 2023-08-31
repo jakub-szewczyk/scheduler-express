@@ -11,6 +11,12 @@ export const getProjectsController = async (
 ) => {
   try {
     const projects = await prismaClient.project.findMany({
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        description: true,
+      },
       where: {
         authorId: req.auth.userId!,
       },
@@ -18,17 +24,33 @@ export const getProjectsController = async (
     })
     if (projects.length === 0) {
       const project = await prismaClient.project.create({
-        data: {
-          name: 'Project #1',
-          description:
-            "Edit your project's title and description. Manage your notes, boards and schedules within it.",
-          authorId: req.auth.userId!,
-        },
         select: {
           id: true,
           createdAt: true,
           name: true,
           description: true,
+        },
+        data: {
+          name: 'Project #1',
+          description:
+            "Edit your project's title and description. Manage your notes, boards and schedules within it.",
+          authorId: req.auth.userId!,
+          schedules: {
+            create: {
+              name: 'Schedule #1',
+              rows: {
+                createMany: {
+                  data: [
+                    { day: 'Monday' },
+                    { day: 'Tuesday' },
+                    { day: 'Wednesday' },
+                    { day: 'Thursday' },
+                    { day: 'Friday' },
+                  ],
+                },
+              },
+            },
+          },
         },
       })
       return res.json([project])
