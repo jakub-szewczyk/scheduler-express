@@ -1,9 +1,11 @@
 import { Router } from 'express'
 import {
+  createScheduleValidator,
   getScheduleValidator,
   getSchedulesValidator,
 } from '../validators/schedule'
 import {
+  createScheduleController,
   getScheduleController,
   getSchedulesController,
 } from '../controllers/schedule'
@@ -20,6 +22,12 @@ router.get(
   '/:projectId/schedules/:scheduleId',
   getScheduleValidator,
   getScheduleController
+)
+
+router.post(
+  '/:projectId/schedules',
+  createScheduleValidator,
+  createScheduleController
 )
 
 export default router

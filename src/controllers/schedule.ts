@@ -78,3 +78,52 @@ export const getScheduleController = async (
     return res.status(500).end()
   }
 }
+
+export const createScheduleController = async (
+  req: WithAuthProp<Request<{ projectId: string }, {}, { name: string }>>,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const schedule = await prismaClient.schedule.create({
+      data: {
+        name: req.body.name,
+        projectId: req.params.projectId,
+        rows: {
+          createMany: {
+            data: [
+              { day: 'Monday' },
+              { day: 'Tuesday' },
+              { day: 'Wednesday' },
+              { day: 'Thursday' },
+              { day: 'Friday' },
+            ],
+          },
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        rows: {
+          select: {
+            id: true,
+            rowId: true,
+            day: true,
+            starts: true,
+            ends: true,
+            room: true,
+            subject: true,
+            notification: true,
+          },
+        },
+      },
+    })
+    return res.status(201).json(schedule)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
