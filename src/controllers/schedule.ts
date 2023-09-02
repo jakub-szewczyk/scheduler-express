@@ -60,6 +60,7 @@ export const getScheduleController = async (
             subject: true,
             notification: true,
           },
+          orderBy: { id: 'asc' },
         },
       },
       where: {
@@ -88,21 +89,6 @@ export const createScheduleController = async (
     return res.status(400).json({ message: result.array()[0].msg })
   try {
     const schedule = await prismaClient.schedule.create({
-      data: {
-        name: req.body.name,
-        projectId: req.params.projectId,
-        rows: {
-          createMany: {
-            data: [
-              { day: 'Monday' },
-              { day: 'Tuesday' },
-              { day: 'Wednesday' },
-              { day: 'Thursday' },
-              { day: 'Friday' },
-            ],
-          },
-        },
-      },
       select: {
         id: true,
         createdAt: true,
@@ -117,6 +103,22 @@ export const createScheduleController = async (
             room: true,
             subject: true,
             notification: true,
+          },
+          orderBy: { id: 'asc' },
+        },
+      },
+      data: {
+        name: req.body.name,
+        projectId: req.params.projectId,
+        rows: {
+          createMany: {
+            data: [
+              { day: 'Monday' },
+              { day: 'Tuesday' },
+              { day: 'Wednesday' },
+              { day: 'Thursday' },
+              { day: 'Friday' },
+            ],
           },
         },
       },

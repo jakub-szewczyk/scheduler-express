@@ -71,6 +71,12 @@ export const createProjectController = async (
     return res.status(400).json({ message: result.array()[0].msg })
   try {
     const project = await prismaClient.project.create({
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        description: true,
+      },
       data: {
         name: req.body.name,
         description: req.body.description,
@@ -92,12 +98,6 @@ export const createProjectController = async (
           },
         },
       },
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        description: true,
-      },
     })
     return res.status(201).json(project)
   } catch (error) {
@@ -117,6 +117,12 @@ export const updateProjectController = async (
     return res.status(400).json({ message: result.array()[0].msg })
   try {
     const project = await prismaClient.project.update({
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        description: true,
+      },
       where: {
         id: req.params.projectId,
         authorId: req.auth.userId!,
@@ -124,12 +130,6 @@ export const updateProjectController = async (
       data: {
         name: req.body.name,
         description: req.body.description || null,
-      },
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        description: true,
       },
     })
     return res.status(200).json(project)
@@ -148,15 +148,15 @@ export const deleteProjectController = async (
     return res.status(400).json({ message: result.array()[0].msg })
   try {
     const project = await prismaClient.project.delete({
-      where: {
-        id: req.params.projectId,
-        authorId: req.auth.userId!,
-      },
       select: {
         id: true,
         createdAt: true,
         name: true,
         description: true,
+      },
+      where: {
+        id: req.params.projectId,
+        authorId: req.auth.userId!,
       },
     })
     return res.status(200).json(project)
