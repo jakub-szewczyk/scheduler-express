@@ -1,14 +1,14 @@
 import { Router } from 'express'
 import {
-  createScheduleValidator,
-  getScheduleValidator,
-  getSchedulesValidator,
-} from '../validators/schedule'
-import {
   createScheduleController,
   getScheduleController,
   getSchedulesController,
 } from '../controllers/schedule'
+import {
+  createScheduleValidator,
+  getScheduleValidator,
+  getSchedulesValidator,
+} from '../validators/schedule'
 
 const router = Router()
 

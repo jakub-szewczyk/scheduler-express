@@ -41,11 +41,11 @@ export const getProjectsController = async (
               rows: {
                 createMany: {
                   data: [
-                    { day: 'Monday' },
-                    { day: 'Tuesday' },
-                    { day: 'Wednesday' },
-                    { day: 'Thursday' },
-                    { day: 'Friday' },
+                    { day: 'Monday', index: 0 },
+                    { day: 'Tuesday', index: 1 },
+                    { day: 'Wednesday', index: 2 },
+                    { day: 'Thursday', index: 3 },
+                    { day: 'Friday', index: 4 },
                   ],
                 },
               },
@@ -87,11 +87,11 @@ export const createProjectController = async (
             rows: {
               createMany: {
                 data: [
-                  { day: 'Monday' },
-                  { day: 'Tuesday' },
-                  { day: 'Wednesday' },
-                  { day: 'Thursday' },
-                  { day: 'Friday' },
+                  { day: 'Monday', index: 0 },
+                  { day: 'Tuesday', index: 1 },
+                  { day: 'Wednesday', index: 2 },
+                  { day: 'Thursday', index: 3 },
+                  { day: 'Friday', index: 4 },
                 ],
               },
             },
