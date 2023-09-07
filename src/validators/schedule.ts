@@ -86,3 +86,43 @@ export const updateScheduleValidator = [
         )
     }),
 ]
+
+export const deleteScheduleValidator = [
+  param('projectId')
+    .notEmpty()
+    .custom(async (projectId: string, { req }) => {
+      const project = await prismaClient.project.findUnique({
+        where: {
+          id: projectId,
+          authorId: req.auth.userId,
+        },
+      })
+      if (!project) throw new Error('Project not found')
+    }),
+  param('scheduleId')
+    .notEmpty()
+    .custom(async (scheduleId: string, { req }) => {
+      const schedule = await prismaClient.schedule.findUnique({
+        where: {
+          id: scheduleId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
+          },
+        },
+      })
+      if (!schedule) throw new Error('Schedule not found')
+    })
+    .custom(async (scheduleId: string, { req }) => {
+      const scheduleCount = await prismaClient.schedule.count({
+        where: {
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
+          },
+        },
+      })
+      if (scheduleCount === 1)
+        throw new Error('At least one schedule is required')
+    }),
+]

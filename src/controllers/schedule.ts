@@ -194,3 +194,51 @@ export const updateScheduleController = async (
     return res.status(500).end()
   }
 }
+
+export const deleteScheduleController = async (
+  req: WithAuthProp<Request<{ projectId: string; scheduleId: string }>>,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const schedule = await prismaClient.schedule.delete({
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        rows: {
+          select: {
+            id: true,
+            rowId: true,
+            index: true,
+            day: true,
+            starts: true,
+            ends: true,
+            room: true,
+            subject: true,
+            notification: {
+              select: {
+                time: true,
+                active: true,
+              },
+            },
+          },
+          orderBy: { index: 'asc' },
+        },
+      },
+      where: {
+        id: req.params.scheduleId,
+        project: {
+          id: req.params.projectId,
+          authorId: req.auth.userId!,
+        },
+      },
+    })
+    return res.json(schedule)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}

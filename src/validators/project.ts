@@ -36,7 +36,7 @@ export const updateProjectValidator = [
           },
         })
       } catch (error) {
-        throw new Error("Cannot update a project that doesn't exist")
+        throw new Error('Project not found')
       }
     }),
   body('name', 'You have to give your project a unique name')
@@ -69,7 +69,7 @@ export const deleteProjectValidator = param('projectId')
         },
       })
     } catch (error) {
-      throw new Error("Cannot delete a project that doesn't exist")
+      throw new Error('Project not found')
     }
   })
   .custom(async (projectId: string, { req }) => {
