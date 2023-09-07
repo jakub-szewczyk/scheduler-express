@@ -1,16 +1,12 @@
 import { Router } from 'express'
 import { updateRowsController } from '../controllers/row'
+import { updateRowsValidator } from '../validators/row'
 
 const router = Router()
 
 router.put(
   '/:projectId/schedules/:scheduleId/rows',
-  /**
-   * TODO:
-   * Document endpoint in Postman.
-   * Implement following validator.
-   */
-  // updateRowsValidator,
+  updateRowsValidator,
   updateRowsController
 )
 
