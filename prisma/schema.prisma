@@ -15,6 +15,7 @@ model Project {
   description String?
   authorId    String
   schedules   Schedule[]
+  boards      Board[]
 
   @@unique([name, authorId])
 }
@@ -65,4 +66,46 @@ enum Day {
   Wednesday
   Thursday
   Friday
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  statuses  Status[]
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  @@unique([name, projectId])
+}
+
+model Status {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  index     Int
+  title     String
+  issues    Issue[]
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId   String
+
+  @@unique([title, boardId])
+}
+
+model Issue {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  index     Int
+  title     String
+  content   String
+  status    Status   @relation(fields: [statusId], references: [id], onDelete: Cascade)
+  statusId  String
+
+  // NOTE:
+  // Cannot establish such constraint
+  // without defining `boardId` inside this model.
+  // Therefore we'll have to rely on custom validation.
+  // @@unique([title, boardId])
 }
