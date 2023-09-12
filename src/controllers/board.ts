@@ -157,3 +157,52 @@ export const createBoardController = async (
     return res.status(500).end()
   }
 }
+
+export const updateBoardController = async (
+  req: WithAuthProp<
+    Request<{ projectId: string; boardId: string }, {}, { name: string }>
+  >,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const board = await prismaClient.board.update({
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        statuses: {
+          select: {
+            id: true,
+            title: true,
+            issues: {
+              select: {
+                id: true,
+                title: true,
+                content: true,
+              },
+              orderBy: { index: 'asc' },
+            },
+          },
+          orderBy: { index: 'asc' },
+        },
+      },
+      where: {
+        id: req.params.boardId,
+        project: {
+          id: req.params.projectId,
+          authorId: req.auth.userId!,
+        },
+      },
+      data: {
+        name: req.body.name,
+      },
+    })
+    return res.json(board)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
