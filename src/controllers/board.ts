@@ -35,3 +35,46 @@ export const getBoardsController = async (
     return res.status(500).end()
   }
 }
+
+export const getBoardController = async (
+  req: WithAuthProp<Request<{ projectId: string; boardId: string }>>,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const board = await prismaClient.board.findUnique({
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        statuses: {
+          select: {
+            title: true,
+            issues: {
+              select: {
+                title: true,
+                content: true,
+              },
+              orderBy: { index: 'asc' },
+            },
+          },
+          orderBy: { index: 'asc' },
+        },
+      },
+      where: {
+        id: req.params.boardId,
+        project: {
+          id: req.params.projectId,
+          authorId: req.auth.userId!,
+        },
+      },
+    })
+    if (!board) return res.status(404).json({ message: 'Board not found' })
+    return res.json(board)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
