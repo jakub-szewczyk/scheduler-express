@@ -1,12 +1,14 @@
 import { Router } from 'express'
 import {
   createBoardController,
+  deleteBoardController,
   getBoardController,
   getBoardsController,
   updateBoardController,
 } from '../controllers/board'
 import {
   createBoardValidator,
+  deleteBoardValidator,
   getBoardValidator,
   getBoardsValidator,
   updateBoardValidator,
@@ -24,6 +26,12 @@ router.put(
   '/:projectId/boards/:boardId',
   updateBoardValidator,
   updateBoardController
+)
+
+router.delete(
+  '/:projectId/boards/:boardId',
+  deleteBoardValidator,
+  deleteBoardController
 )
 
 export default router
