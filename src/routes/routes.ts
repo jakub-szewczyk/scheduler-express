@@ -3,6 +3,7 @@ import boardRoutes from './board'
 import projectRoutes from './project'
 import rowRoutes from './row'
 import scheduleRoutes from './schedule'
+import statusRoutes from './status'
 
 const router = Router()
 
@@ -13,5 +14,7 @@ router.use('/projects', scheduleRoutes)
 router.use('/projects/', rowRoutes)
 
 router.use('/projects/', boardRoutes)
+
+router.use('/projects/', statusRoutes)
 
 export default router
