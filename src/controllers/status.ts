@@ -5,15 +5,19 @@ import { validationResult } from 'express-validator'
 
 const prismaClient = new PrismaClient()
 
+interface UpdateStatusRequestParams {
+  projectId: string
+  boardId: string
+}
+
+export type UpdateStatusRequestBody = (Pick<Status, 'title'> & {
+  id?: string
+  issues: (Pick<Issue, 'title' | 'content'> & { id?: string })[]
+})[]
+
 export const updateStatusesController = async (
   req: WithAuthProp<
-    Request<
-      { projectId: string; boardId: string },
-      {},
-      (Pick<Status, 'id'> & {
-        issues: Pick<Issue, 'id'>[]
-      })[]
-    >
+    Request<UpdateStatusRequestParams, {}, UpdateStatusRequestBody>
   >,
   res: Response
 ) => {
@@ -21,11 +25,25 @@ export const updateStatusesController = async (
   if (!result.isEmpty())
     return res.status(400).json({ message: result.array()[0].msg })
   try {
-    const result = await prismaClient.$transaction([
+    await prismaClient.$transaction([
+      prismaClient.status.deleteMany({
+        where: {
+          id: {
+            notIn: req.body.map((status) => status.id!),
+          },
+          board: {
+            id: req.params.boardId,
+            project: {
+              id: req.params.projectId,
+              authorId: req.auth.userId!,
+            },
+          },
+        },
+      }),
       ...req.body.map((status, index) =>
-        prismaClient.status.update({
+        prismaClient.status.upsert({
           where: {
-            id: status.id,
+            id: status.id || '',
             board: {
               id: req.params.boardId,
               project: {
@@ -34,16 +52,39 @@ export const updateStatusesController = async (
               },
             },
           },
-          data: {
+          create: {
+            boardId: req.params.boardId,
+            index,
+            title: status.title,
+          },
+          update: {
             index,
           },
         })
       ),
+      prismaClient.issue.deleteMany({
+        where: {
+          id: {
+            notIn: req.body.flatMap((status) =>
+              status.issues.map((issue) => issue.id!)
+            ),
+          },
+          status: {
+            board: {
+              id: req.params.boardId,
+              project: {
+                id: req.params.projectId,
+                authorId: req.auth.userId!,
+              },
+            },
+          },
+        },
+      }),
       ...req.body.flatMap((status) =>
         status.issues.map((issue, index) =>
-          prismaClient.issue.update({
+          prismaClient.issue.upsert({
             where: {
-              id: issue.id,
+              id: issue.id || '',
               status: {
                 board: {
                   id: req.params.boardId,
@@ -54,7 +95,13 @@ export const updateStatusesController = async (
                 },
               },
             },
-            data: {
+            create: {
+              statusId: status.id!,
+              index,
+              title: issue.title,
+              content: issue.content,
+            },
+            update: {
               index,
               statusId: status.id,
             },

@@ -102,10 +102,4 @@ model Issue {
   content   String
   status    Status   @relation(fields: [statusId], references: [id], onDelete: Cascade)
   statusId  String
-
-  // NOTE:
-  // Cannot establish such constraint
-  // without defining `boardId` inside this model.
-  // Therefore we'll have to rely on custom validation.
-  // @@unique([title, boardId])
 }

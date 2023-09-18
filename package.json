@@ -3,9 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "build": "npx tsc",
+    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\"",
     "start": "node dist/index.js",
-    "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\""
+    "build": "npx tsc",
+    "check": "tsc --noEmit",
+    "lint": "eslint --max-warnings=0 src"
   },
   "author": "",
   "license": "ISC",
