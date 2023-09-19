@@ -1,6 +1,6 @@
 import { Issue, PrismaClient } from '@prisma/client'
 import { body, param } from 'express-validator'
-import { UpdateStatusRequestBody } from '../controllers/status'
+import { UpdateStatusesRequestBody } from '../controllers/status'
 
 const prismaClient = new PrismaClient()
 
@@ -37,7 +37,7 @@ export const updateStatusesValidator = [
     .withMessage('You have to give your status a unique title')
     .toLowerCase()
     .custom(async (title: string, { req }) => {
-      const titles = (req.body as UpdateStatusRequestBody).map(
+      const titles = (req.body as UpdateStatusesRequestBody).map(
         (status) => status.title
       )
       if (titles.indexOf(title) !== titles.lastIndexOf(title))
@@ -66,7 +66,7 @@ export const updateStatusesValidator = [
     .withMessage('You have to give your issue some content'),
 ]
 
-export const renameStatusValidator = [
+export const updateStatusValidator = [
   param('projectId')
     .notEmpty()
     .custom(async (projectId: string, { req }) => {

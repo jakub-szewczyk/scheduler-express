@@ -5,19 +5,19 @@ import { validationResult } from 'express-validator'
 
 const prismaClient = new PrismaClient()
 
-interface UpdateStatusRequestParams {
+interface UpdateStatusesRequestParams {
   projectId: string
   boardId: string
 }
 
-export type UpdateStatusRequestBody = (Pick<Status, 'title'> & {
+export type UpdateStatusesRequestBody = (Pick<Status, 'title'> & {
   id?: string
   issues: (Pick<Issue, 'title' | 'content'> & { id?: string })[]
 })[]
 
 export const updateStatusesController = async (
   req: WithAuthProp<
-    Request<UpdateStatusRequestParams, {}, UpdateStatusRequestBody>
+    Request<UpdateStatusesRequestParams, {}, UpdateStatusesRequestBody>
   >,
   res: Response
 ) => {
@@ -116,13 +116,13 @@ export const updateStatusesController = async (
   }
 }
 
-interface RenameStatusRequestParams extends UpdateStatusRequestParams {
+interface UpdateStatusRequestParams extends UpdateStatusesRequestParams {
   statusId: string
 }
 
-export const renameStatusesController = async (
+export const updateStatusController = async (
   req: WithAuthProp<
-    Request<RenameStatusRequestParams, {}, Pick<Status, 'title'>>
+    Request<UpdateStatusRequestParams, {}, Pick<Status, 'title'>>
   >,
   res: Response
 ) => {

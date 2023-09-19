@@ -1,10 +1,10 @@
 import { Router } from 'express'
 import {
-  renameStatusesController,
+  updateStatusController,
   updateStatusesController,
 } from '../controllers/status'
 import {
-  renameStatusValidator,
+  updateStatusValidator,
   updateStatusesValidator,
 } from '../validators/status'
 
@@ -18,8 +18,8 @@ router.put(
 
 router.patch(
   '/:projectId/boards/:boardId/statuses/:statusId',
-  renameStatusValidator,
-  renameStatusesController
+  updateStatusValidator,
+  updateStatusController
 )
 
 export default router
