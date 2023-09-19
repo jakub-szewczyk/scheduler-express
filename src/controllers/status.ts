@@ -115,3 +115,43 @@ export const updateStatusesController = async (
     return res.status(500).end()
   }
 }
+
+interface RenameStatusRequestParams extends UpdateStatusRequestParams {
+  statusId: string
+}
+
+export const renameStatusesController = async (
+  req: WithAuthProp<
+    Request<RenameStatusRequestParams, {}, Pick<Status, 'title'>>
+  >,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const status = await prismaClient.status.update({
+      select: {
+        id: true,
+        title: true,
+        issues: {
+          select: {
+            id: true,
+            title: true,
+            content: true,
+          },
+        },
+      },
+      where: {
+        id: req.params.statusId,
+      },
+      data: {
+        title: req.body.title,
+      },
+    })
+    return res.json(status)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
