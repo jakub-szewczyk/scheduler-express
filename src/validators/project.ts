@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
 import { body, param } from 'express-validator'
-
-const prismaClient = new PrismaClient()
+import prismaClient from '../../prisma/client'
 
 export const createProjectValidator = [
   body('name', 'You have to give your project a unique name')

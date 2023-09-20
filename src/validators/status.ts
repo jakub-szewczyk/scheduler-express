@@ -1,8 +1,7 @@
-import { Issue, PrismaClient } from '@prisma/client'
+import { Issue } from '@prisma/client'
 import { body, param } from 'express-validator'
+import prismaClient from '../../prisma/client'
 import { UpdateStatusesRequestBody } from '../controllers/status'
-
-const prismaClient = new PrismaClient()
 
 export const updateStatusesValidator = [
   param('projectId')

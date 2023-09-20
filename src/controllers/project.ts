@@ -1,9 +1,8 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
-import { PrismaClient, Project } from '@prisma/client'
+import { Project } from '@prisma/client'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
-
-const prismaClient = new PrismaClient()
+import prismaClient from '../../prisma/client'
 
 export const getProjectsController = async (
   req: WithAuthProp<Request>,

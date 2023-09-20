@@ -1,9 +1,8 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
-import { Issue, PrismaClient, Status } from '@prisma/client'
+import { Issue, Status } from '@prisma/client'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
-
-const prismaClient = new PrismaClient()
+import prismaClient from '../../prisma/client'
 
 interface UpdateStatusesRequestParams {
   projectId: string
