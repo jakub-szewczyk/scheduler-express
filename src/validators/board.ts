@@ -1,5 +1,5 @@
 import { body, param } from 'express-validator'
-import prismaClient from '../../prisma/client'
+import prismaClient from '../client'
 
 export const getBoardsValidator = param('projectId').notEmpty()
 

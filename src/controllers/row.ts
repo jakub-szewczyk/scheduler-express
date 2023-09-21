@@ -2,7 +2,7 @@ import { WithAuthProp } from '@clerk/clerk-sdk-node'
 import { Notification, Row } from '@prisma/client'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
-import prismaClient from '../../prisma/client'
+import prismaClient from '../client'
 
 export const updateRowsController = async (
   req: WithAuthProp<

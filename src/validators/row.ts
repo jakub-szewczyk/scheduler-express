@@ -1,7 +1,7 @@
 import { Notification, Row } from '@prisma/client'
 import { body, param } from 'express-validator'
 import { equals } from 'ramda'
-import prismaClient from '../../prisma/client'
+import prismaClient from '../client'
 
 const DAYS: NonNullable<Row['day']>[] = [
   'Monday',
