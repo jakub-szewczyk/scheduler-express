@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import boardRoutes from './board'
 import issueRoutes from './issue'
+import noteRoutes from './note'
 import projectRoutes from './project'
 import rowRoutes from './row'
 import scheduleRoutes from './schedule'
@@ -19,5 +20,7 @@ router.use('/projects', boardRoutes)
 router.use('/projects', statusRoutes)
 
 router.use('/projects', issueRoutes)
+
+router.use('/projects', noteRoutes)
 
 export default router

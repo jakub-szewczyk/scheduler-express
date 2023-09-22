@@ -1,5 +1,5 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
-import { Project } from '@prisma/client'
+import { Prisma, Project } from '@prisma/client'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
@@ -92,6 +92,12 @@ export const getProjectsController = async (
               },
             },
           },
+          notes: {
+            create: {
+              name: 'Note #1',
+              editorState: Prisma.JsonNull,
+            },
+          },
         },
       })
       return res.json([project])
@@ -178,6 +184,12 @@ export const createProjectController = async (
                 ],
               },
             },
+          },
+        },
+        notes: {
+          create: {
+            name: 'Note #1',
+            editorState: Prisma.JsonNull,
           },
         },
       },

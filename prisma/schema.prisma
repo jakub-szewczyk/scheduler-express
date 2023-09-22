@@ -16,6 +16,7 @@ model Project {
   authorId    String
   schedules   Schedule[]
   boards      Board[]
+  notes       Note[]
 
   @@unique([name, authorId])
 }
@@ -102,4 +103,16 @@ model Issue {
   content   String
   status    Status   @relation(fields: [statusId], references: [id], onDelete: Cascade)
   statusId  String
+}
+
+model Note {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  editorState Json
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+
+  @@unique([name, projectId])
 }
