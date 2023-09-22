@@ -33,3 +33,34 @@ export const getNotesController = async (
     return res.status(500).end()
   }
 }
+
+export const getNoteController = async (
+  req: WithAuthProp<Request<{ projectId: string; noteId: string }>>,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const note = await prismaClient.note.findUnique({
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        editorState: true,
+      },
+      where: {
+        id: req.params.noteId,
+        project: {
+          id: req.params.projectId,
+          authorId: req.auth.userId!,
+        },
+      },
+    })
+    if (!note) return res.status(404).json({ message: 'Note not found' })
+    return res.json(note)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
