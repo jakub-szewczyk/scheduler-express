@@ -2,6 +2,7 @@ import { WithAuthProp } from '@clerk/clerk-sdk-node'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
+import { Board } from '@prisma/client'
 
 export const getBoardsController = async (
   req: WithAuthProp<Request<{ projectId: string }>>,
@@ -80,7 +81,7 @@ export const getBoardController = async (
 }
 
 export const createBoardController = async (
-  req: WithAuthProp<Request<{ projectId: string }, {}, { name: string }>>,
+  req: WithAuthProp<Request<{ projectId: string }, {}, Pick<Board, 'name'>>>,
   res: Response
 ) => {
   const result = validationResult(req)

@@ -1,7 +1,8 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
+import { Note, Prisma } from '@prisma/client'
+import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
-import { Request, Response } from 'express'
 
 export const getNotesController = async (
   req: WithAuthProp<Request<{ projectId: string }>>,
@@ -59,6 +60,34 @@ export const getNoteController = async (
     })
     if (!note) return res.status(404).json({ message: 'Note not found' })
     return res.json(note)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
+
+export const createNoteController = async (
+  req: WithAuthProp<Request<{ projectId: string }, {}, Pick<Note, 'name'>>>,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const note = await prismaClient.note.create({
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        editorState: true,
+      },
+      data: {
+        name: req.body.name,
+        editorState: Prisma.JsonNull,
+        projectId: req.params.projectId,
+      },
+    })
+    return res.status(201).json(note)
   } catch (error) {
     console.error(error)
     return res.status(500).end()
