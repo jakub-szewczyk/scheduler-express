@@ -80,3 +80,42 @@ export const updateNoteValidator = [
         throw new Error('This name has already been used by one of your notes')
     }),
 ]
+
+export const deleteNoteValidator = [
+  param('projectId')
+    .notEmpty()
+    .custom(async (projectId: string, { req }) => {
+      const project = await prismaClient.project.findUnique({
+        where: {
+          id: projectId,
+          authorId: req.auth.userId,
+        },
+      })
+      if (!project) throw new Error('Project not found')
+    }),
+  param('noteId')
+    .notEmpty()
+    .custom(async (noteId: string, { req }) => {
+      const note = await prismaClient.note.findUnique({
+        where: {
+          id: noteId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
+          },
+        },
+      })
+      if (!note) throw new Error('Note not found')
+    })
+    .custom(async (noteId: string, { req }) => {
+      const noteCount = await prismaClient.note.count({
+        where: {
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
+          },
+        },
+      })
+      if (noteCount === 1) throw new Error('At least one note is required')
+    }),
+]

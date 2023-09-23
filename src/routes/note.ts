@@ -1,12 +1,14 @@
 import { Router } from 'express'
 import {
   createNoteController,
+  deleteNoteController,
   getNoteController,
   getNotesController,
   updateNoteController,
 } from '../controllers/note'
 import {
   createNoteValidator,
+  deleteNoteValidator,
   getNoteValidator,
   getNotesValidator,
   updateNoteValidator,
@@ -24,6 +26,12 @@ router.put(
   '/:projectId/notes/:noteId',
   updateNoteValidator,
   updateNoteController
+)
+
+router.delete(
+  '/:projectId/notes/:noteId',
+  deleteNoteValidator,
+  deleteNoteController
 )
 
 export default router
