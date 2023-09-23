@@ -93,3 +93,38 @@ export const createNoteController = async (
     return res.status(500).end()
   }
 }
+
+export const updateNoteController = async (
+  req: WithAuthProp<
+    Request<{ projectId: string; noteId: string }, {}, Pick<Note, 'name'>>
+  >,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const note = await prismaClient.note.update({
+      select: {
+        id: true,
+        createdAt: true,
+        name: true,
+        editorState: true,
+      },
+      where: {
+        id: req.params.noteId,
+        project: {
+          id: req.params.projectId,
+          authorId: req.auth.userId!,
+        },
+      },
+      data: {
+        name: req.body.name,
+      },
+    })
+    return res.json(note)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
