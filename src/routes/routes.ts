@@ -3,6 +3,7 @@ import boardRoutes from './board'
 import editorStateRoutes from './editorState'
 import issueRoutes from './issue'
 import noteRoutes from './note'
+import pushSubscriptionRoutes from './pushSubscription'
 import projectRoutes from './project'
 import rowRoutes from './row'
 import scheduleRoutes from './schedule'
@@ -25,5 +26,7 @@ router.use('/projects', issueRoutes)
 router.use('/projects', noteRoutes)
 
 router.use('/projects', editorStateRoutes)
+
+router.use('/push-subscription', pushSubscriptionRoutes)
 
 export default router

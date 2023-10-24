@@ -55,7 +55,7 @@ export const updateRowsValidator = [
         },
       })
       if (!row) {
-        const index = path[1]
+        const [, index] = path.match(/\[(.*?)\]/)!
         if (!req.body[index].rowId)
           throw new Error('Expected field `rowId` must not be empty')
         const row = await prismaClient.row.findFirst({
@@ -123,20 +123,20 @@ export const updateRowsValidator = [
     .isObject()
     .withMessage('Expected field `notification` must be an object'),
   body('*.notification.time')
-    .if(
-      async (time: Notification['time'], { req, path }) =>
-        req.body[path[1]].notification.time
-    )
+    .if(async (time: Notification['time'], { req, path }) => {
+      const [, index] = path.match(/\[(.*?)\]/)!
+      req.body[index].notification.time
+    })
     .isISO8601()
     .toDate()
     .withMessage(
       'Expected field `notification.time` must be a valid date format'
     ),
   body('*.notification.active')
-    .if(
-      async (active: Notification['active'], { req, path }) =>
-        req.body[path[1]].notification.active
-    )
+    .if(async (active: Notification['active'], { req, path }) => {
+      const [, index] = path.match(/\[(.*?)\]/)!
+      req.body[index].notification.active
+    })
     .isBoolean({ strict: true })
     .withMessage('Expected field `notification.active` must be a boolean'),
 ]

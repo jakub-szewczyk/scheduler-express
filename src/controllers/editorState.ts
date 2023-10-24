@@ -33,7 +33,7 @@ export const updateEditorStateController = async (
         },
       },
       data: {
-        editorState: req.body.editorState as Prisma.InputJsonObject,
+        editorState: req.body.editorState as Prisma.JsonObject,
       },
     })
     return res.json(note)

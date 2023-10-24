@@ -48,18 +48,18 @@ export const updateStatusesValidator = [
     .isArray()
     .withMessage('Expected field `issues` must be an array'),
   body('*.issues.title')
-    .if(
-      async (title: Issue['title'], { req, path }) =>
-        req.body[path[1]].issue.title
-    )
+    .if(async (title: Issue['title'], { req, path }) => {
+      const [, index] = path.match(/\[(.*?)\]/)!
+      req.body[index].issue.title
+    })
     .trim()
     .notEmpty()
     .withMessage('You have to give your issue a title'),
   body('*.issues.content')
-    .if(
-      async (content: Issue['content'], { req, path }) =>
-        req.body[path[1]].issue.content
-    )
+    .if(async (content: Issue['content'], { req, path }) => {
+      const [, index] = path.match(/\[(.*?)\]/)!
+      req.body[index].issue.content
+    })
     .trim()
     .notEmpty()
     .withMessage('You have to give your issue some content'),
