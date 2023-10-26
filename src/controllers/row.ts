@@ -21,7 +21,9 @@ export const updateRowsController = async (
         | 'ends'
         | 'room'
         | 'subject'
-      > & { notification?: Pick<Notification, 'time' | 'active'> | null })[]
+      > & {
+        notification?: Pick<Notification, 'time' | 'active' | 'title'> | null
+      })[]
     >
   >,
   res: Response
@@ -57,7 +59,7 @@ export const updateRowsController = async (
         room: true,
         subject: true,
         notification: {
-          select: { id: true, time: true, active: true },
+          select: { id: true, time: true, active: true, title: true },
         },
       },
     })
@@ -103,6 +105,7 @@ export const updateRowsController = async (
                 create: {
                   time: row.notification.time,
                   active: row.notification.active,
+                  title: row.notification.title,
                 },
               },
             }),
@@ -119,10 +122,12 @@ export const updateRowsController = async (
                   create: {
                     time: row.notification.time,
                     active: row.notification.active,
+                    title: row.notification.title,
                   },
                   update: {
                     time: row.notification.time,
                     active: row.notification.active,
+                    title: row.notification.title,
                   },
                 },
               },
@@ -152,7 +157,7 @@ export const updateRowsController = async (
             webpush.sendNotification(
               pushSubscription.pushSubscription as unknown as PushSubscription,
               JSON.stringify({
-                title: project?.schedules[0].name,
+                title: row.notification?.title || project?.schedules[0].name,
                 body: `Scheduled event at ${new Intl.DateTimeFormat('en-US', {
                   hour: '2-digit',
                   minute: '2-digit',

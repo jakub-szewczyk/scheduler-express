@@ -55,6 +55,7 @@ model Notification {
   updatedAt DateTime @updatedAt
   time      DateTime
   active    Boolean  @default(false)
+  title     String?
   row       Row      @relation(fields: [rowId], references: [id], onDelete: Cascade)
   rowId     String   @unique
 }

@@ -61,6 +61,7 @@ export const getScheduleController = async (
               select: {
                 time: true,
                 active: true,
+                title: true,
               },
             },
           },
@@ -111,6 +112,7 @@ export const createScheduleController = async (
               select: {
                 time: true,
                 active: true,
+                title: true,
               },
             },
           },
@@ -220,6 +222,7 @@ export const deleteScheduleController = async (
               select: {
                 time: true,
                 active: true,
+                title: true,
               },
             },
           },

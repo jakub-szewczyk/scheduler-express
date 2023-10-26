@@ -36,7 +36,7 @@ export const schedulePushNotificationJobs = async () => {
         webpush.sendNotification(
           pushSubscription.pushSubscription as unknown as PushSubscription,
           JSON.stringify({
-            title: project?.schedules[0].name,
+            title: row.notification?.title || project?.schedules[0].name,
             body: `Scheduled event at ${new Intl.DateTimeFormat('en-US', {
               hour: '2-digit',
               minute: '2-digit',
