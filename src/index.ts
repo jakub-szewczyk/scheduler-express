@@ -25,11 +25,11 @@ app.use(bodyParser.json())
 
 app.use('/api', ClerkExpressRequireAuth(), routes)
 
-// TODO: Use top level await
+// Main
 ;(async () => {
   console.log(`⚡️[server]: rescheduling jobs...`)
   await schedulePushNotificationJobs()
-  app.listen(PORT, async () => {
+  app.listen(PORT, async () =>
     console.log(`⚡️[server]: running at http://localhost:${PORT}`)
-  })
+  )
 })()

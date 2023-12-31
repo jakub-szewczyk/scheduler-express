@@ -13,6 +13,7 @@ import {
 
 const router = Router()
 
+// TODO: Validate pagination query params
 router.get('/', getProjectsController)
 
 router.post('/', createProjectValidator, createProjectController)
