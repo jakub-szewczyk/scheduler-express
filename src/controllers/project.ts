@@ -10,6 +10,9 @@ export const getProjectsController = async (
   req: WithAuthProp<Request<{}, {}, {}, { page?: string; size?: string }>>,
   res: Response
 ) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
   const { page, size } = paginationParams(req)
   try {
     const projectCount = await prismaClient.project.count({

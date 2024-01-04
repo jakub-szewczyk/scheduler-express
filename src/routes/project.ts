@@ -8,13 +8,13 @@ import {
 import {
   createProjectValidator,
   deleteProjectValidator,
+  getProjectsValidator,
   updateProjectValidator,
 } from '../validators/project'
 
 const router = Router()
 
-// TODO: Validate pagination query params
-router.get('/', getProjectsController)
+router.get('/', getProjectsValidator, getProjectsController)
 
 router.post('/', createProjectValidator, createProjectController)
 

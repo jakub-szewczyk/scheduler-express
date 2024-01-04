@@ -1,5 +1,10 @@
-import { body, param } from 'express-validator'
+import { body, param, query } from 'express-validator'
 import prismaClient from '../client'
+
+export const getProjectsValidator = [
+  query('page', 'Page number must be a non-negative integer').isInt({ gt: -1 }),
+  query('size', 'Page size must be a non-negative integer').isInt({ gt: -1 }),
+]
 
 export const createProjectValidator = [
   body('name', 'You have to give your project a unique name')
