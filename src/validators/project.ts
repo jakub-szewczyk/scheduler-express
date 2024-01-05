@@ -2,8 +2,12 @@ import { body, param, query } from 'express-validator'
 import prismaClient from '../client'
 
 export const getProjectsValidator = [
-  query('page', 'Page number must be a non-negative integer').isInt({ gt: -1 }),
-  query('size', 'Page size must be a non-negative integer').isInt({ gt: -1 }),
+  query('page', 'Page number must be a non-negative integer')
+    .isInt({ gt: -1 })
+    .optional(),
+  query('size', 'Page size must be a non-negative integer')
+    .isInt({ gt: -1 })
+    .optional(),
 ]
 
 export const createProjectValidator = [
@@ -28,27 +32,25 @@ export const createProjectValidator = [
 ]
 
 export const updateProjectValidator = [
-  param('projectId')
-    .notEmpty()
-    .custom(async (projectId: string, { req }) => {
-      try {
-        await prismaClient.project.findUniqueOrThrow({
-          where: {
-            id: projectId,
-            authorId: req.auth.userId,
-          },
-        })
-      } catch (error) {
-        throw new Error('Project not found')
-      }
-    }),
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
+        where: {
+          id: projectId,
+          authorId: req.auth.userId,
+        },
+      })
+    } catch (error) {
+      throw new Error('Project not found')
+    }
+  }),
   body('name', 'You have to give your project a unique name')
     .trim()
     .notEmpty()
     .custom(async (name: string, { req }) => {
       const project = await prismaClient.project.findFirst({
         where: {
-          id: { not: req.params?.projectId },
+          id: { not: req.params!.projectId },
           name,
           authorId: req.auth.userId,
         },
@@ -62,7 +64,6 @@ export const updateProjectValidator = [
 ]
 
 export const deleteProjectValidator = param('projectId')
-  .notEmpty()
   .custom(async (projectId: string, { req }) => {
     try {
       await prismaClient.project.findUniqueOrThrow({
@@ -75,7 +76,7 @@ export const deleteProjectValidator = param('projectId')
       throw new Error('Project not found')
     }
   })
-  .custom(async (projectId: string, { req }) => {
+  .custom(async (_, { req }) => {
     const projectCount = await prismaClient.project.count({
       where: {
         authorId: req.auth.userId,
