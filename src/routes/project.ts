@@ -18,6 +18,8 @@ const router = Router()
  * @openapi
  * /api/projects:
  *   get:
+ *     security:
+ *       - bearerAuth: []
  *     tags:
  *       - Project
  *     summary: Get all projects
@@ -40,13 +42,31 @@ const router = Router()
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: string
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Project'
+ *                 page:
+ *                   type: integer
+ *                   example: 0
+ *                 size:
+ *                   type: integer
+ *                   example: 10
+ *                 total:
+ *                   type: integer
+ *                   example: 1
  *       400:
  *         description: Invalid query params
- *       500:
- *         description: Unexpected server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Page number must be a non-negative integer
  */
 router.get('/', getProjectsValidator, getProjectsController)
 
