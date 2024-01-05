@@ -14,6 +14,40 @@ import {
 
 const router = Router()
 
+/**
+ * @openapi
+ * /api/projects:
+ *   get:
+ *     tags:
+ *       - Project
+ *     summary: Get all projects
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *           default: 0
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Returns all projects
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: string
+ *       400:
+ *         description: Invalid query params
+ *       500:
+ *         description: Unexpected server error
+ */
 router.get('/', getProjectsValidator, getProjectsController)
 
 router.post('/', createProjectValidator, createProjectController)

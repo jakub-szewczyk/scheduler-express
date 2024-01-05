@@ -4,8 +4,9 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
 import webpush from 'web-push'
-import routes from './routes/routes'
 import { schedulePushNotificationJobs } from './modules/notification'
+import apiRoutes from './routes/routes'
+import swaggerRoutes from './routes/swagger'
 
 dotenv.config()
 
@@ -23,7 +24,9 @@ app.use(cors())
 
 app.use(bodyParser.json())
 
-app.use('/api', ClerkExpressRequireAuth(), routes)
+app.use('/api', ClerkExpressRequireAuth(), apiRoutes)
+
+app.use('/api-docs', swaggerRoutes)
 
 // Main
 ;(async () => {
