@@ -2,12 +2,14 @@ import { Router } from 'express'
 import {
   createProjectController,
   deleteProjectController,
+  getProjectController,
   getProjectsController,
   updateProjectController,
 } from '../controllers/project'
 import {
   createProjectValidator,
   deleteProjectValidator,
+  getProjectValidator,
   getProjectsValidator,
   updateProjectValidator,
 } from '../validators/project'
@@ -69,6 +71,8 @@ const router = Router()
  *                   example: Page number must be a non-negative integer
  */
 router.get('/', getProjectsValidator, getProjectsController)
+
+router.get('/:projectId', getProjectValidator, getProjectController)
 
 router.post('/', createProjectValidator, createProjectController)
 

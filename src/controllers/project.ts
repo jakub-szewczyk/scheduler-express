@@ -56,6 +56,27 @@ export const getProjectsController = async (
   }
 }
 
+export const getProjectController = async (
+  req: WithAuthProp<Request<{ projectId: string }>>,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const project = await prismaClient.project.findUnique({
+      where: {
+        id: req.params.projectId,
+        authorId: req.auth.userId!,
+      },
+    })
+    return res.json(project)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
+
 export const createProjectController = async (
   req: WithAuthProp<Request<{}, {}, Pick<Project, 'name' | 'description'>>>,
   res: Response

@@ -10,6 +10,8 @@ export const getProjectsValidator = [
     .optional(),
 ]
 
+export const getProjectValidator = param('projectId').notEmpty()
+
 export const createProjectValidator = [
   body('name', 'You have to give your project a unique name')
     .trim()
