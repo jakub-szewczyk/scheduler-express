@@ -3,32 +3,51 @@ import { Note, Prisma } from '@prisma/client'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
+import { paginationParams } from '../modules/pagination'
 
 export const getNotesController = async (
-  req: WithAuthProp<Request<{ projectId: string }>>,
+  req: WithAuthProp<
+    Request<{ projectId: string }, {}, {}, { page?: string; size?: string }>
+  >,
   res: Response
 ) => {
   const result = validationResult(req)
   if (!result.isEmpty())
     return res.status(400).json({ message: result.array()[0].msg })
+  const { page, size } = paginationParams(req)
   try {
-    const notes = await prismaClient.note.findMany({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-      },
-      where: {
-        project: {
-          id: req.params.projectId,
-          authorId: req.auth.userId!,
+    const [notes, noteCount] = await Promise.all([
+      prismaClient.note.findMany({
+        select: {
+          id: true,
+          createdAt: true,
+          name: true,
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+        where: {
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prismaClient.note.count({
+        where: {
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+      }),
+    ])
     if (notes.length === 0)
       return res.status(404).json({ message: 'Notes not found' })
-    return res.json(notes)
+    return res.json({
+      content: notes,
+      page,
+      size,
+      total: noteCount,
+    })
   } catch (error) {
     console.error(error)
     return res.status(500).end()

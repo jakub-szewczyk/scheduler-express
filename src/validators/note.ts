@@ -1,7 +1,15 @@
-import { body, param } from 'express-validator'
+import { body, param, query } from 'express-validator'
 import prismaClient from '../client'
 
-export const getNotesValidator = param('projectId').notEmpty()
+export const getNotesValidator = [
+  param('projectId').notEmpty(),
+  query('page', 'Page number must be a non-negative integer')
+    .isInt({ gt: -1 })
+    .optional(),
+  query('size', 'Page size must be a non-negative integer')
+    .isInt({ gt: -1 })
+    .optional(),
+]
 
 export const getNoteValidator = [
   param('projectId').notEmpty(),

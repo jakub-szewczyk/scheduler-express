@@ -1,34 +1,53 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
+import { Board } from '@prisma/client'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
-import { Board } from '@prisma/client'
+import { paginationParams } from '../modules/pagination'
 
 export const getBoardsController = async (
-  req: WithAuthProp<Request<{ projectId: string }>>,
+  req: WithAuthProp<
+    Request<{ projectId: string }, {}, {}, { page?: string; size?: string }>
+  >,
   res: Response
 ) => {
   const result = validationResult(req)
   if (!result.isEmpty())
     return res.status(400).json({ message: result.array()[0].msg })
+  const { page, size } = paginationParams(req)
   try {
-    const boards = await prismaClient.board.findMany({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-      },
-      where: {
-        project: {
-          id: req.params.projectId,
-          authorId: req.auth.userId!,
+    const [boards, boardCount] = await Promise.all([
+      prismaClient.board.findMany({
+        select: {
+          id: true,
+          createdAt: true,
+          name: true,
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+        where: {
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prismaClient.board.count({
+        where: {
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+      }),
+    ])
     if (boards.length === 0)
       return res.status(404).json({ message: 'Boards not found' })
-    return res.json(boards)
+    return res.json({
+      content: boards,
+      page,
+      size,
+      total: boardCount,
+    })
   } catch (error) {
     console.error(error)
     return res.status(500).end()

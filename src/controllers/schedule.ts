@@ -2,32 +2,53 @@ import { WithAuthProp } from '@clerk/clerk-sdk-node'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
+import { paginationParams } from '../modules/pagination'
 
 export const getSchedulesController = async (
-  req: WithAuthProp<Request<{ projectId: string }>>,
+  req: WithAuthProp<
+    Request<{ projectId: string }, {}, {}, { page?: string; size?: string }>
+  >,
   res: Response
 ) => {
   const result = validationResult(req)
   if (!result.isEmpty())
     return res.status(400).json({ message: result.array()[0].msg })
+  const { page, size } = paginationParams(req)
   try {
-    const schedules = await prismaClient.schedule.findMany({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-      },
-      where: {
-        project: {
-          id: req.params.projectId,
-          authorId: req.auth.userId!,
+    const [schedules, scheduleCount] = await Promise.all([
+      prismaClient.schedule.findMany({
+        select: {
+          id: true,
+          createdAt: true,
+          name: true,
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    })
+        where: {
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: size,
+        skip: page * size,
+      }),
+      prismaClient.schedule.count({
+        where: {
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+      }),
+    ])
     if (schedules.length === 0)
       return res.status(404).json({ message: 'Schedules not found' })
-    return res.json(schedules)
+    return res.json({
+      content: schedules,
+      page,
+      size,
+      total: scheduleCount,
+    })
   } catch (error) {
     console.error(error)
     return res.status(500).end()
