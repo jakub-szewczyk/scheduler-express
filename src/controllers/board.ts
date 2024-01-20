@@ -30,6 +30,8 @@ export const getBoardsController = async (
           },
         },
         orderBy: { createdAt: 'desc' },
+        take: size,
+        skip: page * size,
       }),
       prismaClient.board.count({
         where: {

@@ -30,6 +30,8 @@ export const getNotesController = async (
           },
         },
         orderBy: { createdAt: 'desc' },
+        take: size,
+        skip: page * size,
       }),
       prismaClient.note.count({
         where: {
