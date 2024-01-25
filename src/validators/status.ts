@@ -112,6 +112,7 @@ export const updateStatusValidator = [
     .trim()
     .notEmpty()
     .withMessage('You have to give your status a unique title')
+    .toLowerCase()
     .custom(async (title: string, { req }) => {
       const status = await prismaClient.status.findUnique({
         where: {
