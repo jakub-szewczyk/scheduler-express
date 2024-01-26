@@ -1,108 +1,76 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
-import { Prisma, Project } from '@prisma/client'
+import { Project } from '@prisma/client'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
+import { paginationParams } from '../modules/pagination'
+import { PROJECT, projectData, projectSelect } from '../modules/project'
 
 export const getProjectsController = async (
-  req: WithAuthProp<Request>,
+  req: WithAuthProp<Request<{}, {}, {}, { page?: string; size?: string }>>,
   res: Response
 ) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  const { page, size } = paginationParams(req)
   try {
-    const projects = await prismaClient.project.findMany({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        description: true,
+    const projectCount = await prismaClient.project.count({
+      where: {
+        authorId: req.auth.userId!,
       },
+    })
+    if (projectCount === 0) {
+      const project = await prismaClient.project.create({
+        select: projectSelect,
+        data: projectData({
+          ...PROJECT,
+          authorId: req.auth.userId!,
+        }),
+      })
+      return res.json({
+        content: [project],
+        page,
+        size,
+        total: projectCount,
+      })
+    }
+    const projects = await prismaClient.project.findMany({
+      select: projectSelect,
       where: {
         authorId: req.auth.userId!,
       },
       orderBy: { createdAt: 'desc' },
+      take: size,
+      skip: page * size,
     })
-    if (projects.length === 0) {
-      const project = await prismaClient.project.create({
-        select: {
-          id: true,
-          createdAt: true,
-          name: true,
-          description: true,
-        },
-        data: {
-          name: 'Project #1',
-          description:
-            "Edit your project's title and description. Manage your notes, boards and schedules within it.",
-          authorId: req.auth.userId!,
-          schedules: {
-            create: {
-              name: 'Schedule #1',
-              rows: {
-                createMany: {
-                  data: [
-                    { day: 'Monday', index: 0 },
-                    { day: 'Tuesday', index: 1 },
-                    { day: 'Wednesday', index: 2 },
-                    { day: 'Thursday', index: 3 },
-                    { day: 'Friday', index: 4 },
-                  ],
-                },
-              },
-            },
-          },
-          boards: {
-            create: {
-              name: 'Board #1',
-              statuses: {
-                create: {
-                  index: 0,
-                  title: 'Todo',
-                  issues: {
-                    createMany: {
-                      data: [
-                        {
-                          index: 0,
-                          title: 'Adjust column titles',
-                          content:
-                            'To rename a status, simply click on the three dots icon next to the status title. This will open the configuration menu, where you can find the option to rename it.',
-                        },
-                        {
-                          index: 1,
-                          title: 'Create your own issues',
-                          content:
-                            'Click on the floating action button in the bottom-right corner of the screen to add more issues',
-                        },
-                        {
-                          index: 2,
-                          title: 'Get familiar with the kanban board',
-                          content:
-                            'Get to know the kanban board. Customize statuses and issues to fit your needs.',
-                        },
-                      ],
-                    },
-                  },
-                },
-                createMany: {
-                  data: [
-                    { index: 1, title: 'On hold' },
-                    { index: 2, title: 'In progress' },
-                    { index: 3, title: 'Done' },
-                  ],
-                },
-              },
-            },
-          },
-          notes: {
-            create: {
-              name: 'Note #1',
-              editorState: Prisma.JsonNull,
-            },
-          },
-        },
-      })
-      return res.json([project])
-    }
-    return res.json(projects)
+    return res.json({
+      content: projects,
+      page,
+      size,
+      total: projectCount,
+    })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
+
+export const getProjectController = async (
+  req: WithAuthProp<Request<{ projectId: string }>>,
+  res: Response
+) => {
+  const result = validationResult(req)
+  if (!result.isEmpty())
+    return res.status(400).json({ message: result.array()[0].msg })
+  try {
+    const project = await prismaClient.project.findUnique({
+      where: {
+        id: req.params.projectId,
+        authorId: req.auth.userId!,
+      },
+    })
+    return res.json(project)
   } catch (error) {
     console.error(error)
     return res.status(500).end()
@@ -118,81 +86,12 @@ export const createProjectController = async (
     return res.status(400).json({ message: result.array()[0].msg })
   try {
     const project = await prismaClient.project.create({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        description: true,
-      },
-      data: {
+      select: projectSelect,
+      data: projectData({
         name: req.body.name,
         description: req.body.description,
         authorId: req.auth.userId!,
-        schedules: {
-          create: {
-            name: 'Schedule #1',
-            rows: {
-              createMany: {
-                data: [
-                  { day: 'Monday', index: 0 },
-                  { day: 'Tuesday', index: 1 },
-                  { day: 'Wednesday', index: 2 },
-                  { day: 'Thursday', index: 3 },
-                  { day: 'Friday', index: 4 },
-                ],
-              },
-            },
-          },
-        },
-        boards: {
-          create: {
-            name: 'Board #1',
-            statuses: {
-              create: {
-                index: 0,
-                title: 'Todo',
-                issues: {
-                  createMany: {
-                    data: [
-                      {
-                        index: 0,
-                        title: 'Adjust column titles',
-                        content:
-                          'To rename a status, simply click on the three dots icon next to the status title. This will open the configuration menu, where you can find the option to rename it.',
-                      },
-                      {
-                        index: 1,
-                        title: 'Create your own issues',
-                        content:
-                          'Click on the floating action button in the bottom-right corner of the screen to add more issues',
-                      },
-                      {
-                        index: 2,
-                        title: 'Get familiar with the kanban board',
-                        content:
-                          'Get to know the kanban board. Customize statuses and issues to fit your needs.',
-                      },
-                    ],
-                  },
-                },
-              },
-              createMany: {
-                data: [
-                  { index: 1, title: 'On hold' },
-                  { index: 2, title: 'In progress' },
-                  { index: 3, title: 'Done' },
-                ],
-              },
-            },
-          },
-        },
-        notes: {
-          create: {
-            name: 'Note #1',
-            editorState: Prisma.JsonNull,
-          },
-        },
-      },
+      }),
     })
     return res.status(201).json(project)
   } catch (error) {
@@ -212,12 +111,7 @@ export const updateProjectController = async (
     return res.status(400).json({ message: result.array()[0].msg })
   try {
     const project = await prismaClient.project.update({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        description: true,
-      },
+      select: projectSelect,
       where: {
         id: req.params.projectId,
         authorId: req.auth.userId!,
@@ -243,12 +137,7 @@ export const deleteProjectController = async (
     return res.status(400).json({ message: result.array()[0].msg })
   try {
     const project = await prismaClient.project.delete({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        description: true,
-      },
+      select: projectSelect,
       where: {
         id: req.params.projectId,
         authorId: req.auth.userId!,

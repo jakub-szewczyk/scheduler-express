@@ -4,8 +4,9 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
 import webpush from 'web-push'
-import routes from './routes/routes'
 import { schedulePushNotificationJobs } from './modules/notification'
+import apiRoutes from './routes/routes'
+import swaggerRoutes from './routes/swagger'
 
 dotenv.config()
 
@@ -23,13 +24,15 @@ app.use(cors())
 
 app.use(bodyParser.json())
 
-app.use('/api', ClerkExpressRequireAuth(), routes)
+app.use('/api', ClerkExpressRequireAuth(), apiRoutes)
 
-// TODO: Use top level await
+app.use('/api-docs', swaggerRoutes)
+
+// Main
 ;(async () => {
   console.log(`⚡️[server]: rescheduling jobs...`)
   await schedulePushNotificationJobs()
-  app.listen(PORT, async () => {
+  app.listen(PORT, async () =>
     console.log(`⚡️[server]: running at http://localhost:${PORT}`)
-  })
+  )
 })()

@@ -2,9 +2,12 @@
   "name": "scheduler-server",
   "private": true,
   "version": "1.0.0",
+  "prisma": {
+    "seed": "npx ts-node prisma/seed.ts"
+  },
   "scripts": {
     "dev": "concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\"",
-    "start": "node dist/index.js",
+    "start": "node dist/src/index.js",
     "build": "npx tsc",
     "check": "tsc --noEmit",
     "lint": "eslint --max-warnings=0 src"
@@ -20,6 +23,8 @@
     "express-validator": "^7.0.1",
     "node-schedule": "^2.1.1",
     "ramda": "^0.29.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
     "web-push": "^3.6.6"
   },
   "devDependencies": {
@@ -28,10 +33,13 @@
     "@types/node": "^20.4.2",
     "@types/node-schedule": "^2.1.2",
     "@types/ramda": "^0.29.3",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.6",
     "@types/web-push": "^3.6.1",
     "concurrently": "^8.2.0",
     "nodemon": "^3.0.1",
     "prisma": "^5.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.1.6"
   }
 }
