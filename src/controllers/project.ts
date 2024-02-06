@@ -7,7 +7,9 @@ import { paginationParams } from '../modules/pagination'
 import { PROJECT, projectData, projectSelect } from '../modules/project'
 
 export const getProjectsController = async (
-  req: WithAuthProp<Request<{}, {}, {}, { page?: string; size?: string }>>,
+  req: WithAuthProp<
+    Request<object, object, object, { page?: string; size?: string }>
+  >,
   res: Response
 ) => {
   const result = validationResult(req)
@@ -78,7 +80,9 @@ export const getProjectController = async (
 }
 
 export const createProjectController = async (
-  req: WithAuthProp<Request<{}, {}, Pick<Project, 'name' | 'description'>>>,
+  req: WithAuthProp<
+    Request<object, object, Pick<Project, 'name' | 'description'>>
+  >,
   res: Response
 ) => {
   const result = validationResult(req)
@@ -102,7 +106,11 @@ export const createProjectController = async (
 
 export const updateProjectController = async (
   req: WithAuthProp<
-    Request<{ projectId: string }, {}, Pick<Project, 'name' | 'description'>>
+    Request<
+      { projectId: string },
+      object,
+      Pick<Project, 'name' | 'description'>
+    >
   >,
   res: Response
 ) => {
@@ -129,7 +137,7 @@ export const updateProjectController = async (
 }
 
 export const deleteProjectController = async (
-  req: WithAuthProp<Request<{ projectId: string }, {}, {}>>,
+  req: WithAuthProp<Request<{ projectId: string }, object, object>>,
   res: Response
 ) => {
   const result = validationResult(req)

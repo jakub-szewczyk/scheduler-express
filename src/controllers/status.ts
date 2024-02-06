@@ -16,7 +16,7 @@ export type UpdateStatusesRequestBody = (Pick<Status, 'title'> & {
 
 export const updateStatusesController = async (
   req: WithAuthProp<
-    Request<UpdateStatusesRequestParams, {}, UpdateStatusesRequestBody>
+    Request<UpdateStatusesRequestParams, object, UpdateStatusesRequestBody>
   >,
   res: Response
 ) => {
@@ -121,7 +121,7 @@ interface UpdateStatusRequestParams extends UpdateStatusesRequestParams {
 
 export const updateStatusController = async (
   req: WithAuthProp<
-    Request<UpdateStatusRequestParams, {}, Pick<Status, 'title'>>
+    Request<UpdateStatusRequestParams, object, Pick<Status, 'title'>>
   >,
   res: Response
 ) => {

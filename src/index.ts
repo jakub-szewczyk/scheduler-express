@@ -32,7 +32,7 @@ app.use('/api-docs', swaggerRoutes)
 ;(async () => {
   console.log(`⚡️[server]: rescheduling jobs...`)
   await schedulePushNotificationJobs()
-  app.listen(PORT, async () =>
+  app.listen(PORT, () =>
     console.log(`⚡️[server]: running at http://localhost:${PORT}`)
   )
 })()

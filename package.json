@@ -1,6 +1,5 @@
 {
   "name": "scheduler-server",
-  "private": true,
   "version": "1.0.0",
   "prisma": {
     "seed": "npx ts-node prisma/seed.ts"
@@ -36,7 +35,10 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.6",
     "@types/web-push": "^3.6.1",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "concurrently": "^8.2.0",
+    "eslint": "^8.56.0",
     "nodemon": "^3.0.1",
     "prisma": "^5.0.0",
     "ts-node": "^10.9.2",

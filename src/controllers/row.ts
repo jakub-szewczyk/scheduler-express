@@ -10,7 +10,7 @@ export const updateRowsController = async (
   req: WithAuthProp<
     Request<
       { projectId: string; scheduleId: string },
-      {},
+      object,
       (Pick<
         Row,
         | 'id'
@@ -139,8 +139,8 @@ export const updateRowsController = async (
     const rows = result.slice(1) as Prisma.RowGetPayload<
       typeof rowWithNotification
     >[]
-    project?.schedules[0].rows.forEach((row) =>
-      cancelJob(row.notification?.id!)
+    project?.schedules[0].rows.forEach(
+      (row) => row.notification?.id && cancelJob(row.notification.id)
     )
     rows
       .filter((row) => row.notification?.active)
@@ -152,7 +152,7 @@ export const updateRowsController = async (
           ).findIndex((day) => day === row.day) + 1
         recurrenceRule.hour = new Date(row.notification!.time).getHours()
         recurrenceRule.minute = new Date(row.notification!.time).getMinutes()
-        scheduleJob(row.notification!.id, recurrenceRule, async () => {
+        scheduleJob(row.notification!.id, recurrenceRule, () => {
           pushSubscriptions.forEach((pushSubscription) =>
             webpush.sendNotification(
               pushSubscription.pushSubscription as unknown as PushSubscription,

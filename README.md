@@ -2,4 +2,4 @@
 
 ## Todo
 
-- Add eslint.
+- Tighten typechecks.

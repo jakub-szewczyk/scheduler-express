@@ -7,7 +7,12 @@ import { paginationParams } from '../modules/pagination'
 
 export const getNotesController = async (
   req: WithAuthProp<
-    Request<{ projectId: string }, {}, {}, { page?: string; size?: string }>
+    Request<
+      { projectId: string },
+      object,
+      object,
+      { page?: string; size?: string }
+    >
   >,
   res: Response
 ) => {
@@ -88,7 +93,7 @@ export const getNoteController = async (
 }
 
 export const createNoteController = async (
-  req: WithAuthProp<Request<{ projectId: string }, {}, Pick<Note, 'name'>>>,
+  req: WithAuthProp<Request<{ projectId: string }, object, Pick<Note, 'name'>>>,
   res: Response
 ) => {
   const result = validationResult(req)
@@ -117,7 +122,7 @@ export const createNoteController = async (
 
 export const updateNoteController = async (
   req: WithAuthProp<
-    Request<{ projectId: string; noteId: string }, {}, Pick<Note, 'name'>>
+    Request<{ projectId: string; noteId: string }, object, Pick<Note, 'name'>>
   >,
   res: Response
 ) => {

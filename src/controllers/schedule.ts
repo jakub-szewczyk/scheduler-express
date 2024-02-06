@@ -6,7 +6,12 @@ import { paginationParams } from '../modules/pagination'
 
 export const getSchedulesController = async (
   req: WithAuthProp<
-    Request<{ projectId: string }, {}, {}, { page?: string; size?: string }>
+    Request<
+      { projectId: string },
+      object,
+      object,
+      { page?: string; size?: string }
+    >
   >,
   res: Response
 ) => {
@@ -107,12 +112,12 @@ export const getScheduleController = async (
 }
 
 export const createScheduleController = async (
-  req: WithAuthProp<Request<{ projectId: string }, {}, { name: string }>>,
+  req: WithAuthProp<Request<{ projectId: string }, object, { name: string }>>,
   res: Response
 ) => {
   const result = validationResult(req)
   if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
+    return res.status(400).json({ message: result.array()[0].msg as string })
   try {
     const schedule = await prismaClient.schedule.create({
       select: {
@@ -165,7 +170,7 @@ export const createScheduleController = async (
 
 export const updateScheduleController = async (
   req: WithAuthProp<
-    Request<{ projectId: string; scheduleId: string }, {}, { name: string }>
+    Request<{ projectId: string; scheduleId: string }, object, { name: string }>
   >,
   res: Response
 ) => {

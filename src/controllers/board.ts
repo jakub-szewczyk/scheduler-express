@@ -7,7 +7,12 @@ import { paginationParams } from '../modules/pagination'
 
 export const getBoardsController = async (
   req: WithAuthProp<
-    Request<{ projectId: string }, {}, {}, { page?: string; size?: string }>
+    Request<
+      { projectId: string },
+      object,
+      object,
+      { page?: string; size?: string }
+    >
   >,
   res: Response
 ) => {
@@ -102,7 +107,9 @@ export const getBoardController = async (
 }
 
 export const createBoardController = async (
-  req: WithAuthProp<Request<{ projectId: string }, {}, Pick<Board, 'name'>>>,
+  req: WithAuthProp<
+    Request<{ projectId: string }, object, Pick<Board, 'name'>>
+  >,
   res: Response
 ) => {
   const result = validationResult(req)
@@ -180,7 +187,7 @@ export const createBoardController = async (
 
 export const updateBoardController = async (
   req: WithAuthProp<
-    Request<{ projectId: string; boardId: string }, {}, { name: string }>
+    Request<{ projectId: string; boardId: string }, object, { name: string }>
   >,
   res: Response
 ) => {

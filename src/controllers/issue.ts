@@ -13,7 +13,7 @@ interface UpdateIssueRequestParams {
 
 export const updateIssueController = async (
   req: WithAuthProp<
-    Request<UpdateIssueRequestParams, {}, Pick<Issue, 'title' | 'content'>>
+    Request<UpdateIssueRequestParams, object, Pick<Issue, 'title' | 'content'>>
   >,
   res: Response
 ) => {

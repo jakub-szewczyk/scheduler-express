@@ -8,7 +8,7 @@ export const updateEditorStateController = async (
   req: WithAuthProp<
     Request<
       { projectId: string; noteId: string },
-      {},
+      object,
       Pick<Note, 'editorState'>
     >
   >,
