@@ -1,5 +1,5 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
-import { Project } from '@prisma/client'
+import { Prisma, Project } from '@prisma/client'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
@@ -8,7 +8,12 @@ import { PROJECT, projectData, projectSelect } from '../modules/project'
 
 export const getProjectsController = async (
   req: WithAuthProp<
-    Request<object, object, object, { page?: string; size?: string }>
+    Request<
+      object,
+      object,
+      object,
+      { page?: string; size?: string; name?: string }
+    >
   >,
   res: Response
 ) => {
@@ -37,20 +42,31 @@ export const getProjectsController = async (
         total: projectCount,
       })
     }
-    const projects = await prismaClient.project.findMany({
-      select: projectSelect,
-      where: {
-        authorId: req.auth.userId!,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: size,
-      skip: page * size,
-    })
+    const where: Prisma.ProjectWhereInput = {
+      authorId: req.auth.userId!,
+      ...(req.query.name && {
+        name: {
+          contains: req.query.name,
+        },
+      }),
+    }
+    const [total, projects] = await Promise.all([
+      prismaClient.project.count({
+        where,
+      }),
+      prismaClient.project.findMany({
+        select: projectSelect,
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: size,
+        skip: page * size,
+      }),
+    ])
     return res.json({
       content: projects,
       page,
       size,
-      total: projectCount,
+      total,
     })
   } catch (error) {
     console.error(error)
