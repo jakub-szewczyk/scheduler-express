@@ -1,5 +1,5 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
-import { Board } from '@prisma/client'
+import { Board, Prisma } from '@prisma/client'
 import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
@@ -11,7 +11,7 @@ export const getBoardsController = async (
       { projectId: string },
       object,
       object,
-      { page?: string; size?: string }
+      { page?: string; size?: string; name?: string }
     >
   >,
   res: Response
@@ -21,6 +21,15 @@ export const getBoardsController = async (
     return res.status(400).json({ message: result.array()[0].msg })
   const { page, size } = paginationParams(req)
   try {
+    const where: Prisma.BoardWhereInput = {
+      name: {
+        contains: req.query.name,
+      },
+      project: {
+        id: req.params.projectId,
+        authorId: req.auth.userId!,
+      },
+    }
     const [boards, boardCount] = await Promise.all([
       prismaClient.board.findMany({
         select: {
@@ -28,27 +37,15 @@ export const getBoardsController = async (
           createdAt: true,
           name: true,
         },
-        where: {
-          project: {
-            id: req.params.projectId,
-            authorId: req.auth.userId!,
-          },
-        },
+        where,
         orderBy: { createdAt: 'desc' },
         take: size,
         skip: page * size,
       }),
       prismaClient.board.count({
-        where: {
-          project: {
-            id: req.params.projectId,
-            authorId: req.auth.userId!,
-          },
-        },
+        where,
       }),
     ])
-    if (boards.length === 0)
-      return res.status(404).json({ message: 'Boards not found' })
     return res.json({
       content: boards,
       page,
