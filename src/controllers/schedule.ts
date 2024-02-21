@@ -3,6 +3,7 @@ import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
 import { paginationParams } from '../modules/pagination'
+import { Prisma } from '@prisma/client'
 
 export const getSchedulesController = async (
   req: WithAuthProp<
@@ -10,7 +11,7 @@ export const getSchedulesController = async (
       { projectId: string },
       object,
       object,
-      { page?: string; size?: string }
+      { page?: string; size?: string; name?: string }
     >
   >,
   res: Response
@@ -20,6 +21,15 @@ export const getSchedulesController = async (
     return res.status(400).json({ message: result.array()[0].msg })
   const { page, size } = paginationParams(req)
   try {
+    const where: Prisma.ScheduleWhereInput = {
+      name: {
+        contains: req.query.name,
+      },
+      project: {
+        id: req.params.projectId,
+        authorId: req.auth.userId!,
+      },
+    }
     const [schedules, scheduleCount] = await Promise.all([
       prismaClient.schedule.findMany({
         select: {
@@ -27,27 +37,15 @@ export const getSchedulesController = async (
           createdAt: true,
           name: true,
         },
-        where: {
-          project: {
-            id: req.params.projectId,
-            authorId: req.auth.userId!,
-          },
-        },
+        where,
         orderBy: { createdAt: 'desc' },
         take: size,
         skip: page * size,
       }),
       prismaClient.schedule.count({
-        where: {
-          project: {
-            id: req.params.projectId,
-            authorId: req.auth.userId!,
-          },
-        },
+        where,
       }),
     ])
-    if (schedules.length === 0)
-      return res.status(404).json({ message: 'Schedules not found' })
     return res.json({
       content: schedules,
       page,
