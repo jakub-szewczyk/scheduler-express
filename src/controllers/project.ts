@@ -50,16 +50,16 @@ export const getProjectsController = async (
         },
       }),
     }
-    const [total, projects] = await Promise.all([
-      prismaClient.project.count({
-        where,
-      }),
+    const [projects, total] = await Promise.all([
       prismaClient.project.findMany({
         select: projectSelect,
         where,
         orderBy: { createdAt: 'desc' },
         take: size,
         skip: page * size,
+      }),
+      prismaClient.project.count({
+        where,
       }),
     ])
     return res.json({
