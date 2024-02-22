@@ -20,16 +20,16 @@ export const getSchedulesController = async (
   if (!result.isEmpty())
     return res.status(400).json({ message: result.array()[0].msg })
   const { page, size } = paginationParams(req)
+  const where: Prisma.ScheduleWhereInput = {
+    name: {
+      contains: req.query.name,
+    },
+    project: {
+      id: req.params.projectId,
+      authorId: req.auth.userId!,
+    },
+  }
   try {
-    const where: Prisma.ScheduleWhereInput = {
-      name: {
-        contains: req.query.name,
-      },
-      project: {
-        id: req.params.projectId,
-        authorId: req.auth.userId!,
-      },
-    }
     const [schedules, scheduleCount] = await Promise.all([
       prismaClient.schedule.findMany({
         select: {

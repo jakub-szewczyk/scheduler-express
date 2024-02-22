@@ -20,16 +20,16 @@ export const getBoardsController = async (
   if (!result.isEmpty())
     return res.status(400).json({ message: result.array()[0].msg })
   const { page, size } = paginationParams(req)
+  const where: Prisma.BoardWhereInput = {
+    name: {
+      contains: req.query.name,
+    },
+    project: {
+      id: req.params.projectId,
+      authorId: req.auth.userId!,
+    },
+  }
   try {
-    const where: Prisma.BoardWhereInput = {
-      name: {
-        contains: req.query.name,
-      },
-      project: {
-        id: req.params.projectId,
-        authorId: req.auth.userId!,
-      },
-    }
     const [boards, boardCount] = await Promise.all([
       prismaClient.board.findMany({
         select: {

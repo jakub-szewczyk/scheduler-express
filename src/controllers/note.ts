@@ -11,7 +11,7 @@ export const getNotesController = async (
       { projectId: string },
       object,
       object,
-      { page?: string; size?: string }
+      { page?: string; size?: string; name?: string }
     >
   >,
   res: Response
@@ -20,6 +20,15 @@ export const getNotesController = async (
   if (!result.isEmpty())
     return res.status(400).json({ message: result.array()[0].msg })
   const { page, size } = paginationParams(req)
+  const where: Prisma.NoteWhereInput = {
+    name: {
+      contains: req.query.name,
+    },
+    project: {
+      id: req.params.projectId,
+      authorId: req.auth.userId!,
+    },
+  }
   try {
     const [notes, noteCount] = await Promise.all([
       prismaClient.note.findMany({
@@ -28,27 +37,15 @@ export const getNotesController = async (
           createdAt: true,
           name: true,
         },
-        where: {
-          project: {
-            id: req.params.projectId,
-            authorId: req.auth.userId!,
-          },
-        },
+        where,
         orderBy: { createdAt: 'desc' },
         take: size,
         skip: page * size,
       }),
       prismaClient.note.count({
-        where: {
-          project: {
-            id: req.params.projectId,
-            authorId: req.auth.userId!,
-          },
-        },
+        where,
       }),
     ])
-    if (notes.length === 0)
-      return res.status(404).json({ message: 'Notes not found' })
     return res.json({
       content: notes,
       page,
