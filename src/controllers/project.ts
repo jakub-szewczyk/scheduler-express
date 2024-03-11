@@ -12,7 +12,12 @@ export const getProjectsController = async (
       object,
       object,
       object,
-      { page?: string; size?: string; name?: string }
+      {
+        page?: string
+        size?: string
+        name?: string
+        createdAt?: 'ASC' | 'DESC'
+      }
     >
   >,
   res: Response
@@ -54,7 +59,10 @@ export const getProjectsController = async (
       prismaClient.project.findMany({
         select: projectSelect,
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: {
+          createdAt: (req.query.createdAt?.toLowerCase() ||
+            'desc') as Prisma.SortOrder,
+        },
         take: size,
         skip: page * size,
       }),

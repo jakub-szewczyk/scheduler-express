@@ -8,6 +8,12 @@ export const getProjectsValidator = [
   query('size', 'Page size must be a non-negative integer')
     .isInt({ gt: -1 })
     .optional(),
+  query(
+    'createdAt',
+    'Invalid value was provided for sorting projects by creation date.'
+  )
+    .isIn(['ASC', 'DESC'])
+    .optional(),
 ]
 
 export const getProjectValidator = param('projectId').notEmpty()
