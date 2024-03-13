@@ -91,12 +91,13 @@ export const getProjectController = async (
     return res.status(400).json({ message: result.array()[0].msg })
   try {
     const project = await prismaClient.project.findUnique({
+      select: projectSelect,
       where: {
         id: req.params.projectId,
         authorId: req.auth.userId!,
       },
     })
-    return res.json(project)
+    return project ? res.json(project) : res.status(404).json(project)
   } catch (error) {
     console.error(error)
     return res.status(500).end()
