@@ -84,6 +84,52 @@
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/Row'
+ *           example:
+ *             - id: clrssbi1c02m12uhb4oymnoqc
+ *               rowId: null
+ *               index: 0
+ *               day: Monday
+ *               starts: null
+ *               ends: null
+ *               room: null
+ *               subject: null
+ *               notification: null
+ *             - id: clrssbi1c02m22uhbdy1w65e2
+ *               rowId: null
+ *               index: 1
+ *               day: Tuesday
+ *               starts: null
+ *               ends: null
+ *               room: null
+ *               subject: null
+ *               notification: null
+ *             - id: clrssbi1c02m32uhbdt9fejkd
+ *               rowId: null
+ *               index: 2
+ *               day: Wednesday
+ *               starts: null
+ *               ends: null
+ *               room: null
+ *               subject: null
+ *               notification: null
+ *             - id: clrssbi1c02m42uhb5wq6esbv
+ *               rowId: null
+ *               index: 3
+ *               day: Thursday
+ *               starts: null
+ *               ends: null
+ *               room: null
+ *               subject: null
+ *               notification: null
+ *             - id: clrssbi1c02m52uhb6t5bfplr
+ *               rowId: null
+ *               index: 4
+ *               day: Friday
+ *               starts: null
+ *               ends: null
+ *               room: null
+ *               subject: null
+ *               notification: null
  */
 
 /**
