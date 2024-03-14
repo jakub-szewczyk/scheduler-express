@@ -136,6 +136,20 @@
  * @openapi
  * components:
  *   schemas:
+ *     ScheduleBody:
+ *       type: object
+ *       required:
+ *         - name
+ *       properties:
+ *         name:
+ *           type: string
+ *           example: 'Schedule #1'
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
  *     Row:
  *       type: object
  *       properties:
@@ -174,5 +188,3 @@
  *           nullable: true
  *           example: null
  */
-
-// TODO: Define notification schema
