@@ -1,5 +1,6 @@
 import { body, param, query } from 'express-validator'
 import prismaClient from '../client'
+import { validationMiddleware } from '../middlewares/validation'
 
 export const getProjectsValidator = [
   query('page', 'Page number must be a non-negative integer')
@@ -14,6 +15,7 @@ export const getProjectsValidator = [
   )
     .isIn(['ASC', 'DESC'])
     .optional(),
+  validationMiddleware,
 ]
 
 export const getProjectValidator = param('projectId').notEmpty()

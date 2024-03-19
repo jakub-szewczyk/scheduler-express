@@ -4,54 +4,39 @@ import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
 import { paginationParams } from '../modules/pagination'
-import { PROJECT, projectData, projectSelect } from '../modules/project'
+import { projectData, projectSelect } from '../modules/project'
+import { PaginableResponse } from '../types/pagination'
+
+type GetProjectsControllerRequest = WithAuthProp<
+  Request<
+    object,
+    object,
+    object,
+    {
+      page?: string
+      size?: string
+      name?: string
+      createdAt?: 'ASC' | 'DESC'
+    }
+  >
+>
+
+type GetProjectsControllerResponse = Response<
+  PaginableResponse<Pick<Project, 'id' | 'createdAt' | 'name' | 'description'>>
+>
 
 export const getProjectsController = async (
-  req: WithAuthProp<
-    Request<
-      object,
-      object,
-      object,
-      {
-        page?: string
-        size?: string
-        name?: string
-        createdAt?: 'ASC' | 'DESC'
-      }
-    >
-  >,
-  res: Response
+  req: GetProjectsControllerRequest,
+  res: GetProjectsControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   const { page, size } = paginationParams(req)
   try {
-    const projectCount = await prismaClient.project.count({
-      where: {
-        authorId: req.auth.userId!,
-      },
-    })
-    if (projectCount === 0) {
-      const project = await prismaClient.project.create({
-        select: projectSelect,
-        data: projectData({
-          ...PROJECT,
-          authorId: req.auth.userId!,
-        }),
-      })
-      return res.json({
-        content: [project],
-        page,
-        size,
-        total: projectCount,
-      })
-    }
     const where: Prisma.ProjectWhereInput = {
       authorId: req.auth.userId!,
       ...(req.query.name && {
         name: {
           contains: req.query.name,
+          mode: 'insensitive',
         },
       }),
     }

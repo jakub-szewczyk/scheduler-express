@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Project {
-  id          String     @id @default(cuid())
+  id          String     @id @default(uuid())
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   name        String
@@ -22,7 +22,7 @@ model Project {
 }
 
 model Schedule {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   name      String
@@ -34,7 +34,7 @@ model Schedule {
 }
 
 model Row {
-  id           String        @id @default(cuid())
+  id           String        @id @default(uuid())
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   rowId        String?
@@ -50,7 +50,7 @@ model Row {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   time      DateTime
@@ -61,7 +61,7 @@ model Notification {
 }
 
 model PushSubscription {
-  id               String   @id @default(cuid())
+  id               String   @id @default(uuid())
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   authorId         String
@@ -77,7 +77,7 @@ enum Day {
 }
 
 model Board {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   name      String
@@ -89,7 +89,7 @@ model Board {
 }
 
 model Status {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   index     Int
@@ -102,7 +102,7 @@ model Status {
 }
 
 model Issue {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   index     Int
@@ -113,7 +113,7 @@ model Issue {
 }
 
 model Note {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   name        String
