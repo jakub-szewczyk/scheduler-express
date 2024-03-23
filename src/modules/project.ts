@@ -9,12 +9,12 @@ export const PROJECT: Pick<Project, 'name' | 'description'> = {
     "Edit your project's title and description. Manage your notes, boards and schedules within it.",
 }
 
-export const projectSelect: Prisma.ProjectSelect = {
+export const projectSelect = {
   id: true,
   createdAt: true,
   name: true,
   description: true,
-}
+} satisfies Prisma.ProjectSelect
 
 export const projectData = ({
   name,
