@@ -4,6 +4,7 @@ import { promisify } from 'node:util'
 import supertest from 'supertest'
 import { beforeAll, describe, expect, it } from 'vitest'
 import app from '../app'
+import { ordinals } from '../modules/common'
 
 const execAsync = promisify(exec)
 
@@ -29,7 +30,7 @@ beforeAll(async () => {
 
 describe('Project', () => {
   describe('GET /projects', () => {
-    it('returns default content', async () => {
+    it('returns default projects', async () => {
       const res = await req
         .get('/api/projects')
         .set('Accept', 'application/json')
@@ -52,51 +53,99 @@ describe('Project', () => {
       })
     })
 
-    it('returns second page', async () => {
+    it('returns 400 Bad Request when page number is negative', async () => {
       const res = await req
-        .get('/api/projects?page=1')
+        .get('/api/projects')
+        .query({ page: -1 })
         .set('Accept', 'application/json')
         .set('Authorization', BEARER_TOKEN)
-      const projects: Project[] = res.body.content
-      expect(res.status).toEqual(200)
-      expect(res.body).toMatchObject({
-        page: 1,
-        size: 10,
-        total: 100,
-      })
-      expect(projects).toHaveLength(10)
-      projects.forEach((project, index) => {
-        expect(project).toHaveProperty('id')
-        expect(project).toHaveProperty('createdAt')
-        expect(project).toMatchObject({
-          name: `Project #${90 - index}`,
-          description: null,
-        })
-      })
+      expect(res.status).toEqual(400)
+      expect(res.body).toEqual([
+        {
+          type: 'field',
+          value: '-1',
+          msg: 'Page number must be a non-negative integer',
+          path: 'page',
+          location: 'query',
+        },
+      ])
     })
 
-    it('returns fourth page', async () => {
+    Array(10)
+      .fill(null)
+      .forEach((_, page) =>
+        it(`returns ${ordinals(page + 1)} project page`, async () => {
+          const res = await req
+            .get('/api/projects')
+            .query({ page })
+            .set('Accept', 'application/json')
+            .set('Authorization', BEARER_TOKEN)
+          const projects: Project[] = res.body.content
+          expect(res.status).toEqual(200)
+          expect(res.body).toMatchObject({
+            page,
+            size: 10,
+            total: 100,
+          })
+          expect(projects).toHaveLength(10)
+          projects.forEach((project, index) => {
+            expect(project).toHaveProperty('id')
+            expect(project).toHaveProperty('createdAt')
+            expect(project).toMatchObject({
+              name: `Project #${100 - index - page * 10}`,
+              description: null,
+            })
+          })
+        })
+      )
+
+    it('returns 400 Bad Request when page size is negative', async () => {
       const res = await req
-        .get('/api/projects?page=3')
+        .get('/api/projects')
+        .query({ size: -1 })
         .set('Accept', 'application/json')
         .set('Authorization', BEARER_TOKEN)
-      const projects: Project[] = res.body.content
-      expect(res.status).toEqual(200)
-      expect(res.body).toMatchObject({
-        page: 3,
-        size: 10,
-        total: 100,
-      })
-      expect(projects).toHaveLength(10)
-      projects.forEach((project, index) => {
-        expect(project).toHaveProperty('id')
-        expect(project).toHaveProperty('createdAt')
-        expect(project).toMatchObject({
-          name: `Project #${70 - index}`,
-          description: null,
-        })
-      })
+      expect(res.status).toEqual(400)
+      expect(res.body).toEqual([
+        {
+          type: 'field',
+          value: '-1',
+          msg: 'Page size must be a non-negative integer',
+          path: 'size',
+          location: 'query',
+        },
+      ])
     })
+
+    Array(101)
+      .fill(null)
+      .forEach((_, size) =>
+        it(`returns ${size} ${size === 1 ? 'project' : 'projects'}`, async () => {
+          const res = await req
+            .get('/api/projects')
+            .query({
+              size,
+            })
+            .set('Accept', 'application/json')
+            .set('Authorization', BEARER_TOKEN)
+          const projects: Project[] = res.body.content
+          expect(res.status).toEqual(200)
+          expect(res.body).toMatchObject({
+            page: 0,
+            size,
+            total: 100,
+          })
+          expect(projects).toHaveLength(size)
+          projects.forEach((project, index) => {
+            expect(project).toHaveProperty('id')
+            expect(project).toHaveProperty('createdAt')
+            expect(project).toMatchObject({
+              name: `Project #${100 - index}`,
+              description: null,
+            })
+          })
+        })
+      )
 
     // TODO: Write more tests
   })
