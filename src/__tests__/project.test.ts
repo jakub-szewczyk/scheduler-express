@@ -5,6 +5,10 @@ const TOKEN = process.env.BEARER_TOKEN
 
 const req = supertest(app)
 
+beforeAll(() => {
+  // TODO: Seed database
+})
+
 describe('Project', () => {
   describe('GET /projects', () => {
     it('should return projects', async () => {

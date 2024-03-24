@@ -94,14 +94,14 @@ const seed = async () => {
   )
 }
 
-  // Main
-  ; (async () => {
-    try {
-      await seed()
-      await prismaClient.$disconnect()
-    } catch (error) {
-      console.error(error)
-      await prismaClient.$disconnect()
-      process.exit(1)
-    }
-  })()
+// Main
+;(async () => {
+  try {
+    await seed()
+    await prismaClient.$disconnect()
+  } catch (error) {
+    console.error(error)
+    await prismaClient.$disconnect()
+    process.exit(1)
+  }
+})()
