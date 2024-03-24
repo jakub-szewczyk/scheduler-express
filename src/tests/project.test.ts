@@ -1,4 +1,5 @@
 import supertest from 'supertest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import app from '../app'
 
 const TOKEN = process.env.BEARER_TOKEN
