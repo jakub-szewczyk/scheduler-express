@@ -7,10 +7,11 @@ import { scheduleData } from '../src/modules/schedule'
 
 const prismaClient = new PrismaClient()
 
-const seed = async () => {
+export const seed = async () => {
   const {
-    values: { author: authorId },
+    values: { author },
   } = parseArgs({ options: { author: { type: 'string', short: 'a' } } })
+  const authorId = process.env.BEARER_TOKEN || author
   if (!authorId)
     throw new Error(
       'The `--author` argument is required. Please provide a valid id of a user whose data you want to seed.'
@@ -90,18 +91,18 @@ const seed = async () => {
       ])
       return projects
     },
-    { timeout: 120000 }
+    { timeout: 180000 }
   )
 }
 
-// Main
-;(async () => {
-  try {
-    await seed()
-    await prismaClient.$disconnect()
-  } catch (error) {
-    console.error(error)
-    await prismaClient.$disconnect()
-    process.exit(1)
-  }
-})()
+  // Main
+  ; (async () => {
+    try {
+      await seed()
+      await prismaClient.$disconnect()
+    } catch (error) {
+      console.error(error)
+      await prismaClient.$disconnect()
+      process.exit(1)
+    }
+  })()

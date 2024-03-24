@@ -1,13 +1,25 @@
 import supertest from 'supertest'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { seed } from '../../prisma/seed'
 import app from '../app'
+import { PrismaClient } from '@prisma/client'
+
+const prismaClient = new PrismaClient()
 
 const TOKEN = process.env.BEARER_TOKEN
 
 const req = supertest(app)
 
-beforeAll(() => {
-  // TODO: Seed database
+beforeAll(async () => {
+  try {
+    // FIXME
+    await seed()
+    await prismaClient.$disconnect()
+  } catch (error) {
+    console.error(error)
+    await prismaClient.$disconnect()
+    process.exit(1)
+  }
 })
 
 describe('Project', () => {
@@ -18,9 +30,7 @@ describe('Project', () => {
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${TOKEN}`)
       expect(res.status).toEqual(200)
-      // TODO:
-      // Finish configuring testing setup.
-      // Inspect why the test suit is running twice.
+      // TODO
       expect(res.body).toEqual([])
     })
   })

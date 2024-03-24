@@ -6,6 +6,12 @@
   },
   "scripts": {
     "dev": "dotenv -e .env.dev -- concurrently \"npx tsc --watch\" \"nodemon -q dist/index.js\"",
+    "migrate:dev": "dotenv -e .env.dev -- npx prisma migrate dev",
+    "migrate:test": "dotenv -e .env.test -- npx prisma migrate dev",
+    "seed:dev": "dotenv -e .env.dev -- npx prisma db seed --",
+    "seed:test": "dotenv -e .env.test -- npx prisma db seed --",
+    "studio:dev": "dotenv -e .env.dev -- npx prisma studio",
+    "studio:test": "dotenv -e .env.test -- npx prisma studio",
     "test": "dotenv -e .env.test -- vitest",
     "start": "node dist/src/index.js",
     "build": "npx tsc",

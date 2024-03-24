@@ -1,0 +1,48 @@
+services:
+  # scheduler-dev:
+  #   build:
+  #     context: .
+  #   environment:
+  #     NODE_ENV: development
+  #   ports:
+  #     - 3000:3000
+  #   depends_on:
+  #     postgres-dev:
+  #       condition: service_healthy
+  postgres-dev:
+    image: postgres
+    restart: always
+    container_name: postgres-dev
+    volumes:
+      - scheduler-dev:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=scheduler-dev
+      - POSTGRES_DB=scheduler-dev
+      - POSTGRES_PASSWORD=scheduler-dev
+    ports:
+      - 5555:5432
+    healthcheck:
+      test: ['CMD', 'pg_isready']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  postgres-test:
+    image: postgres
+    restart: always
+    container_name: postgres-test
+    volumes:
+      - scheduler-test:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=scheduler-test
+      - POSTGRES_DB=scheduler-test
+      - POSTGRES_PASSWORD=scheduler-test
+    ports:
+      - 5556:5432
+    healthcheck:
+      test: ['CMD', 'pg_isready']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  scheduler-dev:
+  scheduler-test:
