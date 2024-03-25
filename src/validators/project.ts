@@ -11,7 +11,7 @@ export const getProjectsValidator = [
     .optional(),
   query(
     'createdAt',
-    'Invalid value was provided for sorting projects by creation date.'
+    'Invalid value was provided for sorting projects by creation date'
   )
     .isIn(['ASC', 'DESC'])
     .optional(),
