@@ -1,8 +1,10 @@
 # Scheduler
 
-Express REST API
+Express REST API 2.0.0
 
 ## Todo
+
+- Exlude non-testable files from coverage report.
 
 - Document all endpoints.
 

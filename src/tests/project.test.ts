@@ -1,35 +1,30 @@
-import { PrismaClient, Project } from '@prisma/client'
-import { exec } from 'node:child_process'
-import { promisify } from 'node:util'
+import { Project } from '@prisma/client'
 import supertest from 'supertest'
-import { beforeAll, describe, expect, it, test } from 'vitest'
+import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
 import { ordinals } from '../modules/common'
-
-const execAsync = promisify(exec)
-
-const AUTHOR_ID = process.env.AUTHOR_ID
+import prismaClient from './client'
 
 const BEARER_TOKEN = `Bearer ${process.env.BEARER_TOKEN}`
 
-const prismaClient = new PrismaClient()
-
 const req = supertest(app)
-
-beforeAll(async () => {
-  try {
-    console.log('⏳[test]: seeding database...')
-    await execAsync(`npm run seed:test -- -a ${AUTHOR_ID}`)
-    console.log('✅[test]: seeding finished')
-  } catch (error) {
-    console.error(error)
-    await prismaClient.$disconnect()
-    process.exit(1)
-  }
-})
 
 describe('Project', () => {
   describe('GET /projects', () => {
+    beforeEach(async () => {
+      console.log('⏳[test]: seeding database...')
+      await prismaClient.project.createMany({
+        data: Array(100)
+          .fill(null)
+          .map((_, index, array) => ({
+            name: `Project #${array.length - index}`,
+            authorId: process.env.AUTHOR_ID!,
+            createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+          })),
+      })
+      console.log('✅[test]: seeding finished')
+    })
+
     it('returns default projects', async () => {
       const res = await req
         .get('/api/projects')

@@ -7,7 +7,7 @@ import { scheduleData } from '../src/modules/schedule'
 
 const prismaClient = new PrismaClient()
 
-export const seed = async () => {
+const seed = async () => {
   const {
     values: { author: authorId },
   } = parseArgs({ options: { author: { type: 'string', short: 'a' } } })
@@ -19,7 +19,7 @@ export const seed = async () => {
     async (prismaClient) => {
       await prismaClient.project.deleteMany({
         where: {
-          authorId: authorId,
+          authorId,
         },
       })
       const projects = await Promise.all([
@@ -31,7 +31,7 @@ export const seed = async () => {
                 ...projectData({
                   name: `Project #${array.length - index}`,
                   description: null,
-                  authorId: authorId,
+                  authorId,
                 }),
                 createdAt: new Date(Date.now() - index * 1000000).toISOString(),
               },
