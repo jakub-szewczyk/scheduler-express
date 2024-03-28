@@ -4,7 +4,9 @@ Express REST API v2.0.0
 
 ## Todo
 
-- Exlude non-testable files from coverage report.
+- Configure pre-commit git hook
+
+- Exclude non-testable files from coverage report.
 
 - Document all endpoints.
 

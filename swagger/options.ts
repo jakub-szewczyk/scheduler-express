@@ -5,7 +5,7 @@ export const options: swaggerJSDoc.Options = {
     openapi: '3.0.0',
     info: {
       title: 'Scheduler REST API',
-      version: '1.0.0',
+      version: '2.0.0',
     },
   },
   apis: ['**/*.ts'],
