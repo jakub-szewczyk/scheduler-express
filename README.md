@@ -4,12 +4,30 @@ Express REST API v2.0.0
 
 ## Todo
 
-- Configure pre-commit git hook
+### Refactor
+
+- Schedules module.
+
+- Boards module.
+
+- Notes module.
+
+- Notification cron job.
+
+### Test
+
+- Schedules module.
+
+- Boards module.
+
+- Notes module.
+
+- Notification cron job.
 
 - Exclude non-testable files from coverage report.
 
+### Other
+
 - Document all endpoints.
 
-- Optimize schedule, board and note update logic.
-
-- Optimize notification cron job.
+- Configure pre-commit git hook.

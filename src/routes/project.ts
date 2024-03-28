@@ -250,7 +250,7 @@ router.put('/:projectId', updateProjectValidator, updateProjectController)
  *         name: projectId
  *         schema:
  *           type: string
- *           example: 'clrssbgnw00012uhbmyxgs3uf'
+ *           example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
  *         required: true
  *     responses:
  *       200:
@@ -261,16 +261,30 @@ router.put('/:projectId', updateProjectValidator, updateProjectController)
  *               type: object
  *               properties:
  *               $ref: '#/components/schemas/Project'
- *       400:
- *         description: Invalid request body
+ *       404:
+ *         description: Project not found
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Project not found
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     example: field
+ *                   value:
+ *                     type: string
+ *                     example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
+ *                   msg:
+ *                     type: string
+ *                     example: Project not found
+ *                   path:
+ *                     type: string
+ *                     example: projectId
+ *                   location:
+ *                     type: string
+ *                     example: params
  */
 router.delete('/:projectId', deleteProjectValidator, deleteProjectController)
 

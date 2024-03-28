@@ -79,8 +79,8 @@ export const updateProjectValidator = [
   validationMiddleware,
 ]
 
-export const deleteProjectValidator = param('projectId')
-  .custom(async (projectId: string, { req }) => {
+export const deleteProjectValidator = [
+  param('projectId').custom(async (projectId: string, { req }) => {
     try {
       await prismaClient.project.findUniqueOrThrow({
         where: {
@@ -89,14 +89,9 @@ export const deleteProjectValidator = param('projectId')
         },
       })
     } catch (error) {
+      req.statusCode = 404
       throw new Error('Project not found')
     }
-  })
-  .custom(async (_, { req }) => {
-    const projectCount = await prismaClient.project.count({
-      where: {
-        authorId: req.auth.userId,
-      },
-    })
-    if (projectCount === 1) throw new Error('At least one project is required')
-  })
+  }),
+  validationMiddleware,
+]

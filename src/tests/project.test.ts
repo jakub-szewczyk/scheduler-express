@@ -530,150 +530,188 @@ describe('POST /projects', () => {
       },
     ])
   })
+})
 
-  describe('PUT /projects/:projectId', () => {
-    it('updates a project', async () => {
-      const project = await prismaClient.project.create({
-        select: projectSelect,
-        data: {
-          name: 'Project #1',
-          authorId: AUTHOR_ID,
-        },
-      })
-      const res = await req
-        .put(`/api/projects/${project.id}`)
-        .set('Accept', 'application/json')
-        .set('Authorization', BEARER_TOKEN)
-        .send({
-          name: 'Project #2',
-          description: 'This is the second project',
-        })
-      expect(res.status).toEqual(200)
-      expect(res.body).toStrictEqual({
-        ...project,
+describe('PUT /projects/:projectId', () => {
+  it('updates a project', async () => {
+    const project = await prismaClient.project.create({
+      select: projectSelect,
+      data: {
+        name: 'Project #1',
+        authorId: AUTHOR_ID,
+      },
+    })
+    const res = await req
+      .put(`/api/projects/${project.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
         name: 'Project #2',
         description: 'This is the second project',
-        createdAt: project.createdAt.toISOString(),
       })
+    expect(res.status).toEqual(200)
+    expect(res.body).toStrictEqual({
+      ...project,
+      name: 'Project #2',
+      description: 'This is the second project',
+      createdAt: project.createdAt.toISOString(),
     })
+  })
 
-    it('returns 404 Not Found in case of invalid project id', async () => {
-      const res = await req
-        .put('/api/projects/abc')
-        .set('Accept', 'application/json')
-        .set('Authorization', BEARER_TOKEN)
-        .send({
-          name: 'Project #2',
-          description: 'This is the second project',
-        })
-      expect(res.status).toEqual(404)
-      expect(res.body).toStrictEqual([
-        {
-          type: 'field',
-          value: 'abc',
-          msg: 'Project not found',
-          path: 'projectId',
-          location: 'params',
-        },
-      ])
-    })
-
-    test('`name` field in request body being required', async () => {
-      const project = await prismaClient.project.create({
-        select: projectSelect,
-        data: {
-          name: 'Project #1',
-          authorId: AUTHOR_ID,
-        },
-      })
-      const [res1, res2] = await Promise.all([
-        req
-          .put(`/api/projects/${project.id}`)
-          .set('Accept', 'application/json')
-          .set('Authorization', BEARER_TOKEN)
-          .send({}),
-        req
-          .put(`/api/projects/${project.id}`)
-          .set('Accept', 'application/json')
-          .set('Authorization', BEARER_TOKEN)
-          .send({ name: '' }),
-      ])
-      expect(res1.status).toEqual(400)
-      expect(res1.body).toStrictEqual([
-        {
-          type: 'field',
-          value: '',
-          msg: 'You have to give your project a unique name',
-          path: 'name',
-          location: 'body',
-        },
-      ])
-      expect(res2.status).toEqual(400)
-      expect(res2.body).toStrictEqual([
-        {
-          type: 'field',
-          value: '',
-          msg: 'You have to give your project a unique name',
-          path: 'name',
-          location: 'body',
-        },
-      ])
-    })
-
-    it('returns 400 Bad Request when the project name is already taken', async () => {
-      await prismaClient.project.createMany({
-        data: [
-          {
-            name: 'Project #1',
-            authorId: AUTHOR_ID,
-          },
-          {
-            name: 'Project #2',
-            authorId: AUTHOR_ID,
-          },
-        ],
-      })
-      const project = (await prismaClient.project.findFirst({
-        select: projectSelect,
-      }))!
-      const res = await req
-        .put(`/api/projects/${project.id}`)
-        .set('Accept', 'application/json')
-        .set('Authorization', BEARER_TOKEN)
-        .send({ name: 'Project #2' })
-      expect(res.status).toEqual(400)
-      expect(res.body).toStrictEqual([
-        {
-          type: 'field',
-          value: 'Project #2',
-          msg: 'This name has already been used by one of your projects',
-          path: 'name',
-          location: 'body',
-        },
-      ])
-    })
-
-    test('`description` field in request body being optional', async () => {
-      const project = await prismaClient.project.create({
-        select: projectSelect,
-        data: {
-          name: 'Project #1',
-          authorId: AUTHOR_ID,
-        },
-      })
-      const res = await req
-        .put(`/api/projects/${project.id}`)
-        .set('Accept', 'application/json')
-        .set('Authorization', BEARER_TOKEN)
-        .send({
-          name: 'Project #2',
-        })
-      expect(res.status).toEqual(200)
-      expect(res.body).toMatchObject({
-        ...project,
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const res = await req
+      .put('/api/projects/abc')
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
         name: 'Project #2',
-        createdAt: project.createdAt.toISOString(),
+        description: 'This is the second project',
       })
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+    ])
+  })
+
+  test('`name` field in request body being required', async () => {
+    const project = await prismaClient.project.create({
+      select: projectSelect,
+      data: {
+        name: 'Project #1',
+        authorId: AUTHOR_ID,
+      },
     })
+    const [res1, res2] = await Promise.all([
+      req
+        .put(`/api/projects/${project.id}`)
+        .set('Accept', 'application/json')
+        .set('Authorization', BEARER_TOKEN)
+        .send({}),
+      req
+        .put(`/api/projects/${project.id}`)
+        .set('Accept', 'application/json')
+        .set('Authorization', BEARER_TOKEN)
+        .send({ name: '' }),
+    ])
+    expect(res1.status).toEqual(400)
+    expect(res1.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '',
+        msg: 'You have to give your project a unique name',
+        path: 'name',
+        location: 'body',
+      },
+    ])
+    expect(res2.status).toEqual(400)
+    expect(res2.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '',
+        msg: 'You have to give your project a unique name',
+        path: 'name',
+        location: 'body',
+      },
+    ])
+  })
+
+  it('returns 400 Bad Request when the project name is already taken', async () => {
+    await prismaClient.project.createMany({
+      data: [
+        {
+          name: 'Project #1',
+          authorId: AUTHOR_ID,
+        },
+        {
+          name: 'Project #2',
+          authorId: AUTHOR_ID,
+        },
+      ],
+    })
+    const project = (await prismaClient.project.findFirst({
+      select: projectSelect,
+    }))!
+    const res = await req
+      .put(`/api/projects/${project.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ name: 'Project #2' })
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'Project #2',
+        msg: 'This name has already been used by one of your projects',
+        path: 'name',
+        location: 'body',
+      },
+    ])
+  })
+
+  test('`description` field in request body being optional', async () => {
+    const project = await prismaClient.project.create({
+      select: projectSelect,
+      data: {
+        name: 'Project #1',
+        authorId: AUTHOR_ID,
+      },
+    })
+    const res = await req
+      .put(`/api/projects/${project.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        name: 'Project #2',
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toMatchObject({
+      ...project,
+      name: 'Project #2',
+      createdAt: project.createdAt.toISOString(),
+    })
+  })
+})
+
+describe('DELETE /projects/:projectId', () => {
+  it('deletes a project', async () => {
+    const project = await prismaClient.project.create({
+      select: projectSelect,
+      data: {
+        name: 'Project #1',
+        authorId: AUTHOR_ID,
+      },
+    })
+    const res = await req
+      .delete(`/api/projects/${project.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(200)
+    expect(res.body).toMatchObject({
+      ...project,
+      createdAt: project.createdAt.toISOString(),
+    })
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const res = await req
+      .delete('/api/projects/abc')
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+    ])
   })
 })

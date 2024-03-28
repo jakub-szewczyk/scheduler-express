@@ -147,13 +147,16 @@ export const updateProjectController = async (
   }
 }
 
+type DeleteProjectControllerRequest = WithAuthProp<
+  Request<{ projectId: string }, object, object>
+>
+
+type DeleteProjectControllerResponse = Response<ProjectResponse>
+
 export const deleteProjectController = async (
-  req: WithAuthProp<Request<{ projectId: string }, object, object>>,
-  res: Response
+  req: DeleteProjectControllerRequest,
+  res: DeleteProjectControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const project = await prismaClient.project.delete({
       select: projectSelect,
