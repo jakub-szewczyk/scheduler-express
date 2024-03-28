@@ -11,53 +11,54 @@ model Project {
   id          String     @id @default(uuid())
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-  name        String
+  title       String
   description String?
   authorId    String
   schedules   Schedule[]
   boards      Board[]
   notes       Note[]
 
-  @@unique([name, authorId])
+  @@unique([title, authorId])
 }
 
 model Schedule {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  name      String
-  rows      Row[]
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId String
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  title       String
+  description String?
+  events      Event[]
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
 
-  @@unique([name, projectId])
+  @@unique([title, projectId])
 }
 
-model Row {
+model Event {
   id           String        @id @default(uuid())
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  rowId        String?
-  index        Int
-  day          Day
-  starts       DateTime?
-  ends         DateTime?
-  room         String?
-  subject      String?
+  title        String
+  description  String?
+  startsAt     DateTime
+  endsAt       DateTime
   notification Notification?
   schedule     Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   scheduleId   String
+
+  @@unique([title, scheduleId])
 }
 
 model Notification {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  time      DateTime
-  active    Boolean  @default(false)
-  title     String?
-  row       Row      @relation(fields: [rowId], references: [id], onDelete: Cascade)
-  rowId     String   @unique
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  title       String
+  description String?
+  startsAt    DateTime
+  isActive    Boolean  @default(false)
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId     String   @unique
 }
 
 model PushSubscription {
@@ -68,58 +69,55 @@ model PushSubscription {
   pushSubscription Json
 }
 
-enum Day {
-  Monday
-  Tuesday
-  Wednesday
-  Thursday
-  Friday
-}
-
 model Board {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  name      String
-  statuses  Status[]
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId String
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  title       String
+  description String?
+  statuses    Status[]
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
 
-  @@unique([name, projectId])
+  @@unique([title, projectId])
 }
 
 model Status {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  index     Int
-  title     String
-  issues    Issue[]
-  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  boardId   String
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  title       String
+  description String?
+  index       Int
+  issues      Issue[]
+  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  boardId     String
 
   @@unique([title, boardId])
 }
 
 model Issue {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  index     Int
-  title     String
-  content   String
-  status    Status   @relation(fields: [statusId], references: [id], onDelete: Cascade)
-  statusId  String
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  title       String
+  description String?
+  index       Int
+  priorities  String[]
+  attachments Bytes[]
+  status      Status   @relation(fields: [statusId], references: [id], onDelete: Cascade)
+  statusId    String
 }
 
 model Note {
   id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  name        String
-  editorState Json
+  title       String
+  description String?
+  content     Json
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId   String
 
-  @@unique([name, projectId])
+  @@unique([title, projectId])
 }

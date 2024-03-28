@@ -39,7 +39,7 @@ const router = Router()
  *           minimum: 0
  *           default: 10
  *       - in: query
- *         name: name
+ *         name: title
  *         schema:
  *           type: string
  *           default: 'Project #10'
@@ -168,10 +168,10 @@ router.get('/:projectId', getProjectValidator, getProjectController)
  *                     example: 'Project #1'
  *                   msg:
  *                     type: string
- *                     example: This name has already been used by one of your projects
+ *                     example: This title has already been used by one of your projects
  *                   path:
  *                     type: string
- *                     example: name
+ *                     example: title
  *                   location:
  *                     type: string
  *                     example: body
@@ -226,10 +226,10 @@ router.post('/', createProjectValidator, createProjectController)
  *                     example: 'Project #1'
  *                   msg:
  *                     type: string
- *                     example: This name has already been used by one of your projects
+ *                     example: This title has already been used by one of your projects
  *                   path:
  *                     type: string
- *                     example: name
+ *                     example: title
  *                   location:
  *                     type: string
  *                     example: body

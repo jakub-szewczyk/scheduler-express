@@ -21,7 +21,7 @@
  *         createdAt:
  *           type: string
  *           example: 2023-12-31T12:41:53.207Z
- *         name:
+ *         title:
  *           type: string
  *           example: 'Project #1'
  *         description:
@@ -36,9 +36,9 @@
  *     ProjectBody:
  *       type: object
  *       required:
- *         - name
+ *         - title
  *       properties:
- *         name:
+ *         title:
  *           type: string
  *           example: 'Project #1'
  *         description:
@@ -59,7 +59,7 @@
  *         createdAt:
  *           type: string
  *           example: 2023-12-31T12:41:53.207Z
- *         name:
+ *         title:
  *           type: string
  *           example: 'Schedule #1'
  */
@@ -77,7 +77,7 @@
  *         createdAt:
  *           type: string
  *           example: 2023-12-31T12:41:53.207Z
- *         name:
+ *         title:
  *           type: string
  *           example: 'Schedule #1'
  *         rows:
@@ -139,9 +139,9 @@
  *     ScheduleBody:
  *       type: object
  *       required:
- *         - name
+ *         - title
  *       properties:
- *         name:
+ *         title:
  *           type: string
  *           example: 'Schedule #1'
  */
