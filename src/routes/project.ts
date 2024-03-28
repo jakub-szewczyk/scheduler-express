@@ -107,15 +107,9 @@ router.get('/', getProjectsValidator, getProjectsController)
  *             schema:
  *               type: object
  *               properties:
- *               $ref: '#/components/schemas/Project'
+ *               $ref: '#/components/schemas/ProjectDetails'
  *       404:
  *         description: Project not found
- *         content:
- *           application/json:
- *             schema:
- *               type: integer
- *               nullable: true
- *               example: null
  */
 router.get('/:projectId', getProjectValidator, getProjectController)
 

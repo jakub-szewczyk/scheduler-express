@@ -33,6 +33,33 @@
  * @openapi
  * components:
  *   schemas:
+ *     ProjectDetails:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: clqthe0ja00002uevktkmoy6q
+ *         createdAt:
+ *           type: string
+ *           example: 2023-12-31T12:41:53.207Z
+ *         updatedAt:
+ *           type: string
+ *           example: 2023-12-31T12:41:53.207Z
+ *         name:
+ *           type: string
+ *           example: 'Project #1'
+ *         description:
+ *           type: string
+ *           example: Edit your project's title and description. Manage your notes, boards and schedules within it.
+ *         authorId:
+ *           type: string
+ *           example: user_2SSSUbIMbeNiV2lmsG6PfLQcjJM
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
  *     ProjectBody:
  *       type: object
  *       required:
