@@ -121,7 +121,7 @@ router.get('/', getProjectsValidator, getProjectsController)
  *             schema:
  *               type: object
  *               properties:
- *               $ref: '#/components/schemas/ProjectDetails'
+ *               $ref: '#/components/schemas/Project'
  *       404:
  *         description: Project not found
  */
@@ -150,7 +150,7 @@ router.get('/:projectId', getProjectValidator, getProjectController)
  *             schema:
  *               type: object
  *               properties:
- *               $ref: '#/components/schemas/ProjectDetails'
+ *               $ref: '#/components/schemas/Project'
  *       400:
  *         description: Invalid request body
  *         content:
@@ -192,7 +192,7 @@ router.post('/', createProjectValidator, createProjectController)
  *         name: projectId
  *         schema:
  *           type: string
- *           example: 'clrssbgnw00012uhbmyxgs3uf'
+ *           example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
  *         required: true
  *     requestBody:
  *       required: true
@@ -214,11 +214,25 @@ router.post('/', createProjectValidator, createProjectController)
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: You have to give your project a unique name
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     example: field
+ *                   value:
+ *                     type: string
+ *                     example: 'Project #1'
+ *                   msg:
+ *                     type: string
+ *                     example: This name has already been used by one of your projects
+ *                   path:
+ *                     type: string
+ *                     example: name
+ *                   location:
+ *                     type: string
+ *                     example: body
  */
 router.put('/:projectId', updateProjectValidator, updateProjectController)
 

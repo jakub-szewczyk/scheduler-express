@@ -7,6 +7,7 @@ export const validationMiddleware = (
   next: NextFunction
 ) => {
   const result = validationResult(req)
-  if (!result.isEmpty()) return res.status(400).json(result.array())
+  if (!result.isEmpty())
+    return res.status(req.statusCode ?? 400).json(result.array())
   next()
 }

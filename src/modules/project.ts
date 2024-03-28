@@ -16,15 +16,6 @@ export const projectSelect = {
   description: true,
 } satisfies Prisma.ProjectSelect
 
-export const projectDetailsSelect = {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  name: true,
-  description: true,
-  authorId: true,
-} satisfies Prisma.ProjectSelect
-
 export const projectData = ({
   name,
   description,

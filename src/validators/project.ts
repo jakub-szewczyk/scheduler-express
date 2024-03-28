@@ -55,6 +55,7 @@ export const updateProjectValidator = [
         },
       })
     } catch (error) {
+      req.statusCode = 404
       throw new Error('Project not found')
     }
   }),
@@ -75,6 +76,7 @@ export const updateProjectValidator = [
         )
     }),
   body('description').trim().optional(),
+  validationMiddleware,
 ]
 
 export const deleteProjectValidator = param('projectId')
