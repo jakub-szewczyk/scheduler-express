@@ -4,8 +4,17 @@ import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
 import { ordinals } from '../modules/common'
 import prismaClient from './client'
+import { PROJECT } from '../modules/project'
 
-const BEARER_TOKEN = `Bearer ${process.env.BEARER_TOKEN}`
+const AUTHOR_ID = process.env.AUTHOR_ID
+
+if (!AUTHOR_ID) throw new Error('Missing `AUTHOR_ID` in .env.test')
+
+const JWT_TOKEN = process.env.JWT_TOKEN
+
+if (!JWT_TOKEN) throw new Error('Missing `JWT_TOKEN` in .env.test')
+
+const BEARER_TOKEN = `Bearer ${JWT_TOKEN}`
 
 const req = supertest(app)
 
@@ -18,7 +27,7 @@ describe('Project', () => {
           .fill(null)
           .map((_, index, array) => ({
             name: `Project #${array.length - index}`,
-            authorId: process.env.AUTHOR_ID!,
+            authorId: AUTHOR_ID,
             createdAt: new Date(Date.now() - index * 1000000).toISOString(),
           })),
       })
@@ -394,6 +403,42 @@ describe('Project', () => {
           location: 'query',
         },
       ])
+    })
+  })
+
+  describe('GET /projects/:projectId', () => {
+    beforeEach(async () => {
+      console.log('⏳[test]: seeding database...')
+      await prismaClient.project.create({
+        data: {
+          ...PROJECT,
+          authorId: AUTHOR_ID,
+        },
+      })
+      console.log('✅[test]: seeding finished')
+    })
+
+    it('returns project by id', async () => {
+      const project = (await prismaClient.project.findFirst())!
+      const res = await req
+        .get(`/api/projects/${project.id}`)
+        .set('Accept', 'application/json')
+        .set('Authorization', BEARER_TOKEN)
+      expect(res.status).toEqual(200)
+      expect(res.body).toStrictEqual({
+        ...project,
+        createdAt: project.createdAt.toISOString(),
+        updatedAt: project.updatedAt.toISOString(),
+      })
+    })
+
+    it('returns 404 Not Found in case of invalid project id', async () => {
+      const res = await req
+        .get('/api/projects/abc')
+        .set('Accept', 'application/json')
+        .set('Authorization', BEARER_TOKEN)
+      expect(res.status).toEqual(404)
+      expect(res.body).toEqual({})
     })
   })
 })

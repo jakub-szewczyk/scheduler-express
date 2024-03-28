@@ -1,6 +1,6 @@
 # Scheduler
 
-Express REST API 2.0.0
+Express REST API v2.0.0
 
 ## Todo
 

@@ -18,7 +18,10 @@ export const getProjectsValidator = [
   validationMiddleware,
 ]
 
-export const getProjectValidator = param('projectId').notEmpty()
+export const getProjectValidator = [
+  param('projectId').notEmpty(),
+  validationMiddleware,
+]
 
 export const createProjectValidator = [
   body('name', 'You have to give your project a unique name')
