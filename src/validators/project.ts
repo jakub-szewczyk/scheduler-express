@@ -42,6 +42,7 @@ export const createProjectValidator = [
         )
     }),
   body('description').trim().optional(),
+  validationMiddleware,
 ]
 
 export const updateProjectValidator = [

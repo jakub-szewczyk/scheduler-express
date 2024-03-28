@@ -75,11 +75,25 @@ const router = Router()
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Page number must be a non-negative integer
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  type:
+ *                    type: string
+ *                    example: field
+ *                  value:
+ *                    type: string
+ *                    example: -1
+ *                  msg:
+ *                    type: string
+ *                    example: Page number must be a non-negative integer
+ *                  path:
+ *                    type: string
+ *                    example: page
+ *                  location:
+ *                    type: string
+ *                    example: query
  */
 router.get('/', getProjectsValidator, getProjectsController)
 
@@ -97,7 +111,7 @@ router.get('/', getProjectsValidator, getProjectsController)
  *         name: projectId
  *         schema:
  *           type: string
- *           example: 'clrssbgnw00012uhbmyxgs3uf'
+ *           example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
  *         required: true
  *     responses:
  *       200:
@@ -136,17 +150,31 @@ router.get('/:projectId', getProjectValidator, getProjectController)
  *             schema:
  *               type: object
  *               properties:
- *               $ref: '#/components/schemas/Project'
+ *               $ref: '#/components/schemas/ProjectDetails'
  *       400:
  *         description: Invalid request body
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: This name has already been used by one of your projects
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     example: field
+ *                   value:
+ *                     type: string
+ *                     example: 'Project #1'
+ *                   msg:
+ *                     type: string
+ *                     example: This name has already been used by one of your projects
+ *                   path:
+ *                     type: string
+ *                     example: name
+ *                   location:
+ *                     type: string
+ *                     example: body
  */
 router.post('/', createProjectValidator, createProjectController)
 

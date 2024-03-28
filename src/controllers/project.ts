@@ -4,7 +4,11 @@ import { Request, Response } from 'express'
 import { validationResult } from 'express-validator'
 import prismaClient from '../client'
 import { paginationParams } from '../modules/pagination'
-import { projectData, projectSelect } from '../modules/project'
+import {
+  projectData,
+  projectDetailsSelect,
+  projectSelect,
+} from '../modules/project'
 import { PaginableResponse } from '../types/pagination'
 
 type GetProjectsControllerRequest = WithAuthProp<
@@ -77,14 +81,7 @@ export const getProjectController = async (
 ) => {
   try {
     const project = await prismaClient.project.findUnique({
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        name: true,
-        description: true,
-        authorId: true,
-      },
+      select: projectDetailsSelect,
       where: {
         id: req.params.projectId,
         authorId: req.auth.userId!,
@@ -97,18 +94,19 @@ export const getProjectController = async (
   }
 }
 
+type CreateProjectControllerRequest = WithAuthProp<
+  Request<object, object, Pick<Project, 'name' | 'description'>>
+>
+
+type CreateProjectControllerResponse = Response<Project>
+
 export const createProjectController = async (
-  req: WithAuthProp<
-    Request<object, object, Pick<Project, 'name' | 'description'>>
-  >,
-  res: Response
+  req: CreateProjectControllerRequest,
+  res: CreateProjectControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const project = await prismaClient.project.create({
-      select: projectSelect,
+      select: projectDetailsSelect,
       data: projectData({
         name: req.body.name,
         description: req.body.description,
@@ -122,6 +120,7 @@ export const createProjectController = async (
   }
 }
 
+// TODO: Refactor
 export const updateProjectController = async (
   req: WithAuthProp<
     Request<

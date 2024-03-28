@@ -17,7 +17,7 @@
  *       properties:
  *         id:
  *           type: string
- *           example: clqthe0ja00002uevktkmoy6q
+ *           example: 074da7fd-a939-4879-a1d6-e2671a82cdfa
  *         createdAt:
  *           type: string
  *           example: 2023-12-31T12:41:53.207Z
@@ -38,7 +38,7 @@
  *       properties:
  *         id:
  *           type: string
- *           example: clqthe0ja00002uevktkmoy6q
+ *           example: 074da7fd-a939-4879-a1d6-e2671a82cdfa
  *         createdAt:
  *           type: string
  *           example: 2023-12-31T12:41:53.207Z
