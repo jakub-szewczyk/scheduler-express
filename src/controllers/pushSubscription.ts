@@ -4,6 +4,7 @@ import prismaClient from '../client'
 import { Request, Response } from 'express'
 import { Prisma } from '@prisma/client'
 
+// TODO: Refactor
 export const pushSubscriptionController = async (
   req: WithAuthProp<
     Request<object, object, ReturnType<PushSubscription['toJSON']>>

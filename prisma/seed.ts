@@ -1,9 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client'
 import { parseArgs } from 'node:util'
-import { boardData } from '../src/modules/board'
-import { noteData } from '../src/modules/note'
-import { projectData } from '../src/modules/project'
-import { scheduleData } from '../src/modules/schedule'
 
 const prismaClient = new PrismaClient()
 
@@ -28,11 +24,9 @@ const seed = async () => {
           .map((_, index, array) =>
             prismaClient.project.create({
               data: {
-                ...projectData({
-                  name: `Project #${array.length - index}`,
-                  description: null,
-                  authorId,
-                }),
+                title: `Project #${array.length - index}`,
+                description: null,
+                authorId,
                 createdAt: new Date(Date.now() - index * 1000000).toISOString(),
               },
             })
@@ -45,9 +39,7 @@ const seed = async () => {
             .map((_, index, array) =>
               prismaClient.schedule.create({
                 data: {
-                  ...scheduleData({
-                    name: `Schedule #${array.length - index + 1}`,
-                  }),
+                  title: `Schedule #${array.length - index + 1}`,
                   createdAt: new Date(
                     Date.now() - index + 1 * 1000000
                   ).toISOString(),
@@ -60,9 +52,7 @@ const seed = async () => {
             .map((_, index, array) =>
               prismaClient.board.create({
                 data: {
-                  ...boardData({
-                    name: `Board #${array.length - index + 1}`,
-                  }),
+                  title: `Board #${array.length - index + 1}`,
                   createdAt: new Date(
                     Date.now() - index + 1 * 1000000
                   ).toISOString(),
@@ -75,10 +65,8 @@ const seed = async () => {
             .map((_, index, array) =>
               prismaClient.note.create({
                 data: {
-                  ...noteData({
-                    name: `Note #${array.length - index + 1}`,
-                    editorState: Prisma.JsonNull,
-                  }),
+                  title: `Note #${array.length - index + 1}`,
+                  content: Prisma.JsonNull,
                   createdAt: new Date(
                     Date.now() - index + 1 * 1000000
                   ).toISOString(),

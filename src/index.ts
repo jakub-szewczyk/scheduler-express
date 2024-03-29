@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import webpush from 'web-push'
 import app from './app'
-import { schedulePushNotificationJobs } from './modules/notification'
+// import { schedulePushNotificationJobs } from './modules/notification'
 import swaggerRoutes from './routes/swagger'
 
 const PORT = process.env.PORT
@@ -17,7 +17,7 @@ app.use('/api-docs', swaggerRoutes)
 // Main
 ;(async () => {
   console.log(`⚡️[server]: rescheduling jobs...`)
-  await schedulePushNotificationJobs()
+  // await schedulePushNotificationJobs()
   app.listen(PORT, () =>
     console.log(`⚡️[server]: running at http://localhost:${PORT}`)
   )
