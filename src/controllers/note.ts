@@ -1,44 +1,55 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
 import { Note, Prisma } from '@prisma/client'
 import { Request, Response } from 'express'
-import { validationResult } from 'express-validator'
 import prismaClient from '../client'
+import { noteSelect } from '../modules/note'
 import { paginationParams } from '../modules/pagination'
+import { PaginableResponse } from '../types/pagination'
+
+type NoteResponse = Pick<Note, keyof typeof noteSelect>
+
+type GetNotesControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string },
+    object,
+    object,
+    {
+      page?: string
+      size?: string
+      title?: string
+      createdAt?: 'ASC' | 'DESC'
+    }
+  >
+>
+
+type GetNotesControllerResponse = Response<PaginableResponse<NoteResponse>>
 
 export const getNotesController = async (
-  req: WithAuthProp<
-    Request<
-      { projectId: string },
-      object,
-      object,
-      { page?: string; size?: string; name?: string }
-    >
-  >,
-  res: Response
+  req: GetNotesControllerRequest,
+  res: GetNotesControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   const { page, size } = paginationParams(req)
   const where: Prisma.NoteWhereInput = {
-    name: {
-      contains: req.query.name,
-    },
+    ...(req.query.title && {
+      title: {
+        contains: req.query.title,
+        mode: 'insensitive',
+      },
+    }),
     project: {
       id: req.params.projectId,
       authorId: req.auth.userId!,
     },
   }
   try {
-    const [notes, noteCount] = await Promise.all([
+    const [notes, total] = await Promise.all([
       prismaClient.note.findMany({
-        select: {
-          id: true,
-          createdAt: true,
-          name: true,
-        },
+        select: noteSelect,
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: {
+          createdAt: (req.query.createdAt?.toLowerCase() ||
+            'desc') as Prisma.SortOrder,
+        },
         take: size,
         skip: page * size,
       }),
@@ -50,7 +61,7 @@ export const getNotesController = async (
       content: notes,
       page,
       size,
-      total: noteCount,
+      total,
     })
   } catch (error) {
     console.error(error)
@@ -58,21 +69,19 @@ export const getNotesController = async (
   }
 }
 
+type GetNoteControllerRequest = WithAuthProp<
+  Request<{ projectId: string; noteId: string }>
+>
+
+type GetNoteControllerResponse = Response<NoteResponse>
+
 export const getNoteController = async (
-  req: WithAuthProp<Request<{ projectId: string; noteId: string }>>,
-  res: Response
+  req: GetNoteControllerRequest,
+  res: GetNoteControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const note = await prismaClient.note.findUnique({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        editorState: true,
-      },
+      select: noteSelect,
       where: {
         id: req.params.noteId,
         project: {
@@ -81,32 +90,30 @@ export const getNoteController = async (
         },
       },
     })
-    if (!note) return res.status(404).json({ message: 'Note not found' })
-    return res.json(note)
+    return note ? res.json(note) : res.status(404).end()
   } catch (error) {
     console.error(error)
     return res.status(500).end()
   }
 }
 
+type CreateNoteControllerRequest = WithAuthProp<
+  Request<{ projectId: string }, object, Pick<Note, 'title' | 'description'>>
+>
+
+type CreateNoteControllerResponse = Response<NoteResponse>
+
 export const createNoteController = async (
-  req: WithAuthProp<Request<{ projectId: string }, object, Pick<Note, 'name'>>>,
-  res: Response
+  req: CreateNoteControllerRequest,
+  res: CreateNoteControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const note = await prismaClient.note.create({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        editorState: true,
-      },
+      select: noteSelect,
       data: {
-        name: req.body.name,
-        editorState: Prisma.JsonNull,
+        title: req.body.title,
+        description: req.body.description,
+        content: Prisma.JsonNull,
         projectId: req.params.projectId,
       },
     })
@@ -117,23 +124,23 @@ export const createNoteController = async (
   }
 }
 
+type UpdateNoteControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; noteId: string },
+    object,
+    Pick<Note, 'title' | 'description'>
+  >
+>
+
+type UpdateNoteControllerResponse = Response<NoteResponse>
+
 export const updateNoteController = async (
-  req: WithAuthProp<
-    Request<{ projectId: string; noteId: string }, object, Pick<Note, 'name'>>
-  >,
-  res: Response
+  req: UpdateNoteControllerRequest,
+  res: UpdateNoteControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const note = await prismaClient.note.update({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        editorState: true,
-      },
+      select: noteSelect,
       where: {
         id: req.params.noteId,
         project: {
@@ -142,7 +149,8 @@ export const updateNoteController = async (
         },
       },
       data: {
-        name: req.body.name,
+        title: req.body.title,
+        description: req.body.description,
       },
     })
     return res.json(note)
@@ -152,21 +160,19 @@ export const updateNoteController = async (
   }
 }
 
+type DeleteNoteControllerRequest = WithAuthProp<
+  Request<{ projectId: string; noteId: string }>
+>
+
+type DeleteNoteControllerResponse = Response<NoteResponse>
+
 export const deleteNoteController = async (
-  req: WithAuthProp<Request<{ projectId: string; noteId: string }>>,
-  res: Response
+  req: DeleteNoteControllerRequest,
+  res: DeleteNoteControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const note = await prismaClient.note.delete({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        editorState: true,
-      },
+      select: noteSelect,
       where: {
         id: req.params.noteId,
         project: {
