@@ -121,6 +121,7 @@ export const updateScheduleValidator = [
         )
     }),
   body('description').trim().optional(),
+  validationMiddleware,
 ]
 
 export const deleteScheduleValidator = [

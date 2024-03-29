@@ -1,44 +1,55 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
 import { Board, Prisma } from '@prisma/client'
 import { Request, Response } from 'express'
-import { validationResult } from 'express-validator'
 import prismaClient from '../client'
+import { boardSelect } from '../modules/board'
 import { paginationParams } from '../modules/pagination'
+import { PaginableResponse } from '../types/pagination'
+
+type BoardResponse = Pick<Board, keyof typeof boardSelect>
+
+type GetBoardsControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string },
+    object,
+    object,
+    {
+      page?: string
+      size?: string
+      title?: string
+      createdAt?: 'ASC' | 'DESC'
+    }
+  >
+>
+
+type GetBoardsControllerResponse = Response<PaginableResponse<BoardResponse>>
 
 export const getBoardsController = async (
-  req: WithAuthProp<
-    Request<
-      { projectId: string },
-      object,
-      object,
-      { page?: string; size?: string; name?: string }
-    >
-  >,
-  res: Response
+  req: GetBoardsControllerRequest,
+  res: GetBoardsControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   const { page, size } = paginationParams(req)
   const where: Prisma.BoardWhereInput = {
-    name: {
-      contains: req.query.name,
-    },
+    ...(req.query.title && {
+      title: {
+        contains: req.query.title,
+        mode: 'insensitive',
+      },
+    }),
     project: {
       id: req.params.projectId,
       authorId: req.auth.userId!,
     },
   }
   try {
-    const [boards, boardCount] = await Promise.all([
+    const [boards, total] = await Promise.all([
       prismaClient.board.findMany({
-        select: {
-          id: true,
-          createdAt: true,
-          name: true,
-        },
+        select: boardSelect,
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: {
+          createdAt: (req.query.createdAt?.toLowerCase() ||
+            'desc') as Prisma.SortOrder,
+        },
         take: size,
         skip: page * size,
       }),
@@ -50,7 +61,7 @@ export const getBoardsController = async (
       content: boards,
       page,
       size,
-      total: boardCount,
+      total,
     })
   } catch (error) {
     console.error(error)
@@ -58,35 +69,19 @@ export const getBoardsController = async (
   }
 }
 
+type GetBoardControllerRequest = WithAuthProp<
+  Request<{ projectId: string; boardId: string }>
+>
+
+type GetBoardControllerResponse = Response<BoardResponse>
+
 export const getBoardController = async (
-  req: WithAuthProp<Request<{ projectId: string; boardId: string }>>,
-  res: Response
+  req: GetBoardControllerRequest,
+  res: GetBoardControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const board = await prismaClient.board.findUnique({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        statuses: {
-          select: {
-            id: true,
-            title: true,
-            issues: {
-              select: {
-                id: true,
-                title: true,
-                content: true,
-              },
-              orderBy: { index: 'asc' },
-            },
-          },
-          orderBy: { index: 'asc' },
-        },
-      },
+      select: boardSelect,
       where: {
         id: req.params.boardId,
         project: {
@@ -95,84 +90,30 @@ export const getBoardController = async (
         },
       },
     })
-    if (!board) return res.status(404).json({ message: 'Board not found' })
-    return res.json(board)
+    return board ? res.json(board) : res.status(404).end()
   } catch (error) {
     console.error(error)
     return res.status(500).end()
   }
 }
 
+type CreateBoardControllerRequest = WithAuthProp<
+  Request<{ projectId: string }, object, Pick<Board, 'title' | 'description'>>
+>
+
+type CreateBoardControllerResponse = Response<BoardResponse>
+
 export const createBoardController = async (
-  req: WithAuthProp<
-    Request<{ projectId: string }, object, Pick<Board, 'name'>>
-  >,
-  res: Response
+  req: CreateBoardControllerRequest,
+  res: CreateBoardControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const board = await prismaClient.board.create({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        statuses: {
-          select: {
-            id: true,
-            title: true,
-            issues: {
-              select: {
-                id: true,
-                title: true,
-                content: true,
-              },
-            },
-          },
-          orderBy: { index: 'asc' },
-        },
-      },
+      select: boardSelect,
       data: {
-        name: req.body.name,
+        title: req.body.title,
+        description: req.body.description,
         projectId: req.params.projectId,
-        statuses: {
-          create: {
-            index: 0,
-            title: 'Todo',
-            issues: {
-              createMany: {
-                data: [
-                  {
-                    index: 0,
-                    title: 'Adjust column titles',
-                    content:
-                      'To rename a status, simply click on the three dots icon next to the status title. This will open the configuration menu, where you can find the option to rename it.',
-                  },
-                  {
-                    index: 1,
-                    title: 'Create your own issues',
-                    content:
-                      'Click on the floating action button in the bottom-right corner of the screen to add more issues',
-                  },
-                  {
-                    index: 2,
-                    title: 'Get familiar with the kanban board',
-                    content:
-                      'Get to know the kanban board. Customize statuses and issues to fit your needs.',
-                  },
-                ],
-              },
-            },
-          },
-          createMany: {
-            data: [
-              { index: 1, title: 'On hold' },
-              { index: 2, title: 'In progress' },
-              { index: 3, title: 'Done' },
-            ],
-          },
-        },
       },
     })
     return res.status(201).json(board)
@@ -182,37 +123,23 @@ export const createBoardController = async (
   }
 }
 
+type UpdateBoardControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; boardId: string },
+    object,
+    Pick<Board, 'title' | 'description'>
+  >
+>
+
+type UpdateBoardControllerResponse = Response<BoardResponse>
+
 export const updateBoardController = async (
-  req: WithAuthProp<
-    Request<{ projectId: string; boardId: string }, object, { name: string }>
-  >,
-  res: Response
+  req: UpdateBoardControllerRequest,
+  res: UpdateBoardControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const board = await prismaClient.board.update({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        statuses: {
-          select: {
-            id: true,
-            title: true,
-            issues: {
-              select: {
-                id: true,
-                title: true,
-                content: true,
-              },
-              orderBy: { index: 'asc' },
-            },
-          },
-          orderBy: { index: 'asc' },
-        },
-      },
+      select: boardSelect,
       where: {
         id: req.params.boardId,
         project: {
@@ -221,7 +148,8 @@ export const updateBoardController = async (
         },
       },
       data: {
-        name: req.body.name,
+        title: req.body.title,
+        description: req.body.description,
       },
     })
     return res.json(board)
@@ -231,35 +159,19 @@ export const updateBoardController = async (
   }
 }
 
+type DeleteBoardControllerRequest = WithAuthProp<
+  Request<{ projectId: string; boardId: string }>
+>
+
+type DeleteBoardControllerResponse = Response<BoardResponse>
+
 export const deleteBoardController = async (
-  req: WithAuthProp<Request<{ projectId: string; boardId: string }>>,
-  res: Response
+  req: DeleteBoardControllerRequest,
+  res: DeleteBoardControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const board = await prismaClient.board.delete({
-      select: {
-        id: true,
-        createdAt: true,
-        name: true,
-        statuses: {
-          select: {
-            id: true,
-            title: true,
-            issues: {
-              select: {
-                id: true,
-                title: true,
-                content: true,
-              },
-              orderBy: { index: 'asc' },
-            },
-          },
-          orderBy: { index: 'asc' },
-        },
-      },
+      select: boardSelect,
       where: {
         id: req.params.boardId,
         project: {

@@ -1,7 +1,6 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
 import { Prisma, Schedule } from '@prisma/client'
 import { Request, Response } from 'express'
-import { validationResult } from 'express-validator'
 import prismaClient from '../client'
 import { paginationParams } from '../modules/pagination'
 import { scheduleSelect } from '../modules/schedule'
@@ -64,7 +63,7 @@ export const getSchedulesController = async (
       content: schedules,
       page,
       size,
-      total: total,
+      total,
     })
   } catch (error) {
     console.error(error)
@@ -93,7 +92,7 @@ export const getScheduleController = async (
         },
       },
     })
-    return schedule ? res.json(schedule) : res.set(404).end()
+    return schedule ? res.json(schedule) : res.status(404).end()
   } catch (error) {
     console.error(error)
     return res.status(500).end()
@@ -104,7 +103,7 @@ type CreateScheduleControllerRequest = WithAuthProp<
   Request<
     { projectId: string },
     object,
-    { title: string; description?: string }
+    Pick<Schedule, 'title' | 'description'>
   >
 >
 
@@ -134,7 +133,7 @@ type UpdateScheduleControllerRequest = WithAuthProp<
   Request<
     { projectId: string; scheduleId: string },
     object,
-    { title: string; description?: string }
+    Pick<Schedule, 'title' | 'description'>
   >
 >
 

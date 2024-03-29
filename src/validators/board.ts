@@ -1,129 +1,160 @@
 import { body, param, query } from 'express-validator'
 import prismaClient from '../client'
+import { validationMiddleware } from '../middlewares/validation'
 
 export const getBoardsValidator = [
-  param('projectId').notEmpty(),
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
+        where: {
+          id: projectId,
+          authorId: req.auth.userId,
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
   query('page', 'Page number must be a non-negative integer')
     .isInt({ gt: -1 })
     .optional(),
   query('size', 'Page size must be a non-negative integer')
     .isInt({ gt: -1 })
     .optional(),
+  query(
+    'createdAt',
+    'Invalid value was provided for sorting boards by creation date'
+  )
+    .isIn(['ASC', 'DESC'])
+    .optional(),
+  validationMiddleware,
 ]
 
 export const getBoardValidator = [
   param('projectId').notEmpty(),
   param('boardId').notEmpty(),
+  validationMiddleware,
 ]
 
 export const createBoardValidator = [
-  param('projectId')
-    .notEmpty()
-    .custom(async (projectId: string, { req }) => {
-      const project = await prismaClient.project.findUnique({
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
         where: {
           id: projectId,
           authorId: req.auth.userId,
         },
       })
-      if (!project) throw new Error('Project not found')
-    }),
-  body('name', 'You have to give your board a unique name')
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
+  body('title', 'You have to give your board a unique title')
     .trim()
     .notEmpty()
-    .custom(async (name: string, { req }) => {
+    .custom(async (title: string, { req }) => {
       const board = await prismaClient.board.findUnique({
         where: {
-          name_projectId: {
-            name,
+          title_projectId: {
+            title,
             projectId: req.params!.projectId,
           },
         },
       })
       if (board)
-        throw new Error('This name has already been used by one of your boards')
+        throw new Error(
+          'This title has already been used by one of your boards'
+        )
     }),
+  body('description').trim().optional(),
+  validationMiddleware,
 ]
 
 export const updateBoardValidator = [
-  param('projectId')
-    .notEmpty()
-    .custom(async (projectId: string, { req }) => {
-      const project = await prismaClient.project.findUnique({
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
         where: {
           id: projectId,
           authorId: req.auth.userId,
         },
       })
-      if (!project) throw new Error('Project not found')
-    }),
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
   param('boardId')
     .notEmpty()
     .custom(async (boardId: string, { req }) => {
-      const board = await prismaClient.board.findUnique({
-        where: {
-          id: boardId,
-          project: {
-            id: req.params!.projectId,
-            authorId: req.auth.userId,
+      try {
+        await prismaClient.board.findFirstOrThrow({
+          where: {
+            id: boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
           },
-        },
-      })
-      if (!board) throw new Error('Board not found')
+        })
+      } catch (error) {
+        req.statusCode = 404
+        throw new Error('Board not found')
+      }
     }),
-  body('name', 'You have to give your board a unique name')
+  body('title', 'You have to give your board a unique title')
     .trim()
     .notEmpty()
-    .custom(async (name: string, { req }) => {
-      const board = await prismaClient.board.findUnique({
+    .custom(async (title: string, { req }) => {
+      const board = await prismaClient.board.findFirst({
         where: {
-          AND: [
-            { id: { not: req.params!.boardId } },
-            { name, projectId: req.params!.projectId },
-          ],
-          name_projectId: { name, projectId: req.params!.projectId },
+          id: { not: req.params!.boardId },
+          title,
+          projectId: req.params!.projectId,
         },
       })
       if (board)
-        throw new Error('This name has already been used by one of your boards')
+        throw new Error(
+          'This title has already been used by one of your boards'
+        )
     }),
+  body('description').trim().optional(),
+  validationMiddleware,
 ]
 
 export const deleteBoardValidator = [
-  param('projectId')
-    .notEmpty()
-    .custom(async (projectId: string, { req }) => {
-      const project = await prismaClient.project.findUnique({
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
         where: {
           id: projectId,
           authorId: req.auth.userId,
         },
       })
-      if (!project) throw new Error('Project not found')
-    }),
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
   param('boardId')
     .notEmpty()
     .custom(async (boardId: string, { req }) => {
-      const board = await prismaClient.board.findUnique({
-        where: {
-          id: boardId,
-          project: {
-            id: req.params!.projectId,
-            authorId: req.auth.userId,
+      try {
+        await prismaClient.board.findFirstOrThrow({
+          where: {
+            id: boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
           },
-        },
-      })
-      if (!board) throw new Error('Board not found')
-    })
-    .custom(async (boardId: string, { req }) => {
-      const boardCount = await prismaClient.board.count({
-        where: {
-          project: {
-            id: req.params!.projectId,
-            authorId: req.auth.userId,
-          },
-        },
-      })
-      if (boardCount === 1) throw new Error('At least one board is required')
+        })
+      } catch (error) {
+        req.statusCode = 404
+        throw new Error('Board not found')
+      }
     }),
+  validationMiddleware,
 ]
