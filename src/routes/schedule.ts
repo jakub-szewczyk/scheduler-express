@@ -16,6 +16,7 @@ import {
 
 const router = Router()
 
+// TODO: Update openapi desc
 /**
  * @openapi
  * /api/projects/{projectId}/schedules:

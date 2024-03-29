@@ -31,16 +31,16 @@ export const getProjectsController = async (
   res: GetProjectsControllerResponse
 ) => {
   const { page, size } = paginationParams(req)
+  const where: Prisma.ProjectWhereInput = {
+    authorId: req.auth.userId!,
+    ...(req.query.title && {
+      title: {
+        contains: req.query.title,
+        mode: 'insensitive',
+      },
+    }),
+  }
   try {
-    const where: Prisma.ProjectWhereInput = {
-      authorId: req.auth.userId!,
-      ...(req.query.title && {
-        title: {
-          contains: req.query.title,
-          mode: 'insensitive',
-        },
-      }),
-    }
     const [projects, total] = await Promise.all([
       prismaClient.project.findMany({
         select: projectSelect,
@@ -139,7 +139,7 @@ export const updateProjectController = async (
         description: req.body.description,
       },
     })
-    return res.status(200).json(project)
+    return res.json(project)
   } catch (error) {
     console.error(error)
     return res.status(500).end()

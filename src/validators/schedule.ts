@@ -1,134 +1,159 @@
 import { body, param, query } from 'express-validator'
 import prismaClient from '../client'
+import { validationMiddleware } from '../middlewares/validation'
 
 export const getSchedulesValidator = [
-  param('projectId').notEmpty(),
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
+        where: {
+          id: projectId,
+          authorId: req.auth.userId,
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
   query('page', 'Page number must be a non-negative integer')
     .isInt({ gt: -1 })
     .optional(),
   query('size', 'Page size must be a non-negative integer')
     .isInt({ gt: -1 })
     .optional(),
+  query(
+    'createdAt',
+    'Invalid value was provided for sorting schedules by creation date'
+  )
+    .isIn(['ASC', 'DESC'])
+    .optional(),
+  validationMiddleware,
 ]
 
 export const getScheduleValidator = [
   param('projectId').notEmpty(),
   param('scheduleId').notEmpty(),
+  validationMiddleware,
 ]
 
 export const createScheduleValidator = [
-  param('projectId')
-    .notEmpty()
-    .custom(async (projectId: string, { req }) => {
-      const project = await prismaClient.project.findUnique({
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
         where: {
           id: projectId,
           authorId: req.auth.userId,
         },
       })
-      if (!project) throw new Error('Project not found')
-    }),
-  body('name', 'You have to give your schedule a unique name')
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
+  body('title', 'You have to give your schedule a unique title')
     .trim()
     .notEmpty()
-    .custom(async (name: string, { req }) => {
+    .custom(async (title: string, { req }) => {
       const schedule = await prismaClient.schedule.findUnique({
         where: {
-          name_projectId: {
-            name,
+          title_projectId: {
+            title,
             projectId: req.params!.projectId,
           },
         },
       })
       if (schedule)
         throw new Error(
-          'This name has already been used by one of your schedules'
+          'This title has already been used by one of your schedules'
         )
     }),
+  body('description').trim().optional(),
+  validationMiddleware,
 ]
 
 export const updateScheduleValidator = [
-  param('projectId')
-    .notEmpty()
-    .custom(async (projectId: string, { req }) => {
-      const project = await prismaClient.project.findUnique({
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
         where: {
           id: projectId,
           authorId: req.auth.userId,
         },
       })
-      if (!project) throw new Error('Project not found')
-    }),
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
   param('scheduleId')
     .notEmpty()
     .custom(async (scheduleId: string, { req }) => {
-      const schedule = await prismaClient.schedule.findUnique({
-        where: {
-          id: scheduleId,
-          project: {
-            id: req.params!.projectId,
-            authorId: req.auth.userId,
+      try {
+        await prismaClient.schedule.findFirstOrThrow({
+          where: {
+            id: scheduleId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
           },
-        },
-      })
-      if (!schedule) throw new Error('Schedule not found')
+        })
+      } catch (error) {
+        req.statusCode = 404
+        throw new Error('Schedule not found')
+      }
     }),
-  body('name', 'You have to give your schedule a unique name')
+  body('title', 'You have to give your schedule a unique title')
     .trim()
     .notEmpty()
-    .custom(async (name: string, { req }) => {
-      const schedule = await prismaClient.schedule.findUnique({
+    .custom(async (title: string, { req }) => {
+      const schedule = await prismaClient.schedule.findFirst({
         where: {
-          AND: [
-            { id: { not: req.params!.scheduleId } },
-            { name, projectId: req.params!.projectId },
-          ],
-          name_projectId: { name, projectId: req.params!.projectId },
+          id: { not: req.params!.scheduleId },
+          title,
+          projectId: req.params!.projectId,
         },
       })
       if (schedule)
         throw new Error(
-          'This name has already been used by one of your schedules'
+          'This title has already been used by one of your schedules'
         )
     }),
+  body('description').trim().optional(),
 ]
 
 export const deleteScheduleValidator = [
-  param('projectId')
-    .notEmpty()
-    .custom(async (projectId: string, { req }) => {
-      const project = await prismaClient.project.findUnique({
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
         where: {
           id: projectId,
           authorId: req.auth.userId,
         },
       })
-      if (!project) throw new Error('Project not found')
-    }),
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
   param('scheduleId')
     .notEmpty()
     .custom(async (scheduleId: string, { req }) => {
-      const schedule = await prismaClient.schedule.findUnique({
-        where: {
-          id: scheduleId,
-          project: {
-            id: req.params!.projectId,
-            authorId: req.auth.userId,
+      try {
+        await prismaClient.schedule.findFirstOrThrow({
+          where: {
+            id: scheduleId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
           },
-        },
-      })
-      if (!schedule) throw new Error('Schedule not found')
-    })
-    .custom(async (scheduleId: string, { req }) => {
-      const scheduleCount = await prismaClient.schedule.count({
-        where: {
-          project: {
-            id: req.params!.projectId,
-            authorId: req.auth.userId,
-          },
-        },
-      })
-      if (scheduleCount === 1)
-        throw new Error('At least one schedule is required')
+        })
+      } catch (error) {
+        req.statusCode = 404
+        throw new Error('Schedule not found')
+      }
     }),
+  validationMiddleware,
 ]
