@@ -24,6 +24,8 @@ Express REST API v2.0.0
 
 - Notification cron job.
 
+- Figure out how to pass vitest CLI args to a bash script.
+
 - Exclude non-testable files from coverage report.
 
 ### Other

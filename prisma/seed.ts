@@ -34,41 +34,41 @@ const seed = async () => {
       ])
       await Promise.all([
         ...projects.flatMap((project) => [
-          ...Array(99)
+          ...Array(100)
             .fill(null)
             .map((_, index, array) =>
               prismaClient.schedule.create({
                 data: {
-                  title: `Schedule #${array.length - index + 1}`,
+                  title: `Schedule #${array.length - index}`,
                   createdAt: new Date(
-                    Date.now() - index + 1 * 1000000
+                    Date.now() - index * 1000000
                   ).toISOString(),
                   projectId: project.id,
                 },
               })
             ),
-          ...Array(99)
+          ...Array(100)
             .fill(null)
             .map((_, index, array) =>
               prismaClient.board.create({
                 data: {
-                  title: `Board #${array.length - index + 1}`,
+                  title: `Board #${array.length - index}`,
                   createdAt: new Date(
-                    Date.now() - index + 1 * 1000000
+                    Date.now() - index * 1000000
                   ).toISOString(),
                   projectId: project.id,
                 },
               })
             ),
-          ...Array(99)
+          ...Array(100)
             .fill(null)
             .map((_, index, array) =>
               prismaClient.note.create({
                 data: {
-                  title: `Note #${array.length - index + 1}`,
+                  title: `Note #${array.length - index}`,
                   content: Prisma.JsonNull,
                   createdAt: new Date(
-                    Date.now() - index + 1 * 1000000
+                    Date.now() - index * 1000000
                   ).toISOString(),
                   projectId: project.id,
                 },

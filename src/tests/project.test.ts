@@ -33,29 +33,6 @@ describe('GET /projects', () => {
     console.log('✅[test]: seeding finished')
   })
 
-  it('returns default projects', async () => {
-    const res = await req
-      .get('/api/projects')
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-    const projects: Project[] = res.body.content
-    expect(res.status).toEqual(200)
-    expect(res.body).toMatchObject({
-      page: 0,
-      size: 10,
-      total: 100,
-    })
-    expect(projects).toHaveLength(10)
-    projects.forEach((project, index) => {
-      expect(project).toHaveProperty('id')
-      expect(project).toHaveProperty('createdAt')
-      expect(project).toMatchObject({
-        title: `Project #${100 - index}`,
-        description: null,
-      })
-    })
-  })
-
   test('`page`, `size`, `title` and `createdAt` query param being optional', async () => {
     const res = await req
       .get('/api/projects')
@@ -185,9 +162,7 @@ describe('GET /projects', () => {
       it(`returns ${size} ${size === 1 ? 'project' : 'projects'}`, async () => {
         const res = await req
           .get('/api/projects')
-          .query({
-            size,
-          })
+          .query({ size })
           .set('Accept', 'application/json')
           .set('Authorization', BEARER_TOKEN)
         const projects: Project[] = res.body.content
@@ -212,9 +187,7 @@ describe('GET /projects', () => {
   it('returns projects filtered by title', async () => {
     const res = await req
       .get('/api/projects')
-      .query({
-        title: 'project #10',
-      })
+      .query({ title: 'project #10' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects: Project[] = res.body.content
@@ -242,9 +215,7 @@ describe('GET /projects', () => {
   test('case insensitivity in project search by title', async () => {
     const res1 = await req
       .get('/api/projects')
-      .query({
-        title: 'project #69',
-      })
+      .query({ title: 'project #69' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects1: Project[] = res1.body.content
@@ -263,9 +234,7 @@ describe('GET /projects', () => {
     })
     const res2 = await req
       .get('/api/projects')
-      .query({
-        title: 'Project #69',
-      })
+      .query({ title: 'Project #69' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects2: Project[] = res2.body.content
@@ -287,9 +256,7 @@ describe('GET /projects', () => {
   it('returns an empty projects array if none are found', async () => {
     const res = await req
       .get('/api/projects')
-      .query({
-        title: 'project #420',
-      })
+      .query({ title: 'project #420' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects: Project[] = res.body.content
@@ -305,9 +272,7 @@ describe('GET /projects', () => {
   it('returns projects sorted by creation date in ascending order', async () => {
     const res = await req
       .get('/api/projects')
-      .query({
-        createdAt: 'ASC',
-      })
+      .query({ createdAt: 'ASC' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects: Project[] = res.body.content
@@ -334,9 +299,7 @@ describe('GET /projects', () => {
   it('returns projects sorted by creation date in descending order', async () => {
     const res = await req
       .get('/api/projects')
-      .query({
-        createdAt: 'DESC',
-      })
+      .query({ createdAt: 'DESC' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects: Project[] = res.body.content
