@@ -745,3 +745,71 @@ describe('PUT /projects/:projectId/schedules/:scheduleId', () => {
     })
   })
 })
+
+describe('DELETE /projects/:projectId/schedules/:scheduleId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = await prismaClient.schedule.create({
+      select: scheduleSelect,
+      data: {
+        title: 'Schedule #1',
+        projectId: project.id,
+      },
+    })
+    const res = await req
+      .get(`/api/projects/abc/schedules/${schedule.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('deletes a schedule', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = await prismaClient.schedule.create({
+      select: scheduleSelect,
+      data: {
+        title: 'Schedule #1',
+        projectId: project.id,
+      },
+    })
+    const res = await req
+      .delete(`/api/projects/${project.id}/schedules/${schedule.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(200)
+    expect(res.body).toMatchObject({
+      ...schedule,
+      createdAt: schedule.createdAt.toISOString(),
+    })
+  })
+
+  it('returns 404 Not Found in case of invalid schedule id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const res = await req
+      .delete(`/api/projects/${project.id}/schedules/abc`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Schedule not found',
+        path: 'scheduleId',
+        location: 'params',
+      },
+    ])
+  })
+})
