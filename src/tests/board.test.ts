@@ -1,9 +1,9 @@
-import { Schedule } from '@prisma/client'
+import { Board } from '@prisma/client'
 import supertest from 'supertest'
 import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
+import { BOARD, boardSelect } from '../modules/board'
 import { ordinals } from '../modules/common'
-import { SCHEDULE, scheduleSelect } from '../modules/schedule'
 import prismaClient from './client'
 
 const AUTHOR_ID = process.env.AUTHOR_ID
@@ -18,19 +18,19 @@ const BEARER_TOKEN = `Bearer ${JWT_TOKEN}`
 
 const req = supertest(app)
 
-describe('GET /projects/:projectId/schedules', () => {
+describe('GET /projects/:projectId/boards', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
     await prismaClient.project.create({
       data: {
         title: 'Project #1',
         authorId: AUTHOR_ID,
-        schedules: {
+        boards: {
           createMany: {
             data: Array(100)
               .fill(null)
               .map((_, index, array) => ({
-                title: `Schedule #${array.length - index}`,
+                title: `Board #${array.length - index}`,
                 createdAt: new Date(Date.now() - index * 1000000).toISOString(),
               })),
           },
@@ -42,7 +42,7 @@ describe('GET /projects/:projectId/schedules', () => {
 
   it('returns 404 Not Found in case of invalid project id', async () => {
     const res = await req
-      .get('/api/projects/abc/schedules')
+      .get('/api/projects/abc/boards')
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
@@ -60,22 +60,22 @@ describe('GET /projects/:projectId/schedules', () => {
   test('`page`, `size`, `title` and `createdAt` query param being optional', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
+      .get(`/api/projects/${project.id}/boards`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-    const schedules: Schedule[] = res.body.content
+    const boards: Board[] = res.body.content
     expect(res.status).toEqual(200)
     expect(res.body).toMatchObject({
       page: 0,
       size: 10,
       total: 100,
     })
-    expect(schedules).toHaveLength(10)
-    schedules.forEach((schedule, index) => {
-      expect(schedule).toHaveProperty('id')
-      expect(schedule).toHaveProperty('createdAt')
-      expect(schedule).toMatchObject({
-        title: `Schedule #${100 - index}`,
+    expect(boards).toHaveLength(10)
+    boards.forEach((board, index) => {
+      expect(board).toHaveProperty('id')
+      expect(board).toHaveProperty('createdAt')
+      expect(board).toMatchObject({
+        title: `Board #${100 - index}`,
         description: null,
       })
     })
@@ -84,7 +84,7 @@ describe('GET /projects/:projectId/schedules', () => {
   it('returns 400 Bad Request when the page number is negative', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
+      .get(`/api/projects/${project.id}/boards`)
       .query({ page: -1 })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
@@ -103,7 +103,7 @@ describe('GET /projects/:projectId/schedules', () => {
   it('returns 400 Bad Request when the page number is not an integer', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
+      .get(`/api/projects/${project.id}/boards`)
       .query({ page: 'abc' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
@@ -122,26 +122,26 @@ describe('GET /projects/:projectId/schedules', () => {
   Array(10)
     .fill(null)
     .forEach((_, page) =>
-      it(`returns ${ordinals(page + 1)} schedule page`, async () => {
+      it(`returns ${ordinals(page + 1)} board page`, async () => {
         const project = (await prismaClient.project.findFirst())!
         const res = await req
-          .get(`/api/projects/${project.id}/schedules`)
+          .get(`/api/projects/${project.id}/boards`)
           .query({ page })
           .set('Accept', 'application/json')
           .set('Authorization', BEARER_TOKEN)
-        const schedules: Schedule[] = res.body.content
+        const boards: Board[] = res.body.content
         expect(res.status).toEqual(200)
         expect(res.body).toMatchObject({
           page,
           size: 10,
           total: 100,
         })
-        expect(schedules).toHaveLength(10)
-        schedules.forEach((schedule, index) => {
-          expect(schedule).toHaveProperty('id')
-          expect(schedule).toHaveProperty('createdAt')
-          expect(schedule).toMatchObject({
-            title: `Schedule #${100 - index - page * 10}`,
+        expect(boards).toHaveLength(10)
+        boards.forEach((board, index) => {
+          expect(board).toHaveProperty('id')
+          expect(board).toHaveProperty('createdAt')
+          expect(board).toMatchObject({
+            title: `Board #${100 - index - page * 10}`,
             description: null,
           })
         })
@@ -151,7 +151,7 @@ describe('GET /projects/:projectId/schedules', () => {
   it('returns 400 Bad Request when the page size is negative', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
+      .get(`/api/projects/${project.id}/boards`)
       .query({ size: -1 })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
@@ -170,7 +170,7 @@ describe('GET /projects/:projectId/schedules', () => {
   it('returns 400 Bad Request when the page size is not an integer', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
+      .get(`/api/projects/${project.id}/boards`)
       .query({ size: 'abc' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
@@ -189,201 +189,201 @@ describe('GET /projects/:projectId/schedules', () => {
   Array(101)
     .fill(null)
     .forEach((_, size) =>
-      it(`returns ${size} ${size === 1 ? 'schedule' : 'schedules'}`, async () => {
+      it(`returns ${size} ${size === 1 ? 'board' : 'boards'}`, async () => {
         const project = (await prismaClient.project.findFirst())!
         const res = await req
-          .get(`/api/projects/${project.id}/schedules`)
+          .get(`/api/projects/${project.id}/boards`)
           .query({ size })
           .set('Accept', 'application/json')
           .set('Authorization', BEARER_TOKEN)
-        const schedules: Schedule[] = res.body.content
+        const boards: Board[] = res.body.content
         expect(res.status).toEqual(200)
         expect(res.body).toMatchObject({
           page: 0,
           size,
           total: 100,
         })
-        expect(schedules).toHaveLength(size)
-        schedules.forEach((schedule, index) => {
-          expect(schedule).toHaveProperty('id')
-          expect(schedule).toHaveProperty('createdAt')
-          expect(schedule).toMatchObject({
-            title: `Schedule #${100 - index}`,
+        expect(boards).toHaveLength(size)
+        boards.forEach((board, index) => {
+          expect(board).toHaveProperty('id')
+          expect(board).toHaveProperty('createdAt')
+          expect(board).toMatchObject({
+            title: `Board #${100 - index}`,
             description: null,
           })
         })
       })
     )
 
-  it('returns schedules filtered by title', async () => {
+  it('returns boards filtered by title', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
+      .get(`/api/projects/${project.id}/boards`)
       .query({
-        title: 'schedule #10',
+        title: 'board #10',
       })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-    const schedules: Schedule[] = res.body.content
+    const boards: Board[] = res.body.content
     expect(res.status).toEqual(200)
     expect(res.body).toMatchObject({
       page: 0,
       size: 10,
       total: 2,
     })
-    expect(schedules).toHaveLength(2)
-    schedules.forEach((schedule) => {
-      expect(schedule).toHaveProperty('id')
-      expect(schedule).toHaveProperty('createdAt')
+    expect(boards).toHaveLength(2)
+    boards.forEach((board) => {
+      expect(board).toHaveProperty('id')
+      expect(board).toHaveProperty('createdAt')
     })
-    expect(schedules[0]).toMatchObject({
-      title: 'Schedule #100',
+    expect(boards[0]).toMatchObject({
+      title: 'Board #100',
       description: null,
     })
-    expect(schedules[1]).toMatchObject({
-      title: 'Schedule #10',
+    expect(boards[1]).toMatchObject({
+      title: 'Board #10',
       description: null,
     })
   })
 
-  test('case insensitivity in schedule search by title', async () => {
+  test('case insensitivity in board search by title', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res1 = await req
-      .get(`/api/projects/${project.id}/schedules`)
-      .query({ title: 'schedule #69' })
+      .get(`/api/projects/${project.id}/boards`)
+      .query({ title: 'board #69' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-    const schedules1: Schedule[] = res1.body.content
+    const boards1: Board[] = res1.body.content
     expect(res1.status).toEqual(200)
     expect(res1.body).toMatchObject({
       page: 0,
       size: 10,
       total: 1,
     })
-    expect(schedules1).toHaveLength(1)
-    expect(schedules1[0]).toHaveProperty('id')
-    expect(schedules1[0]).toHaveProperty('createdAt')
-    expect(schedules1[0]).toMatchObject({
-      title: 'Schedule #69',
+    expect(boards1).toHaveLength(1)
+    expect(boards1[0]).toHaveProperty('id')
+    expect(boards1[0]).toHaveProperty('createdAt')
+    expect(boards1[0]).toMatchObject({
+      title: 'Board #69',
       description: null,
     })
     const res2 = await req
-      .get(`/api/projects/${project.id}/schedules`)
-      .query({ title: 'Schedule #69' })
+      .get(`/api/projects/${project.id}/boards`)
+      .query({ title: 'Board #69' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-    const schedules2: Schedule[] = res2.body.content
+    const boards2: Board[] = res2.body.content
     expect(res2.status).toEqual(200)
     expect(res2.body).toMatchObject({
       page: 0,
       size: 10,
       total: 1,
     })
-    expect(schedules1).toHaveLength(1)
-    expect(schedules2[0]).toHaveProperty('id')
-    expect(schedules2[0]).toHaveProperty('createdAt')
-    expect(schedules2[0]).toMatchObject({
-      title: 'Schedule #69',
+    expect(boards1).toHaveLength(1)
+    expect(boards2[0]).toHaveProperty('id')
+    expect(boards2[0]).toHaveProperty('createdAt')
+    expect(boards2[0]).toMatchObject({
+      title: 'Board #69',
       description: null,
     })
   })
 
-  it('returns an empty schedules array if none are found', async () => {
+  it('returns an empty boards array if none are found', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
-      .query({ title: 'schedule #420' })
+      .get(`/api/projects/${project.id}/boards`)
+      .query({ title: 'board #420' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-    const schedules: Schedule[] = res.body.content
+    const boards: Board[] = res.body.content
     expect(res.status).toEqual(200)
     expect(res.body).toMatchObject({
       page: 0,
       size: 10,
       total: 0,
     })
-    expect(schedules).toHaveLength(0)
+    expect(boards).toHaveLength(0)
   })
 
-  it('returns schedules sorted by creation date in ascending order', async () => {
+  it('returns boards sorted by creation date in ascending order', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
+      .get(`/api/projects/${project.id}/boards`)
       .query({ createdAt: 'ASC' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-    const schedules: Schedule[] = res.body.content
+    const boards: Board[] = res.body.content
     expect(res.status).toEqual(200)
     expect(res.body).toMatchObject({
       page: 0,
       size: 10,
       total: 100,
     })
-    expect(schedules).toHaveLength(10)
-    schedules.forEach((schedule) => {
-      expect(schedule).toHaveProperty('id')
-      expect(schedule).toHaveProperty('createdAt')
+    expect(boards).toHaveLength(10)
+    boards.forEach((board) => {
+      expect(board).toHaveProperty('id')
+      expect(board).toHaveProperty('createdAt')
     })
-    schedules
+    boards
       .slice(1)
-      .forEach((schedule, index) =>
-        expect(new Date(schedule.createdAt).getTime()).toBeGreaterThan(
-          new Date(schedules[index].createdAt).getTime()
+      .forEach((board, index) =>
+        expect(new Date(board.createdAt).getTime()).toBeGreaterThan(
+          new Date(boards[index].createdAt).getTime()
         )
       )
   })
 
-  it('returns schedules sorted by creation date in descending order', async () => {
+  it('returns boards sorted by creation date in descending order', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
+      .get(`/api/projects/${project.id}/boards`)
       .query({ createdAt: 'DESC' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-    const schedules: Schedule[] = res.body.content
+    const boards: Board[] = res.body.content
     expect(res.status).toEqual(200)
     expect(res.body).toMatchObject({
       page: 0,
       size: 10,
       total: 100,
     })
-    expect(schedules).toHaveLength(10)
-    schedules.forEach((schedule) => {
-      expect(schedule).toHaveProperty('id')
-      expect(schedule).toHaveProperty('createdAt')
+    expect(boards).toHaveLength(10)
+    boards.forEach((board) => {
+      expect(board).toHaveProperty('id')
+      expect(board).toHaveProperty('createdAt')
     })
-    schedules
+    boards
       .slice(1)
-      .forEach((schedule, index) =>
-        expect(new Date(schedule.createdAt).getTime()).toBeLessThan(
-          new Date(schedules[index].createdAt).getTime()
+      .forEach((board, index) =>
+        expect(new Date(board.createdAt).getTime()).toBeLessThan(
+          new Date(boards[index].createdAt).getTime()
         )
       )
   })
 
-  it('returns schedules sorted by creation date in descending order by default', async () => {
+  it('returns boards sorted by creation date in descending order by default', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
+      .get(`/api/projects/${project.id}/boards`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-    const schedules: Schedule[] = res.body.content
+    const boards: Board[] = res.body.content
     expect(res.status).toEqual(200)
     expect(res.body).toMatchObject({
       page: 0,
       size: 10,
       total: 100,
     })
-    expect(schedules).toHaveLength(10)
-    schedules.forEach((schedule) => {
-      expect(schedule).toHaveProperty('id')
-      expect(schedule).toHaveProperty('createdAt')
+    expect(boards).toHaveLength(10)
+    boards.forEach((board) => {
+      expect(board).toHaveProperty('id')
+      expect(board).toHaveProperty('createdAt')
     })
-    schedules
+    boards
       .slice(1)
-      .forEach((schedule, index) =>
-        expect(new Date(schedule.createdAt).getTime()).toBeLessThan(
-          new Date(schedules[index].createdAt).getTime()
+      .forEach((board, index) =>
+        expect(new Date(board.createdAt).getTime()).toBeLessThan(
+          new Date(boards[index].createdAt).getTime()
         )
       )
   })
@@ -391,7 +391,7 @@ describe('GET /projects/:projectId/schedules', () => {
   it("returns 400 Bad Request when the `createdAt` query param is not one of the following values: ['ASC', 'DESC']", async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules`)
+      .get(`/api/projects/${project.id}/boards`)
       .query({ createdAt: 'abc' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
@@ -400,7 +400,7 @@ describe('GET /projects/:projectId/schedules', () => {
       {
         type: 'field',
         value: 'abc',
-        msg: 'Invalid value was provided for sorting schedules by creation date',
+        msg: 'Invalid value was provided for sorting boards by creation date',
         path: 'createdAt',
         location: 'query',
       },
@@ -408,16 +408,16 @@ describe('GET /projects/:projectId/schedules', () => {
   })
 })
 
-describe('GET /projects/:projectId/schedules/:scheduleId', () => {
+describe('GET /projects/:projectId/boards/:boardId', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
     await prismaClient.project.create({
       data: {
         title: 'Project #1',
         authorId: AUTHOR_ID,
-        schedules: {
+        boards: {
           create: {
-            title: 'Schedule #1',
+            title: 'Board #1',
           },
         },
       },
@@ -426,35 +426,35 @@ describe('GET /projects/:projectId/schedules/:scheduleId', () => {
   })
 
   it('returns 404 Not Found in case of invalid project id', async () => {
-    const schedule = (await prismaClient.schedule.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
     const res = await req
-      .get(`/api/projects/abc/schedules/${schedule.id}`)
+      .get(`/api/projects/abc/boards/${board.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
     expect(res.body).toStrictEqual({})
   })
 
-  it('returns a schedule by id', async () => {
+  it('returns a board by id', async () => {
     const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst({
-      select: scheduleSelect,
+    const board = (await prismaClient.board.findFirst({
+      select: boardSelect,
     }))!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules/${schedule.id}`)
+      .get(`/api/projects/${project.id}/boards/${board.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(200)
     expect(res.body).toStrictEqual({
-      ...schedule,
-      createdAt: schedule.createdAt.toISOString(),
+      ...board,
+      createdAt: board.createdAt.toISOString(),
     })
   })
 
-  it('returns 404 Not Found in case of invalid schedule id', async () => {
+  it('returns 404 Not Found in case of invalid board id', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .get(`/api/projects/${project.id}/schedules/abc`)
+      .get(`/api/projects/${project.id}/boards/abc`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
@@ -462,7 +462,7 @@ describe('GET /projects/:projectId/schedules/:scheduleId', () => {
   })
 })
 
-describe('POST /projects/:projectId/schedules', () => {
+describe('POST /projects/:projectId/boards', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
     await prismaClient.project.create({
@@ -476,10 +476,10 @@ describe('POST /projects/:projectId/schedules', () => {
 
   it('returns 404 Not Found in case of invalid project id', async () => {
     const res = await req
-      .post('/api/projects/abc/schedules')
+      .post('/api/projects/abc/boards')
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send(SCHEDULE)
+      .send(BOARD)
     expect(res.status).toEqual(404)
     expect(res.body).toStrictEqual([
       {
@@ -492,40 +492,40 @@ describe('POST /projects/:projectId/schedules', () => {
     ])
   })
 
-  it('creates a schedule', async () => {
+  it('creates a board', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .post(`/api/projects/${project.id}/schedules`)
+      .post(`/api/projects/${project.id}/boards`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send(SCHEDULE)
+      .send(BOARD)
     expect(res.status).toEqual(201)
     expect(res.body).toHaveProperty('id')
     expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject(SCHEDULE)
+    expect(res.body).toMatchObject(BOARD)
   })
 
   test('`description` field in request body being optional', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .post(`/api/projects/${project.id}/schedules`)
+      .post(`/api/projects/${project.id}/boards`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({
-        title: 'Schedule #1',
+        title: 'Board #1',
       })
     expect(res.status).toEqual(201)
     expect(res.body).toHaveProperty('id')
     expect(res.body).toHaveProperty('createdAt')
     expect(res.body).toMatchObject({
-      title: 'Schedule #1',
+      title: 'Board #1',
     })
   })
 
   test('`title` field in request body being required', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .post(`/api/projects/${project.id}/schedules`)
+      .post(`/api/projects/${project.id}/boards`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({ title: '' })
@@ -534,32 +534,32 @@ describe('POST /projects/:projectId/schedules', () => {
       {
         type: 'field',
         value: '',
-        msg: 'You have to give your schedule a unique title',
+        msg: 'You have to give your board a unique title',
         path: 'title',
         location: 'body',
       },
     ])
   })
 
-  it('returns 400 Bad Request when the schedule title is already taken', async () => {
+  it('returns 400 Bad Request when the board title is already taken', async () => {
     const project = (await prismaClient.project.findFirst())!
-    await prismaClient.schedule.create({
+    await prismaClient.board.create({
       data: {
-        title: 'Schedule #1',
+        title: 'Board #1',
         projectId: project.id,
       },
     })
     const res = await req
-      .post(`/api/projects/${project.id}/schedules`)
+      .post(`/api/projects/${project.id}/boards`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send({ title: 'Schedule #1' })
+      .send({ title: 'Board #1' })
     expect(res.status).toEqual(400)
     expect(res.body).toStrictEqual([
       {
         type: 'field',
-        value: 'Schedule #1',
-        msg: 'This title has already been used by one of your schedules',
+        value: 'Board #1',
+        msg: 'This title has already been used by one of your boards',
         path: 'title',
         location: 'body',
       },
@@ -567,7 +567,7 @@ describe('POST /projects/:projectId/schedules', () => {
   })
 })
 
-describe('PUT /projects/:projectId/schedules/:scheduleId', () => {
+describe('PUT /projects/:projectId/boards/:boardId', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
     await prismaClient.project.create({
@@ -581,64 +581,64 @@ describe('PUT /projects/:projectId/schedules/:scheduleId', () => {
 
   it('returns 404 Not Found in case of invalid project id', async () => {
     const project = (await prismaClient.project.findFirst())!
-    const schedule = await prismaClient.schedule.create({
-      select: scheduleSelect,
+    const board = await prismaClient.board.create({
+      select: boardSelect,
       data: {
-        title: 'Schedule #1',
+        title: 'Board #1',
         projectId: project.id,
       },
     })
     const res = await req
-      .get(`/api/projects/abc/schedules/${schedule.id}`)
+      .get(`/api/projects/abc/boards/${board.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
     expect(res.body).toStrictEqual({})
   })
 
-  it('updates a schedule', async () => {
+  it('updates a board', async () => {
     const project = (await prismaClient.project.findFirst())!
-    const schedule = await prismaClient.schedule.create({
-      select: scheduleSelect,
+    const board = await prismaClient.board.create({
+      select: boardSelect,
       data: {
-        title: 'Schedule #1',
+        title: 'Board #1',
         projectId: project.id,
       },
     })
     const res = await req
-      .put(`/api/projects/${project.id}/schedules/${schedule.id}`)
+      .put(`/api/projects/${project.id}/boards/${board.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({
-        title: 'Schedule #2',
-        description: 'This is the second schedule',
+        title: 'Board #2',
+        description: 'This is the second board',
       })
     expect(res.status).toEqual(200)
     expect(res.body).toStrictEqual({
-      ...schedule,
-      title: 'Schedule #2',
-      description: 'This is the second schedule',
-      createdAt: schedule.createdAt.toISOString(),
+      ...board,
+      title: 'Board #2',
+      description: 'This is the second board',
+      createdAt: board.createdAt.toISOString(),
     })
   })
 
-  it('returns 404 Not Found in case of invalid schedule id', async () => {
+  it('returns 404 Not Found in case of invalid board id', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .put(`/api/projects/${project.id}/schedules/abc`)
+      .put(`/api/projects/${project.id}/boards/abc`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({
-        title: 'Schedule #2',
-        description: 'This is the second schedule',
+        title: 'Board #2',
+        description: 'This is the second board',
       })
     expect(res.status).toEqual(404)
     expect(res.body).toStrictEqual([
       {
         type: 'field',
         value: 'abc',
-        msg: 'Schedule not found',
-        path: 'scheduleId',
+        msg: 'Board not found',
+        path: 'boardId',
         location: 'params',
       },
     ])
@@ -646,21 +646,21 @@ describe('PUT /projects/:projectId/schedules/:scheduleId', () => {
 
   test('`title` field in request body being required', async () => {
     const project = (await prismaClient.project.findFirst())!
-    const schedule = await prismaClient.schedule.create({
-      select: scheduleSelect,
+    const board = await prismaClient.board.create({
+      select: boardSelect,
       data: {
-        title: 'Schedule #1',
+        title: 'Board #1',
         projectId: project.id,
       },
     })
     const [res1, res2] = await Promise.all([
       req
-        .put(`/api/projects/${project.id}/schedules/${schedule.id}`)
+        .put(`/api/projects/${project.id}/boards/${board.id}`)
         .set('Accept', 'application/json')
         .set('Authorization', BEARER_TOKEN)
         .send({}),
       req
-        .put(`/api/projects/${project.id}/schedules/${schedule.id}`)
+        .put(`/api/projects/${project.id}/boards/${board.id}`)
         .set('Accept', 'application/json')
         .set('Authorization', BEARER_TOKEN)
         .send({ title: '' }),
@@ -670,7 +670,7 @@ describe('PUT /projects/:projectId/schedules/:scheduleId', () => {
       {
         type: 'field',
         value: '',
-        msg: 'You have to give your schedule a unique title',
+        msg: 'You have to give your board a unique title',
         path: 'title',
         location: 'body',
       },
@@ -680,41 +680,41 @@ describe('PUT /projects/:projectId/schedules/:scheduleId', () => {
       {
         type: 'field',
         value: '',
-        msg: 'You have to give your schedule a unique title',
+        msg: 'You have to give your board a unique title',
         path: 'title',
         location: 'body',
       },
     ])
   })
 
-  it('returns 400 Bad Request when the schedule title is already taken', async () => {
+  it('returns 400 Bad Request when the board title is already taken', async () => {
     const project = (await prismaClient.project.findFirst())!
-    await prismaClient.schedule.createMany({
+    await prismaClient.board.createMany({
       data: [
         {
-          title: 'Schedule #1',
+          title: 'Board #1',
           projectId: project.id,
         },
         {
-          title: 'Schedule #2',
+          title: 'Board #2',
           projectId: project.id,
         },
       ],
     })
-    const schedule = (await prismaClient.schedule.findFirst({
-      select: scheduleSelect,
+    const board = (await prismaClient.board.findFirst({
+      select: boardSelect,
     }))!
     const res = await req
-      .put(`/api/projects/${project.id}/schedules/${schedule.id}`)
+      .put(`/api/projects/${project.id}/boards/${board.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send({ title: 'Schedule #2' })
+      .send({ title: 'Board #2' })
     expect(res.status).toEqual(400)
     expect(res.body).toStrictEqual([
       {
         type: 'field',
-        value: 'Schedule #2',
-        msg: 'This title has already been used by one of your schedules',
+        value: 'Board #2',
+        msg: 'This title has already been used by one of your boards',
         path: 'title',
         location: 'body',
       },
@@ -723,30 +723,30 @@ describe('PUT /projects/:projectId/schedules/:scheduleId', () => {
 
   test('`description` field in request body being optional', async () => {
     const project = (await prismaClient.project.findFirst())!
-    const schedule = await prismaClient.schedule.create({
-      select: scheduleSelect,
+    const board = await prismaClient.board.create({
+      select: boardSelect,
       data: {
-        title: 'Schedule #1',
+        title: 'Board #1',
         projectId: project.id,
       },
     })
     const res = await req
-      .put(`/api/projects/${project.id}/schedules/${schedule.id}`)
+      .put(`/api/projects/${project.id}/boards/${board.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({
-        title: 'Schedule #2',
+        title: 'Board #2',
       })
     expect(res.status).toEqual(200)
     expect(res.body).toMatchObject({
-      ...schedule,
-      title: 'Schedule #2',
-      createdAt: schedule.createdAt.toISOString(),
+      ...board,
+      title: 'Board #2',
+      createdAt: board.createdAt.toISOString(),
     })
   })
 })
 
-describe('DELETE /projects/:projectId/schedules/:scheduleId', () => {
+describe('DELETE /projects/:projectId/boards/:boardId', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
     await prismaClient.project.create({
@@ -760,45 +760,45 @@ describe('DELETE /projects/:projectId/schedules/:scheduleId', () => {
 
   it('returns 404 Not Found in case of invalid project id', async () => {
     const project = (await prismaClient.project.findFirst())!
-    const schedule = await prismaClient.schedule.create({
-      select: scheduleSelect,
+    const board = await prismaClient.board.create({
+      select: boardSelect,
       data: {
-        title: 'Schedule #1',
+        title: 'Board #1',
         projectId: project.id,
       },
     })
     const res = await req
-      .get(`/api/projects/abc/schedules/${schedule.id}`)
+      .get(`/api/projects/abc/boards/${board.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
     expect(res.body).toStrictEqual({})
   })
 
-  it('deletes a schedule', async () => {
+  it('deletes a board', async () => {
     const project = (await prismaClient.project.findFirst())!
-    const schedule = await prismaClient.schedule.create({
-      select: scheduleSelect,
+    const board = await prismaClient.board.create({
+      select: boardSelect,
       data: {
-        title: 'Schedule #1',
+        title: 'Board #1',
         projectId: project.id,
       },
     })
     const res = await req
-      .delete(`/api/projects/${project.id}/schedules/${schedule.id}`)
+      .delete(`/api/projects/${project.id}/boards/${board.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(200)
     expect(res.body).toMatchObject({
-      ...schedule,
-      createdAt: schedule.createdAt.toISOString(),
+      ...board,
+      createdAt: board.createdAt.toISOString(),
     })
   })
 
-  it('returns 404 Not Found in case of invalid schedule id', async () => {
+  it('returns 404 Not Found in case of invalid board id', async () => {
     const project = (await prismaClient.project.findFirst())!
     const res = await req
-      .delete(`/api/projects/${project.id}/schedules/abc`)
+      .delete(`/api/projects/${project.id}/boards/abc`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
@@ -806,8 +806,8 @@ describe('DELETE /projects/:projectId/schedules/:scheduleId', () => {
       {
         type: 'field',
         value: 'abc',
-        msg: 'Schedule not found',
-        path: 'scheduleId',
+        msg: 'Board not found',
+        path: 'boardId',
         location: 'params',
       },
     ])
