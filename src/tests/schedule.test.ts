@@ -566,3 +566,182 @@ describe('POST /projects/:projectId/schedules', () => {
     ])
   })
 })
+
+describe('PUT /projects/:projectId/schedules/:scheduleId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = await prismaClient.schedule.create({
+      select: scheduleSelect,
+      data: {
+        title: 'Schedule #1',
+        projectId: project.id,
+      },
+    })
+    const res = await req
+      .get(`/api/projects/abc/schedules/${schedule.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('updates a schedule', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = await prismaClient.schedule.create({
+      select: scheduleSelect,
+      data: {
+        title: 'Schedule #1',
+        projectId: project.id,
+      },
+    })
+    const res = await req
+      .put(`/api/projects/${project.id}/schedules/${schedule.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Schedule #2',
+        description: 'This is the second schedule',
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toStrictEqual({
+      ...schedule,
+      title: 'Schedule #2',
+      description: 'This is the second schedule',
+      createdAt: schedule.createdAt.toISOString(),
+    })
+  })
+
+  it('returns 404 Not Found in case of invalid schedule id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const res = await req
+      .put(`/api/projects/${project.id}/schedules/abc`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Schedule #2',
+        description: 'This is the second schedule',
+      })
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Schedule not found',
+        path: 'scheduleId',
+        location: 'params',
+      },
+    ])
+  })
+
+  test('`title` field in request body being required', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = await prismaClient.schedule.create({
+      select: scheduleSelect,
+      data: {
+        title: 'Schedule #1',
+        projectId: project.id,
+      },
+    })
+    const [res1, res2] = await Promise.all([
+      req
+        .put(`/api/projects/${project.id}/schedules/${schedule.id}`)
+        .set('Accept', 'application/json')
+        .set('Authorization', BEARER_TOKEN)
+        .send({}),
+      req
+        .put(`/api/projects/${project.id}/schedules/${schedule.id}`)
+        .set('Accept', 'application/json')
+        .set('Authorization', BEARER_TOKEN)
+        .send({ title: '' }),
+    ])
+    expect(res1.status).toEqual(400)
+    expect(res1.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '',
+        msg: 'You have to give your schedule a unique title',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+    expect(res2.status).toEqual(400)
+    expect(res2.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '',
+        msg: 'You have to give your schedule a unique title',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+  })
+
+  it('returns 400 Bad Request when the schedule title is already taken', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    await prismaClient.schedule.createMany({
+      data: [
+        {
+          title: 'Schedule #1',
+          projectId: project.id,
+        },
+        {
+          title: 'Schedule #2',
+          projectId: project.id,
+        },
+      ],
+    })
+    const schedule = (await prismaClient.schedule.findFirst({
+      select: scheduleSelect,
+    }))!
+    const res = await req
+      .put(`/api/projects/${project.id}/schedules/${schedule.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Schedule #2' })
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'Schedule #2',
+        msg: 'This title has already been used by one of your schedules',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+  })
+
+  test('`description` field in request body being optional', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = await prismaClient.schedule.create({
+      select: scheduleSelect,
+      data: {
+        title: 'Schedule #1',
+        projectId: project.id,
+      },
+    })
+    const res = await req
+      .put(`/api/projects/${project.id}/schedules/${schedule.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Schedule #2',
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toMatchObject({
+      ...schedule,
+      title: 'Schedule #2',
+      createdAt: schedule.createdAt.toISOString(),
+    })
+  })
+})
