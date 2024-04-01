@@ -83,3 +83,41 @@
  *           type: string
  *           example: Edit your schedule's title and description. Manage your events within it.
  */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Board:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 06f750b2-8815-461e-8b7f-f42e96ab973c
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Board #1'
+ *         description:
+ *           type: string
+ *           example: Edit your board's title and description. Manage your issues within it.
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     BoardBody:
+ *       type: object
+ *       required:
+ *         - title
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: 'Board #1'
+ *         description:
+ *           type: string
+ *           example: Edit your board's title and description. Manage your issues within it.
+ */
