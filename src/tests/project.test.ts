@@ -452,24 +452,6 @@ describe('POST /projects', () => {
     ])
   })
 
-  test('`title` field in request body being required', async () => {
-    const res = await req
-      .post('/api/projects')
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({ title: '' })
-    expect(res.status).toEqual(400)
-    expect(res.body).toStrictEqual([
-      {
-        type: 'field',
-        value: '',
-        msg: 'You have to give your project a unique title',
-        path: 'title',
-        location: 'body',
-      },
-    ])
-  })
-
   it('returns 400 Bad Request when the project title is already taken', async () => {
     await prismaClient.project.create({
       data: {

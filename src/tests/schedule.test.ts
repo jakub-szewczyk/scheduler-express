@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
 import prismaClient from './client'
 import { ordinals } from '../modules/common'
+import { SCHEDULE, scheduleSelect } from '../modules/schedule'
 
 const AUTHOR_ID = process.env.AUTHOR_ID
 
@@ -37,6 +38,23 @@ describe('GET /projects/:projectId/schedules', () => {
       },
     })
     console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const res = await req
+      .get('/api/projects/abc/schedules')
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+    ])
   })
 
   test('`page`, `size`, `title` and `createdAt` query param being optional', async () => {
@@ -388,6 +406,163 @@ describe('GET /projects/:projectId/schedules', () => {
       },
     ])
   })
+})
 
-  // TODO: Write more tests
+describe('GET /projects/:projectId/schedules/:scheduleId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        schedules: {
+          create: {
+            title: 'Schedule #1',
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .get(`/api/projects/abc/schedules/${schedule.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('returns a schedule by id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst({
+      select: scheduleSelect,
+    }))!
+    const res = await req
+      .get(`/api/projects/${project.id}/schedules/${schedule.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(200)
+    expect(res.body).toStrictEqual({
+      ...schedule,
+      createdAt: schedule.createdAt.toISOString(),
+    })
+  })
+
+  it('returns 404 Not Found in case of invalid schedule id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const res = await req
+      .get(`/api/projects/${project.id}/schedules/abc`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+})
+
+describe('POST /projects/:projectId/schedules', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const res = await req
+      .post('/api/projects/abc/schedules')
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(SCHEDULE)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('creates a schedule', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(SCHEDULE)
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject(SCHEDULE)
+  })
+
+  test('`description` field in request body being optional', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Schedule #1',
+      })
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: 'Schedule #1',
+    })
+  })
+
+  test('`title` field in request body being required', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: '' })
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '',
+        msg: 'You have to give your schedule a unique title',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+  })
+
+  it('returns 400 Bad Request when the schedule title is already taken', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    await prismaClient.schedule.create({
+      data: {
+        title: 'Schedule #1',
+        projectId: project.id,
+      },
+    })
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Schedule #1' })
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'Schedule #1',
+        msg: 'This title has already been used by one of your schedules',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+  })
 })
