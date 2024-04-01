@@ -1,8 +1,9 @@
 import { Note, Prisma } from '@prisma/client'
 
-export const NOTE: Pick<Note, 'title' | 'content'> = {
+export const NOTE: Pick<Note, 'title' | 'description'> = {
   title: 'Note #1',
-  content: Prisma.JsonNull as unknown as Prisma.JsonValue,
+  description:
+    "Edit your note's title and description. Manage your content within it.",
 }
 
 export const noteSelect = {
