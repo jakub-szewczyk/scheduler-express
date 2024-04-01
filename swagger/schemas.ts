@@ -17,10 +17,10 @@
  *       properties:
  *         id:
  *           type: string
- *           example: 074da7fd-a939-4879-a1d6-e2671a82cdfa
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         createdAt:
  *           type: string
- *           example: 2023-12-31T12:41:53.207Z
+ *           example: 2024-03-29T06:33:22.879Z
  *         title:
  *           type: string
  *           example: 'Project #1'
@@ -55,81 +55,16 @@
  *       properties:
  *         id:
  *           type: string
- *           example: clrssbi1c02m02uhbxrgdhnk3
+ *           example: 44bc0029-14b2-4dd4-a538-99fbac92ef48
  *         createdAt:
  *           type: string
- *           example: 2023-12-31T12:41:53.207Z
+ *           example: 2024-03-29T06:33:22.911Z
  *         title:
  *           type: string
  *           example: 'Schedule #1'
- */
-
-/**
- * @openapi
- * components:
- *   schemas:
- *     ScheduleDetails:
- *       type: object
- *       properties:
- *         id:
+ *         description:
  *           type: string
- *           example: clrssbi1c02m02uhbxrgdhnk3
- *         createdAt:
- *           type: string
- *           example: 2023-12-31T12:41:53.207Z
- *         title:
- *           type: string
- *           example: 'Schedule #1'
- *         rows:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Row'
- *           example:
- *             - id: clrssbi1c02m12uhb4oymnoqc
- *               rowId: null
- *               index: 0
- *               day: Monday
- *               starts: null
- *               ends: null
- *               room: null
- *               subject: null
- *               notification: null
- *             - id: clrssbi1c02m22uhbdy1w65e2
- *               rowId: null
- *               index: 1
- *               day: Tuesday
- *               starts: null
- *               ends: null
- *               room: null
- *               subject: null
- *               notification: null
- *             - id: clrssbi1c02m32uhbdt9fejkd
- *               rowId: null
- *               index: 2
- *               day: Wednesday
- *               starts: null
- *               ends: null
- *               room: null
- *               subject: null
- *               notification: null
- *             - id: clrssbi1c02m42uhb5wq6esbv
- *               rowId: null
- *               index: 3
- *               day: Thursday
- *               starts: null
- *               ends: null
- *               room: null
- *               subject: null
- *               notification: null
- *             - id: clrssbi1c02m52uhb6t5bfplr
- *               rowId: null
- *               index: 4
- *               day: Friday
- *               starts: null
- *               ends: null
- *               room: null
- *               subject: null
- *               notification: null
+ *           example: Edit your schedule's title and description. Manage your events within it.
  */
 
 /**
@@ -144,47 +79,7 @@
  *         title:
  *           type: string
  *           example: 'Schedule #1'
- */
-
-/**
- * @openapi
- * components:
- *   schemas:
- *     Row:
- *       type: object
- *       properties:
- *         id:
+ *         description:
  *           type: string
- *           example: clrssbi1c02m12uhb4oymnoqc
- *         rowId:
- *           type: string
- *           example: null
- *           nullable: true
- *         index:
- *           type: integer
- *           example: 0
- *         day:
- *           type: string
- *           enum: [Monday, Tuesday, Wednesday, Thursday, Friday]
- *           example: Monday
- *         starts:
- *           type: string
- *           nullable: true
- *           example: null
- *         ends:
- *           type: string
- *           nullable: true
- *           example: null
- *         room:
- *           type: string
- *           nullable: true
- *           example: null
- *         subject:
- *           type: string
- *           nullable: true
- *           example: null
- *         notification:
- *           type: string
- *           nullable: true
- *           example: null
+ *           example: Edit your schedule's title and description. Manage your events within it.
  */

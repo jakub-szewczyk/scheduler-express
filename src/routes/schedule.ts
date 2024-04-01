@@ -16,7 +16,6 @@ import {
 
 const router = Router()
 
-// TODO: Update openapi desc
 /**
  * @openapi
  * /api/projects/{projectId}/schedules:
@@ -31,7 +30,7 @@ const router = Router()
  *         name: projectId
  *         schema:
  *           type: string
- *           example: 'clrssbgnw00012uhbmyxgs3uf'
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         required: true
  *       - in: query
  *         name: page
@@ -46,10 +45,16 @@ const router = Router()
  *           minimum: 0
  *           default: 10
  *       - in: query
- *         name: name
+ *         name: title
  *         schema:
  *           type: string
  *           default: 'Schedule #10'
+ *       - in: query
+ *         name: createdAt
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *           default: DESC
  *     responses:
  *       200:
  *         description: Returns all schedules
@@ -76,11 +81,25 @@ const router = Router()
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Page number must be a non-negative integer
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  type:
+ *                    type: string
+ *                    example: field
+ *                  value:
+ *                    type: string
+ *                    example: -1
+ *                  msg:
+ *                    type: string
+ *                    example: Page number must be a non-negative integer
+ *                  path:
+ *                    type: string
+ *                    example: page
+ *                  location:
+ *                    type: string
+ *                    example: query
  */
 router.get(
   '/:projectId/schedules',
@@ -102,13 +121,13 @@ router.get(
  *         name: projectId
  *         schema:
  *           type: string
- *           example: 'clrssbgnw00012uhbmyxgs3uf'
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         required: true
  *       - in: path
  *         name: scheduleId
  *         schema:
  *           type: string
- *           example: 'clrssbi1c02m02uhbxrgdhnk3'
+ *           example: 44bc0029-14b2-4dd4-a538-99fbac92ef48
  *         required: true
  *     responses:
  *       200:
@@ -118,17 +137,9 @@ router.get(
  *             schema:
  *               type: object
  *               properties:
- *               $ref: '#/components/schemas/ScheduleDetails'
+ *               $ref: '#/components/schemas/Schedule'
  *       404:
  *         description: Schedule not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Schedule not found
  */
 router.get(
   '/:projectId/schedules/:scheduleId',
@@ -150,8 +161,8 @@ router.get(
  *         name: projectId
  *         schema:
  *           type: string
- *           example: clrssbgnx000h2uhbhmjoatpr
- *           required: true
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
+ *         required: true
  *     requestBody:
  *       required: true
  *       content:
@@ -166,17 +177,31 @@ router.get(
  *             schema:
  *               type: object
  *               properties:
- *               $ref: '#/components/schemas/ScheduleDetails'
+ *               $ref: '#/components/schemas/Schedule'
  *       400:
  *         description: Invalid request body
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: This name has already been used by one of your schedules
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     example: field
+ *                   value:
+ *                     type: string
+ *                     example: 'Schedule #1'
+ *                   msg:
+ *                     type: string
+ *                     example: This title has already been used by one of your schedules
+ *                   path:
+ *                     type: string
+ *                     example: title
+ *                   location:
+ *                     type: string
+ *                     example: body
  */
 router.post(
   '/:projectId/schedules',
@@ -198,20 +223,20 @@ router.post(
  *         name: projectId
  *         schema:
  *           type: string
- *           example: 'clrssbgnw00012uhbmyxgs3uf'
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         required: true
  *       - in: path
  *         name: scheduleId
  *         schema:
  *           type: string
- *           example: 'clrssbi1c02m02uhbxrgdhnk3'
+ *           example: 44bc0029-14b2-4dd4-a538-99fbac92ef48
  *         required: true
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/ScheduleDetails'
+ *             $ref: '#/components/schemas/ScheduleBody'
  *     responses:
  *       200:
  *         description: Returns updated schedule
@@ -220,17 +245,31 @@ router.post(
  *             schema:
  *               type: object
  *               properties:
- *               $ref: '#/components/schemas/ScheduleDetails'
+ *               $ref: '#/components/schemas/Schedule'
  *       400:
  *         description: Invalid request body
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: This name has already been used by one of your schedules
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     example: field
+ *                   value:
+ *                     type: string
+ *                     example: 'Schedule #1'
+ *                   msg:
+ *                     type: string
+ *                     example: This title has already been used by one of your schedules
+ *                   path:
+ *                     type: string
+ *                     example: title
+ *                   location:
+ *                     type: string
+ *                     example: body
  */
 router.put(
   '/:projectId/schedules/:scheduleId',
@@ -252,13 +291,13 @@ router.put(
  *         name: projectId
  *         schema:
  *           type: string
- *           example: clrssbgnw00012uhbmyxgs3uf
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         required: true
  *       - in: path
  *         name: scheduleId
  *         schema:
  *           type: string
- *           example: clrssbi1c02m02uhbxrgdhnk3
+ *           example: 44bc0029-14b2-4dd4-a538-99fbac92ef48
  *         required: true
  *     responses:
  *       200:
@@ -268,17 +307,31 @@ router.put(
  *             schema:
  *               type: object
  *               properties:
- *               $ref: '#/components/schemas/ScheduleDetails'
- *       400:
- *         description: Invalid request body
+ *               $ref: '#/components/schemas/Schedule'
+ *       404:
+ *         description: Schedule not found
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Schedule not found
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     example: field
+ *                   value:
+ *                     type: string
+ *                     example: 44bc0029-14b2-4dd4-a538-99fbac92ef48
+ *                   msg:
+ *                     type: string
+ *                     example: Schedule not found
+ *                   path:
+ *                     type: string
+ *                     example: scheduleId
+ *                   location:
+ *                     type: string
+ *                     example: params
  */
 router.delete(
   '/:projectId/schedules/:scheduleId',

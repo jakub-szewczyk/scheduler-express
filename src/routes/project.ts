@@ -111,7 +111,7 @@ router.get('/', getProjectsValidator, getProjectsController)
  *         name: projectId
  *         schema:
  *           type: string
- *           example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         required: true
  *     responses:
  *       200:
@@ -192,7 +192,7 @@ router.post('/', createProjectValidator, createProjectController)
  *         name: projectId
  *         schema:
  *           type: string
- *           example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         required: true
  *     requestBody:
  *       required: true
@@ -250,7 +250,7 @@ router.put('/:projectId', updateProjectValidator, updateProjectController)
  *         name: projectId
  *         schema:
  *           type: string
- *           example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         required: true
  *     responses:
  *       200:
@@ -275,7 +275,7 @@ router.put('/:projectId', updateProjectValidator, updateProjectController)
  *                     example: field
  *                   value:
  *                     type: string
- *                     example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
+ *                     example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *                   msg:
  *                     type: string
  *                     example: Project not found
