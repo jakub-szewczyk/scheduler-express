@@ -1,13 +1,13 @@
 import { Router } from 'express'
 import boardRoutes from './board'
-// import contentRoutes from './content'
-// import issueRoutes from './issue'
+import eventRoutes from './event'
 import noteRoutes from './note'
 import projectRoutes from './project'
-// import pushSubscriptionRoutes from './pushSubscription'
-// import eventRoutes from './event'
 import scheduleRoutes from './schedule'
+// import pushSubscriptionRoutes from './pushSubscription'
 // import statusRoutes from './status'
+// import issueRoutes from './issue'
+// import contentRoutes from './content'
 
 const router = Router()
 
@@ -15,7 +15,7 @@ router.use('/projects', projectRoutes)
 
 router.use('/projects', scheduleRoutes)
 
-// router.use('/projects', eventRoutes)
+router.use('/projects', eventRoutes)
 
 router.use('/projects', boardRoutes)
 

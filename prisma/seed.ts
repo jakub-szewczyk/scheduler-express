@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker'
 import { Prisma, PrismaClient } from '@prisma/client'
 import { parseArgs } from 'node:util'
 
@@ -44,6 +45,22 @@ const seed = async () => {
                     Date.now() - index * 1000000
                   ).toISOString(),
                   projectId: project.id,
+                  ...(project.id === projects[0].id && {
+                    events: {
+                      createMany: {
+                        data: Array(100)
+                          .fill(null)
+                          .map((_, index, array) => ({
+                            title: `Event #${array.length - index}`,
+                            createdAt: new Date(
+                              Date.now() - index * 1000000
+                            ).toISOString(),
+                            startsAt: faker.date.recent().toISOString(),
+                            endsAt: faker.date.soon().toISOString(),
+                          })),
+                      },
+                    },
+                  }),
                 },
               })
             ),
