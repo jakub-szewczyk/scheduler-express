@@ -1,9 +1,12 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
-import { Prisma } from '@prisma/client'
+import { Event, Prisma } from '@prisma/client'
 import { Request, Response } from 'express'
 import prismaClient from '../client'
 import { eventSelect } from '../modules/event'
 import { paginationParams } from '../modules/pagination'
+import { PaginableResponse } from '../types/pagination'
+
+type EventResponse = Pick<Event, keyof typeof eventSelect>
 
 type GetEventsControllerRequest = WithAuthProp<
   Request<
@@ -21,11 +24,8 @@ type GetEventsControllerRequest = WithAuthProp<
   >
 >
 
-type GetEventsControllerResponse = Response
+type GetEventsControllerResponse = Response<PaginableResponse<EventResponse>>
 
-// TODO:
-// Implement the rest of CRUD ops.
-// Test & document this route handler.
 export const getEventsController = async (
   req: GetEventsControllerRequest,
   res: GetEventsControllerResponse

@@ -42,7 +42,7 @@ export const getEventsValidator = [
     .optional(),
   query(
     'createdAt',
-    'Invalid value was provided for sorting schedules by creation date'
+    'Invalid value was provided for sorting events by creation date'
   )
     .isIn(['ASC', 'DESC'])
     .optional(),
