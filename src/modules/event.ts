@@ -1,4 +1,10 @@
-import { Prisma } from '@prisma/client'
+import { Event, Prisma } from '@prisma/client'
+
+export const EVENT: Pick<Event, 'title' | 'description'> = {
+  title: 'Event #1',
+  description:
+    "Edit your event's title and description. Manage your notification within it.",
+}
 
 export const eventSelect = {
   id: true,

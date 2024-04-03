@@ -159,3 +159,30 @@
  *           type: string
  *           example: Edit your note's title and description. Manage your content within it.
  */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Event:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 4a6e7431-6ef3-42d2-b608-70cdd2fe21bf
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Event #1'
+ *         description:
+ *           type: string
+ *           example: Edit your event's title and description. Manage your notification within it.
+ *         startsAt:
+ *           type: string
+ *           example: 2024-04-02T13:07:37.603Z
+ *         endsAt:
+ *           type: string
+ *           example: 2024-04-03T03:51:13.040Z
+ */
