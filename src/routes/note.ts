@@ -48,7 +48,7 @@ const router = Router()
  *         name: title
  *         schema:
  *           type: string
- *           default: 'Note #10'
+ *           example: 'Note #10'
  *       - in: query
  *         name: createdAt
  *         schema:
