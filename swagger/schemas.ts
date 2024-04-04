@@ -115,6 +115,31 @@
  * @openapi
  * components:
  *   schemas:
+ *     EventBody:
+ *       type: object
+ *       required:
+ *         - title
+ *         - startsAt
+ *         - endsAt
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: 'Event #1'
+ *         description:
+ *           type: string
+ *           example: Edit your event's title and description. Manage your notification within it.
+ *         startsAt:
+ *           type: string
+ *           example: 2024-04-02T13:07:37.603Z
+ *         endsAt:
+ *           type: string
+ *           example: 2024-04-03T03:51:13.040Z
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
  *     Board:
  *       type: object
  *       properties:

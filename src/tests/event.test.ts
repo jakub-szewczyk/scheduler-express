@@ -1,10 +1,11 @@
 import { Event } from '@prisma/client'
+import { omit } from 'ramda'
 import supertest from 'supertest'
 import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
-import prismaClient from './client'
 import { ordinals } from '../modules/common'
-import { eventSelect } from '../modules/event'
+import { EVENT, eventSelect } from '../modules/event'
+import prismaClient from './client'
 
 const AUTHOR_ID = process.env.AUTHOR_ID
 
@@ -736,5 +737,298 @@ describe('GET /projects/:projectId/schedules/:scheduleId/events/:eventId', () =>
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
     expect(res.body).toStrictEqual({})
+  })
+})
+
+describe('POST /projects/:projectId/schedules/:scheduleId/events', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        schedules: {
+          create: {
+            id: 'c82f7267-0423-4cc2-a378-729349095af2',
+            title: 'Schedule #1',
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .post(`/api/projects/abc/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(EVENT)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: 'c82f7267-0423-4cc2-a378-729349095af2',
+        msg: 'Schedule not found',
+        path: 'scheduleId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid schedule id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules/abc/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(EVENT)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Schedule not found',
+        path: 'scheduleId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('creates an event', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(EVENT)
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      ...EVENT,
+      startsAt: EVENT.startsAt.toISOString(),
+      endsAt: EVENT.endsAt.toISOString(),
+    })
+  })
+
+  test('`description` field in request body being optional', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(omit(['description'], EVENT))
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: 'Event #1',
+      startsAt: '2024-04-02T14:25:54.183Z',
+      endsAt: '2024-04-02T18:23:04.809Z',
+    })
+  })
+
+  test('`title` field in request body being required', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(omit(['title'], EVENT))
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '',
+        msg: 'You have to give your event a unique title',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+  })
+
+  it('returns 400 Bad Request when the event title is already taken', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    await prismaClient.event.create({
+      data: {
+        title: 'Event #1',
+        startsAt: '2024-04-02T14:25:54.183Z',
+        endsAt: '2024-04-02T18:23:04.809Z',
+        schedule: {
+          connect: {
+            id: schedule.id,
+            project: {
+              id: project.id,
+              authorId: AUTHOR_ID,
+            },
+          },
+        },
+      },
+    })
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(EVENT)
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'Event #1',
+        msg: 'This title has already been used by one of your events',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+  })
+
+  test('`startsAt` field in request body being required', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(omit(['startsAt'], EVENT))
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        msg: 'You have to assign a start date to your event',
+        path: 'startsAt',
+        location: 'body',
+      },
+      {
+        type: 'field',
+        msg: 'Start date must follow the ISO 8601 standard',
+        path: 'startsAt',
+        location: 'body',
+      },
+    ])
+  })
+
+  test('`startsAt` field in request body following ISO 8601 standard', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ ...EVENT, startsAt: 'abc' })
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Start date must follow the ISO 8601 standard',
+        path: 'startsAt',
+        location: 'body',
+      },
+    ])
+  })
+
+  test('`endsAt` field in request body being required', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(omit(['endsAt'], EVENT))
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        msg: 'You have to assign an end date to your event',
+        path: 'endsAt',
+        location: 'body',
+      },
+      {
+        type: 'field',
+        msg: 'End date must follow the ISO 8601 standard',
+        path: 'endsAt',
+        location: 'body',
+      },
+    ])
+  })
+
+  test('`endsAt` field in request body following ISO 8601 standard', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ ...EVENT, endsAt: 'abc' })
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'End date must follow the ISO 8601 standard',
+        path: 'endsAt',
+        location: 'body',
+      },
+    ])
+  })
+
+  test('`endsAt` being greater than or equal to the `startsAt`', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res1 = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ ...EVENT, endsAt: '2024-04-02T13:23:04.809Z' })
+    expect(res1.status).toEqual(400)
+    expect(res1.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '2024-04-02T13:23:04.809Z',
+        msg: 'End date cannot precede the start date',
+        path: 'endsAt',
+        location: 'body',
+      },
+    ])
+    const res2 = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ ...EVENT, endsAt: '2024-04-02T14:25:54.183Z' })
+    expect(res2.status).toEqual(201)
+    expect(res2.body).toHaveProperty('id')
+    expect(res2.body).toHaveProperty('createdAt')
+    expect(res2.body).toMatchObject({
+      ...EVENT,
+      startsAt: EVENT.startsAt.toISOString(),
+      endsAt: '2024-04-02T14:25:54.183Z',
+    })
+    await prismaClient.event.deleteMany()
+    const res3 = await req
+      .post(`/api/projects/${project.id}/schedules/${schedule.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(EVENT)
+    expect(res3.status).toEqual(201)
+    expect(res3.body).toHaveProperty('id')
+    expect(res3.body).toHaveProperty('createdAt')
+    expect(res3.body).toMatchObject({
+      ...EVENT,
+      startsAt: EVENT.startsAt.toISOString(),
+      endsAt: EVENT.endsAt.toISOString(),
+    })
   })
 })

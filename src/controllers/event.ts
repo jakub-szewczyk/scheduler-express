@@ -114,3 +114,43 @@ export const getEventController = async (
     return res.status(500).end()
   }
 }
+
+type CreateEventControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; scheduleId: string },
+    object,
+    Pick<Event, 'title' | 'description' | 'startsAt' | 'endsAt'>
+  >
+>
+
+type CreateEventControllerResponse = Response<EventResponse>
+
+export const createEventController = async (
+  req: CreateEventControllerRequest,
+  res: CreateEventControllerResponse
+) => {
+  try {
+    const event = await prismaClient.event.create({
+      select: eventSelect,
+      data: {
+        title: req.body.title,
+        description: req.body.description,
+        startsAt: req.body.startsAt,
+        endsAt: req.body.endsAt,
+        schedule: {
+          connect: {
+            id: req.params.scheduleId,
+            project: {
+              id: req.params.projectId,
+              authorId: req.auth.userId!,
+            },
+          },
+        },
+      },
+    })
+    return res.status(201).json(event)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}

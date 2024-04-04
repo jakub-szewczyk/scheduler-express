@@ -86,24 +86,22 @@ export const updateScheduleValidator = [
       throw new Error('Project not found')
     }
   }),
-  param('scheduleId')
-    .notEmpty()
-    .custom(async (scheduleId: string, { req }) => {
-      try {
-        await prismaClient.schedule.findFirstOrThrow({
-          where: {
-            id: scheduleId,
-            project: {
-              id: req.params!.projectId,
-              authorId: req.auth.userId,
-            },
+  param('scheduleId').custom(async (scheduleId: string, { req }) => {
+    try {
+      await prismaClient.schedule.findFirstOrThrow({
+        where: {
+          id: scheduleId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
           },
-        })
-      } catch (error) {
-        req.statusCode = 404
-        throw new Error('Schedule not found')
-      }
-    }),
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Schedule not found')
+    }
+  }),
   body('title', 'You have to give your schedule a unique title')
     .trim()
     .notEmpty()
@@ -138,23 +136,21 @@ export const deleteScheduleValidator = [
       throw new Error('Project not found')
     }
   }),
-  param('scheduleId')
-    .notEmpty()
-    .custom(async (scheduleId: string, { req }) => {
-      try {
-        await prismaClient.schedule.findFirstOrThrow({
-          where: {
-            id: scheduleId,
-            project: {
-              id: req.params!.projectId,
-              authorId: req.auth.userId,
-            },
+  param('scheduleId').custom(async (scheduleId: string, { req }) => {
+    try {
+      await prismaClient.schedule.findFirstOrThrow({
+        where: {
+          id: scheduleId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
           },
-        })
-      } catch (error) {
-        req.statusCode = 404
-        throw new Error('Schedule not found')
-      }
-    }),
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Schedule not found')
+    }
+  }),
   validationMiddleware,
 ]

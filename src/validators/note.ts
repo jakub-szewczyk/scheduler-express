@@ -84,24 +84,22 @@ export const updateNoteValidator = [
       throw new Error('Project not found')
     }
   }),
-  param('noteId')
-    .notEmpty()
-    .custom(async (noteId: string, { req }) => {
-      try {
-        await prismaClient.note.findFirstOrThrow({
-          where: {
-            id: noteId,
-            project: {
-              id: req.params!.projectId,
-              authorId: req.auth.userId,
-            },
+  param('noteId').custom(async (noteId: string, { req }) => {
+    try {
+      await prismaClient.note.findFirstOrThrow({
+        where: {
+          id: noteId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
           },
-        })
-      } catch (error) {
-        req.statusCode = 404
-        throw new Error('Note not found')
-      }
-    }),
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Note not found')
+    }
+  }),
   body('title', 'You have to give your note a unique title')
     .trim()
     .notEmpty()
@@ -134,23 +132,21 @@ export const deleteNoteValidator = [
       throw new Error('Project not found')
     }
   }),
-  param('noteId')
-    .notEmpty()
-    .custom(async (noteId: string, { req }) => {
-      try {
-        await prismaClient.note.findFirstOrThrow({
-          where: {
-            id: noteId,
-            project: {
-              id: req.params!.projectId,
-              authorId: req.auth.userId,
-            },
+  param('noteId').custom(async (noteId: string, { req }) => {
+    try {
+      await prismaClient.note.findFirstOrThrow({
+        where: {
+          id: noteId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
           },
-        })
-      } catch (error) {
-        req.statusCode = 404
-        throw new Error('Note not found')
-      }
-    }),
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Note not found')
+    }
+  }),
   validationMiddleware,
 ]

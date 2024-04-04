@@ -86,24 +86,22 @@ export const updateBoardValidator = [
       throw new Error('Project not found')
     }
   }),
-  param('boardId')
-    .notEmpty()
-    .custom(async (boardId: string, { req }) => {
-      try {
-        await prismaClient.board.findFirstOrThrow({
-          where: {
-            id: boardId,
-            project: {
-              id: req.params!.projectId,
-              authorId: req.auth.userId,
-            },
+  param('boardId').custom(async (boardId: string, { req }) => {
+    try {
+      await prismaClient.board.findFirstOrThrow({
+        where: {
+          id: boardId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
           },
-        })
-      } catch (error) {
-        req.statusCode = 404
-        throw new Error('Board not found')
-      }
-    }),
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Board not found')
+    }
+  }),
   body('title', 'You have to give your board a unique title')
     .trim()
     .notEmpty()
@@ -138,23 +136,21 @@ export const deleteBoardValidator = [
       throw new Error('Project not found')
     }
   }),
-  param('boardId')
-    .notEmpty()
-    .custom(async (boardId: string, { req }) => {
-      try {
-        await prismaClient.board.findFirstOrThrow({
-          where: {
-            id: boardId,
-            project: {
-              id: req.params!.projectId,
-              authorId: req.auth.userId,
-            },
+  param('boardId').custom(async (boardId: string, { req }) => {
+    try {
+      await prismaClient.board.findFirstOrThrow({
+        where: {
+          id: boardId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
           },
-        })
-      } catch (error) {
-        req.statusCode = 404
-        throw new Error('Board not found')
-      }
-    }),
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Board not found')
+    }
+  }),
   validationMiddleware,
 ]

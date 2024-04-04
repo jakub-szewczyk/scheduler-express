@@ -16,11 +16,7 @@ Express REST API v2.0.0
 
 ### Test
 
-- Schedules module.
-
-- Boards module.
-
-- Notes module.
+- Entity ownership.
 
 - Notification cron job.
 
