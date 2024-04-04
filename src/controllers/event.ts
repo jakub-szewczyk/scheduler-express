@@ -83,3 +83,34 @@ export const getEventsController = async (
     return res.status(500).end()
   }
 }
+
+type GetEventControllerRequest = WithAuthProp<
+  Request<{ projectId: string; scheduleId: string; eventId: string }>
+>
+
+type GetEventControllerResponse = Response<EventResponse>
+
+export const getEventController = async (
+  req: GetEventControllerRequest,
+  res: GetEventControllerResponse
+) => {
+  try {
+    const event = await prismaClient.event.findUnique({
+      select: eventSelect,
+      where: {
+        id: req.params.eventId,
+        schedule: {
+          id: req.params.scheduleId,
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+      },
+    })
+    return event ? res.json(event) : res.status(404).end()
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}

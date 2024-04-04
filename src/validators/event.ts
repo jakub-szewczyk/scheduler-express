@@ -54,3 +54,10 @@ export const getEventsValidator = [
     .optional(),
   validationMiddleware,
 ]
+
+export const getEventValidator = [
+  param('projectId').notEmpty(),
+  param('scheduleId').notEmpty(),
+  param('eventId').notEmpty(),
+  validationMiddleware,
+]

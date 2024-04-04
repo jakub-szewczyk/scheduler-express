@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
 import prismaClient from './client'
 import { ordinals } from '../modules/common'
+import { eventSelect } from '../modules/event'
 
 const AUTHOR_ID = process.env.AUTHOR_ID
 
@@ -658,5 +659,82 @@ describe('GET /projects/:projectId/schedules/:scheduleId/events', () => {
       total: 0,
     })
     expect(events).toHaveLength(0)
+  })
+})
+
+describe('GET /projects/:projectId/schedules/:scheduleId/events/:eventId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        schedules: {
+          create: {
+            title: 'Schedule #1',
+            events: {
+              create: {
+                title: 'Event #1',
+                startsAt: '2024-04-02T13:07:37.603Z',
+                endsAt: '2024-04-03T03:51:13.040Z',
+              },
+            },
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const event = (await prismaClient.event.findFirst())!
+    const res = await req
+      .get(`/api/projects/abc/schedules/${schedule.id}/events/${event.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('returns 404 Not Found in case of invalid schedule id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const event = (await prismaClient.event.findFirst())!
+    const res = await req
+      .get(`/api/projects/${project.id}/schedules/abc/events/${event.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('returns an event by id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const event = (await prismaClient.event.findFirst({ select: eventSelect }))!
+    const res = await req
+      .get(
+        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(200)
+    expect(res.body).toStrictEqual({
+      ...event,
+      createdAt: event.createdAt.toISOString(),
+      startsAt: event.startsAt.toISOString(),
+      endsAt: event.endsAt.toISOString(),
+    })
+  })
+
+  it('returns 404 Not Found in case of invalid event id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .get(`/api/projects/${project.id}/schedules/${schedule.id}/events/abc`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
   })
 })
