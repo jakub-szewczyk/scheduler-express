@@ -1,12 +1,14 @@
 import { Router } from 'express'
 import {
   createEventController,
+  deleteEventController,
   getEventController,
   getEventsController,
   updateEventController,
 } from '../controllers/event'
 import {
   createEventValidator,
+  deleteEventValidator,
   getEventValidator,
   getEventsValidator,
   updateEventValidator,
@@ -307,6 +309,74 @@ router.put(
   '/:projectId/schedules/:scheduleId/events/:eventId',
   updateEventValidator,
   updateEventController
+)
+
+/**
+ * @openapi
+ * /api/projects/{projectId}/schedules/{scheduleId}/events/{eventId}:
+ *   delete:
+ *     security:
+ *       - bearerAuth: []
+ *     tags:
+ *       - Event
+ *     summary: Delete event
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         schema:
+ *           type: string
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
+ *         required: true
+ *       - in: path
+ *         name: scheduleId
+ *         schema:
+ *           type: string
+ *           example: 44bc0029-14b2-4dd4-a538-99fbac92ef48
+ *         required: true
+ *       - in: path
+ *         name: eventId
+ *         schema:
+ *           type: string
+ *           example: 4a6e7431-6ef3-42d2-b608-70cdd2fe21bf
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Returns deleted event
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *               $ref: '#/components/schemas/Event'
+ *       404:
+ *         description: Event not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     example: field
+ *                   value:
+ *                     type: string
+ *                     example: 44bc0029-14b2-4dd4-a538-99fbac92ef48
+ *                   msg:
+ *                     type: string
+ *                     example: Event not found
+ *                   path:
+ *                     type: string
+ *                     example: eventId
+ *                   location:
+ *                     type: string
+ *                     example: params
+ */
+router.delete(
+  '/:projectId/schedules/:scheduleId/events/:eventId',
+  deleteEventValidator,
+  deleteEventController
 )
 
 export default router

@@ -1554,85 +1554,158 @@ describe('PUT /projects/:projectId/schedules/:scheduleId/events/:eventId', () =>
   })
 })
 
-// describe('DELETE /projects/:projectId/schedules/:scheduleId', () => {
-//   beforeEach(async () => {
-//     console.log('⏳[test]: seeding database...')
-//     await prismaClient.project.create({
-//       data: {
-//         title: 'Project #1',
-//         authorId: AUTHOR_ID,
-//       },
-//     })
-//     console.log('✅[test]: seeding finished')
-//   })
-//
-//   it('returns 404 Not Found in case of invalid project id', async () => {
-//     const project = (await prismaClient.project.findFirst())!
-//     const schedule = await prismaClient.schedule.create({
-//       select: scheduleSelect,
-//       data: {
-//         title: 'Schedule #1',
-//         projectId: project.id,
-//       },
-//     })
-//     const res = await req
-//       .delete(`/api/projects/abc/schedules/${schedule.id}`)
-//       .set('Accept', 'application/json')
-//       .set('Authorization', BEARER_TOKEN)
-//     expect(res.status).toEqual(404)
-//     expect(res.body).toStrictEqual([
-//       {
-//         type: 'field',
-//         value: 'abc',
-//         msg: 'Project not found',
-//         path: 'projectId',
-//         location: 'params',
-//       },
-//       {
-//         type: 'field',
-//         value: schedule.id,
-//         msg: 'Schedule not found',
-//         path: 'scheduleId',
-//         location: 'params',
-//       },
-//     ])
-//   })
-//
-//   it('deletes a schedule', async () => {
-//     const project = (await prismaClient.project.findFirst())!
-//     const schedule = await prismaClient.schedule.create({
-//       select: scheduleSelect,
-//       data: {
-//         title: 'Schedule #1',
-//         projectId: project.id,
-//       },
-//     })
-//     const res = await req
-//       .delete(`/api/projects/${project.id}/schedules/${schedule.id}`)
-//       .set('Accept', 'application/json')
-//       .set('Authorization', BEARER_TOKEN)
-//     expect(res.status).toEqual(200)
-//     expect(res.body).toMatchObject({
-//       ...schedule,
-//       createdAt: schedule.createdAt.toISOString(),
-//     })
-//   })
-//
-//   it('returns 404 Not Found in case of invalid schedule id', async () => {
-//     const project = (await prismaClient.project.findFirst())!
-//     const res = await req
-//       .delete(`/api/projects/${project.id}/schedules/abc`)
-//       .set('Accept', 'application/json')
-//       .set('Authorization', BEARER_TOKEN)
-//     expect(res.status).toEqual(404)
-//     expect(res.body).toStrictEqual([
-//       {
-//         type: 'field',
-//         value: 'abc',
-//         msg: 'Schedule not found',
-//         path: 'scheduleId',
-//         location: 'params',
-//       },
-//     ])
-//   })
-// })
+describe('DELETE /projects/:projectId/schedules/:scheduleId/events/:eventId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        schedules: {
+          create: {
+            title: 'Schedule #1',
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const event = await prismaClient.event.create({
+      select: eventSelect,
+      data: {
+        title: 'Event #1',
+        startsAt: '2024-04-02T13:07:37.603Z',
+        endsAt: '2024-04-03T03:51:13.040Z',
+        schedule: {
+          connect: {
+            id: schedule.id,
+            projectId: project.id,
+          },
+        },
+      },
+    })
+    const res = await req
+      .delete(`/api/projects/abc/schedules/${schedule.id}/events/${event.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: schedule.id,
+        msg: 'Schedule not found',
+        path: 'scheduleId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: event.id,
+        msg: 'Event not found',
+        path: 'eventId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid schedule id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const event = await prismaClient.event.create({
+      select: eventSelect,
+      data: {
+        title: 'Event #1',
+        startsAt: '2024-04-02T13:07:37.603Z',
+        endsAt: '2024-04-03T03:51:13.040Z',
+        schedule: {
+          connect: {
+            id: schedule.id,
+            projectId: project.id,
+          },
+        },
+      },
+    })
+    const res = await req
+      .delete(`/api/projects/${project.id}/schedules/abc/events/${event.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Schedule not found',
+        path: 'scheduleId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: event.id,
+        msg: 'Event not found',
+        path: 'eventId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('deletes an event', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const event = await prismaClient.event.create({
+      select: eventSelect,
+      data: {
+        title: 'Event #1',
+        startsAt: '2024-04-02T13:07:37.603Z',
+        endsAt: '2024-04-03T03:51:13.040Z',
+        schedule: {
+          connect: {
+            id: schedule.id,
+            projectId: project.id,
+          },
+        },
+      },
+    })
+    const res = await req
+      .delete(
+        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(200)
+    expect(res.body).toMatchObject({
+      ...event,
+      createdAt: event.createdAt.toISOString(),
+      startsAt: event.startsAt.toISOString(),
+      endsAt: event.endsAt.toISOString(),
+    })
+  })
+
+  it('returns 404 Not Found in case of invalid event id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .delete(`/api/projects/${project.id}/schedules/${schedule.id}/events/abc`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Event not found',
+        path: 'eventId',
+        location: 'params',
+      },
+    ])
+  })
+})

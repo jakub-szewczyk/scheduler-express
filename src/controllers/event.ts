@@ -195,3 +195,34 @@ export const updateEventController = async (
     return res.status(500).end()
   }
 }
+
+type DeleteEventControllerRequest = WithAuthProp<
+  Request<{ projectId: string; scheduleId: string; eventId: string }>
+>
+
+type DeleteEventControllerResponse = Response<EventResponse>
+
+export const deleteEventController = async (
+  req: DeleteEventControllerRequest,
+  res: DeleteEventControllerResponse
+) => {
+  try {
+    const event = await prismaClient.event.delete({
+      select: eventSelect,
+      where: {
+        id: req.params.eventId,
+        schedule: {
+          id: req.params.scheduleId,
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+      },
+    })
+    return res.json(event)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
