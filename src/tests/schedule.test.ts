@@ -589,11 +589,27 @@ describe('PUT /projects/:projectId/schedules/:scheduleId', () => {
       },
     })
     const res = await req
-      .get(`/api/projects/abc/schedules/${schedule.id}`)
+      .put(`/api/projects/abc/schedules/${schedule.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
+      .send(SCHEDULE)
     expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual({})
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: schedule.id,
+        msg: 'Schedule not found',
+        path: 'scheduleId',
+        location: 'params',
+      },
+    ])
   })
 
   it('updates a schedule', async () => {
@@ -768,11 +784,26 @@ describe('DELETE /projects/:projectId/schedules/:scheduleId', () => {
       },
     })
     const res = await req
-      .get(`/api/projects/abc/schedules/${schedule.id}`)
+      .delete(`/api/projects/abc/schedules/${schedule.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual({})
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: schedule.id,
+        msg: 'Schedule not found',
+        path: 'scheduleId',
+        location: 'params',
+      },
+    ])
   })
 
   it('deletes a schedule', async () => {

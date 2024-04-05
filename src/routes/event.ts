@@ -3,11 +3,13 @@ import {
   createEventController,
   getEventController,
   getEventsController,
+  updateEventController,
 } from '../controllers/event'
 import {
   createEventValidator,
   getEventValidator,
   getEventsValidator,
+  updateEventValidator,
 } from '../validators/event'
 
 const router = Router()
@@ -231,6 +233,80 @@ router.post(
   '/:projectId/schedules/:scheduleId/events',
   createEventValidator,
   createEventController
+)
+
+/**
+ * @openapi
+ * /api/projects/{projectId}/schedules/{scheduleId}/events/{eventId}:
+ *   put:
+ *     security:
+ *       - bearerAuth: []
+ *     tags:
+ *       - Event
+ *     summary: Update event
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         schema:
+ *           type: string
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
+ *         required: true
+ *       - in: path
+ *         name: scheduleId
+ *         schema:
+ *           type: string
+ *           example: 44bc0029-14b2-4dd4-a538-99fbac92ef48
+ *         required: true
+ *       - in: path
+ *         name: eventId
+ *         schema:
+ *           type: string
+ *           example: 4a6e7431-6ef3-42d2-b608-70cdd2fe21bf
+ *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/EventBody'
+ *     responses:
+ *       200:
+ *         description: Returns updated event
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *               $ref: '#/components/schemas/Event'
+ *       400:
+ *         description: Invalid request body
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     example: field
+ *                   value:
+ *                     type: string
+ *                     example: 'Event #1'
+ *                   msg:
+ *                     type: string
+ *                     example: This title has already been used by one of your events
+ *                   path:
+ *                     type: string
+ *                     example: title
+ *                   location:
+ *                     type: string
+ *                     example: body
+ */
+router.put(
+  '/:projectId/schedules/:scheduleId/events/:eventId',
+  updateEventValidator,
+  updateEventController
 )
 
 export default router

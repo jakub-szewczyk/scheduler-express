@@ -593,11 +593,27 @@ describe('PUT /projects/:projectId/notes/:noteId', () => {
       },
     })
     const res = await req
-      .get(`/api/projects/abc/notes/${note.id}`)
+      .put(`/api/projects/abc/notes/${note.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
+      .send(NOTE)
     expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual({})
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: note.id,
+        msg: 'Note not found',
+        path: 'noteId',
+        location: 'params',
+      },
+    ])
   })
 
   it('updates a note', async () => {
@@ -778,11 +794,26 @@ describe('DELETE /projects/:projectId/notes/:noteId', () => {
       },
     })
     const res = await req
-      .get(`/api/projects/abc/notes/${note.id}`)
+      .delete(`/api/projects/abc/notes/${note.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual({})
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: note.id,
+        msg: 'Note not found',
+        path: 'noteId',
+        location: 'params',
+      },
+    ])
   })
 
   it('deletes a note', async () => {

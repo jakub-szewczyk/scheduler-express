@@ -154,3 +154,44 @@ export const createEventController = async (
     return res.status(500).end()
   }
 }
+
+type UpdateEventControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; scheduleId: string; eventId: string },
+    object,
+    Pick<Event, 'title' | 'description' | 'startsAt' | 'endsAt'>
+  >
+>
+
+type UpdateEventControllerResponse = Response<EventResponse>
+
+export const updateEventController = async (
+  req: UpdateEventControllerRequest,
+  res: UpdateEventControllerResponse
+) => {
+  try {
+    const event = await prismaClient.event.update({
+      select: eventSelect,
+      where: {
+        id: req.params.eventId,
+        schedule: {
+          id: req.params.scheduleId,
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+      },
+      data: {
+        title: req.body.title,
+        description: req.body.description,
+        startsAt: req.body.startsAt,
+        endsAt: req.body.endsAt,
+      },
+    })
+    return res.json(event)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}

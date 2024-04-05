@@ -589,11 +589,27 @@ describe('PUT /projects/:projectId/boards/:boardId', () => {
       },
     })
     const res = await req
-      .get(`/api/projects/abc/boards/${board.id}`)
+      .put(`/api/projects/abc/boards/${board.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
+      .send(BOARD)
     expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual({})
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: board.id,
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+    ])
   })
 
   it('updates a board', async () => {
@@ -768,11 +784,26 @@ describe('DELETE /projects/:projectId/boards/:boardId', () => {
       },
     })
     const res = await req
-      .get(`/api/projects/abc/boards/${board.id}`)
+      .delete(`/api/projects/abc/boards/${board.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual({})
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: board.id,
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+    ])
   })
 
   it('deletes a board', async () => {
