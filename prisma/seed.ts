@@ -33,65 +33,73 @@ const seed = async () => {
             })
           ),
       ])
-      await Promise.all([
-        ...projects.flatMap((project) => [
-          ...Array(100)
-            .fill(null)
-            .map((_, index, array) =>
-              prismaClient.schedule.create({
-                data: {
-                  title: `Schedule #${array.length - index}`,
-                  createdAt: new Date(
-                    Date.now() - index * 1000000
-                  ).toISOString(),
-                  projectId: project.id,
-                  ...(project.id === projects[0].id && {
-                    events: {
-                      createMany: {
-                        data: Array(100)
-                          .fill(null)
-                          .map((_, index, array) => ({
-                            title: `Event #${array.length - index}`,
-                            createdAt: new Date(
-                              Date.now() - index * 1000000
-                            ).toISOString(),
-                            startsAt: faker.date.recent().toISOString(),
-                            endsAt: faker.date.soon().toISOString(),
-                          })),
-                      },
-                    },
-                  }),
-                },
-              })
-            ),
-          ...Array(100)
-            .fill(null)
-            .map((_, index, array) =>
-              prismaClient.board.create({
-                data: {
-                  title: `Board #${array.length - index}`,
-                  createdAt: new Date(
-                    Date.now() - index * 1000000
-                  ).toISOString(),
-                  projectId: project.id,
-                },
-              })
-            ),
-          ...Array(100)
-            .fill(null)
-            .map((_, index, array) =>
-              prismaClient.note.create({
-                data: {
-                  title: `Note #${array.length - index}`,
-                  content: Prisma.JsonNull,
-                  createdAt: new Date(
-                    Date.now() - index * 1000000
-                  ).toISOString(),
-                  projectId: project.id,
-                },
-              })
-            ),
-        ]),
+      const schedules = await Promise.all([
+        ...Array(100)
+          .fill(null)
+          .map((_, index, array) =>
+            prismaClient.schedule.create({
+              data: {
+                title: `Schedule #${array.length - index}`,
+                createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+                projectId: projects[0].id,
+              },
+            })
+          ),
+      ])
+      const events = await Promise.all([
+        ...Array(100)
+          .fill(null)
+          .map((_, index, array) =>
+            prismaClient.event.create({
+              data: {
+                title: `Event #${array.length - index}`,
+                createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+                startsAt: faker.date.recent().toISOString(),
+                endsAt: faker.date.soon().toISOString(),
+                scheduleId: schedules[0].id,
+              },
+            })
+          ),
+      ])
+      /* const notifications = */ await Promise.all([
+        ...events.map((event, index, array) =>
+          prismaClient.notification.create({
+            data: {
+              title: `Notification #${array.length - index}`,
+              createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+              startsAt: faker.date.recent().toISOString(),
+              isActive: true,
+              eventId: event.id,
+            },
+          })
+        ),
+      ])
+      /* const boards = */ await Promise.all([
+        ...Array(100)
+          .fill(null)
+          .map((_, index, array) =>
+            prismaClient.board.create({
+              data: {
+                title: `Board #${array.length - index}`,
+                createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+                projectId: projects[0].id,
+              },
+            })
+          ),
+      ])
+      /* const notes = */ await Promise.all([
+        ...Array(100)
+          .fill(null)
+          .map((_, index, array) =>
+            prismaClient.note.create({
+              data: {
+                title: `Note #${array.length - index}`,
+                createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+                content: Prisma.JsonNull,
+                projectId: projects[0].id,
+              },
+            })
+          ),
       ])
       return projects
     },

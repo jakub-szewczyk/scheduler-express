@@ -1,16 +1,16 @@
 import 'dotenv/config'
-import webpush from 'web-push'
 import app from './app'
-// import { schedulePushNotificationJobs } from './modules/notification'
 import swaggerRoutes from './routes/swagger'
+// import webpush from 'web-push'
+// import { schedulePushNotificationJobs } from './modules/notification'
 
 const PORT = process.env.PORT
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT!,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_SECRET_KEY!
-)
+// webpush.setVapidDetails(
+//   process.env.VAPID_SUBJECT!,
+//   process.env.VAPID_PUBLIC_KEY!,
+//   process.env.VAPID_SECRET_KEY!
+// )
 
 app.use('/api-docs', swaggerRoutes)
 
