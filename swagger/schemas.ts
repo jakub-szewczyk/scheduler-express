@@ -115,6 +115,33 @@
  * @openapi
  * components:
  *   schemas:
+ *     Notification:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 119b58d1-82a2-44eb-ab2b-e5ba8ae1e870
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Notification #1'
+ *         description:
+ *           type: string
+ *           example: Edit your notification's details. By subscribing to it, you'll receive reminders about your events.
+ *         startsAt:
+ *           type: string
+ *           example: 2024-04-02T13:07:37.603Z
+ *         isActive:
+ *           type: boolean
+ *           example: true
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
  *     EventBody:
  *       type: object
  *       required:
