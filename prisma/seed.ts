@@ -61,19 +61,14 @@ const seed = async () => {
             })
           ),
       ])
-      /* const notifications = */ await Promise.all([
-        ...events.map((event, index, array) =>
-          prismaClient.notification.create({
-            data: {
-              title: `Notification #${array.length - index}`,
-              createdAt: new Date(Date.now() - index * 1000000).toISOString(),
-              startsAt: faker.date.recent().toISOString(),
-              isActive: true,
-              eventId: event.id,
-            },
-          })
-        ),
-      ])
+      await prismaClient.notification.create({
+        data: {
+          title: 'Notification #1',
+          startsAt: faker.date.recent().toISOString(),
+          eventId: events[0].id,
+        },
+      })
+
       /* const boards = */ await Promise.all([
         ...Array(100)
           .fill(null)
@@ -107,14 +102,14 @@ const seed = async () => {
   )
 }
 
-// Main
-;(async () => {
-  try {
-    await seed()
-    await prismaClient.$disconnect()
-  } catch (error) {
-    console.error(error)
-    await prismaClient.$disconnect()
-    process.exit(1)
-  }
-})()
+  // Main
+  ; (async () => {
+    try {
+      await seed()
+      await prismaClient.$disconnect()
+    } catch (error) {
+      console.error(error)
+      await prismaClient.$disconnect()
+      process.exit(1)
+    }
+  })()
