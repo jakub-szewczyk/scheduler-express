@@ -134,7 +134,7 @@ export const createEventController = async (
       select: eventSelect,
       data: {
         title: req.body.title,
-        description: req.body.description,
+        description: req.body.description || null,
         startsAt: req.body.startsAt,
         endsAt: req.body.endsAt,
         schedule: {

@@ -112,7 +112,7 @@ export const createBoardController = async (
       select: boardSelect,
       data: {
         title: req.body.title,
-        description: req.body.description,
+        description: req.body.description || null,
         projectId: req.params.projectId,
       },
     })

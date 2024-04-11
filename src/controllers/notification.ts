@@ -116,7 +116,7 @@ export const updateNotificationController = async (
       },
       data: {
         title: req.body.title,
-        description: req.body.description,
+        description: req.body.description || null,
         startsAt: req.body.startsAt,
         isActive: req.body.isActive,
       },

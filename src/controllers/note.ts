@@ -150,7 +150,7 @@ export const updateNoteController = async (
       },
       data: {
         title: req.body.title,
-        description: req.body.description,
+        description: req.body.description || null,
       },
     })
     return res.json(note)
