@@ -2,10 +2,12 @@ import { Router } from 'express'
 import {
   createNotificationController,
   getNotificationController,
+  updateNotificationController,
 } from '../controllers/notification'
 import {
   createNotificationValidator,
   getNotificationValidator,
+  updateNotificationValidator,
 } from '../validators/notification'
 
 const router = Router()
@@ -126,6 +128,12 @@ router.post(
   '/:projectId/schedules/:scheduleId/events/:eventId/notification',
   createNotificationValidator,
   createNotificationController
+)
+
+router.put(
+  '/:projectId/schedules/:scheduleId/events/:eventId/notification',
+  updateNotificationValidator,
+  updateNotificationController
 )
 
 export default router

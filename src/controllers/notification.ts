@@ -83,3 +83,47 @@ export const createNotificationController = async (
     return res.status(500).end()
   }
 }
+
+type UpdateNotificationControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; scheduleId: string; eventId: string },
+    object,
+    Pick<Notification, 'title' | 'description' | 'startsAt' | 'isActive'>
+  >
+>
+
+type UpdateNotificationControllerResponse = Response<NotificationResponse>
+
+export const updateNotificationController = async (
+  req: UpdateNotificationControllerRequest,
+  res: UpdateNotificationControllerResponse
+) => {
+  try {
+    const notification = await prismaClient.notification.update({
+      select: notificationSelect,
+      where: {
+        id: req.event!.notification.id,
+        event: {
+          id: req.params.eventId,
+          schedule: {
+            id: req.params.scheduleId,
+            project: {
+              id: req.params.projectId,
+              authorId: req.auth.userId!,
+            },
+          },
+        },
+      },
+      data: {
+        title: req.body.title,
+        description: req.body.description,
+        startsAt: req.body.startsAt,
+        isActive: req.body.isActive,
+      },
+    })
+    return res.json(notification)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
