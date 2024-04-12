@@ -3,7 +3,7 @@ import supertest from 'supertest'
 import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
 import { EVENT } from '../modules/event'
-import { NOTIFICATION } from '../modules/notification'
+import { NOTIFICATION, notificationSelect } from '../modules/notification'
 import prismaClient from './client'
 
 const AUTHOR_ID = process.env.AUTHOR_ID
@@ -576,7 +576,6 @@ describe('PUT /projects/:projectId/schedules/:scheduleId/events/:eventId/notific
     })
   })
 
-  // TODO
   it('fails to update a notification for a given event as it does not have one', async () => {
     const project = (await prismaClient.project.findFirst())!
     const schedule = (await prismaClient.schedule.findFirst())!
@@ -594,7 +593,7 @@ describe('PUT /projects/:projectId/schedules/:scheduleId/events/:eventId/notific
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send(NOTIFICATION)
-    expect(res.status).toEqual(400)
+    expect(res.status).toEqual(404)
     expect(res.body).toStrictEqual([
       {
         type: 'field',
@@ -759,6 +758,186 @@ describe('PUT /projects/:projectId/schedules/:scheduleId/events/:eventId/notific
         msg: 'Invalid value was provided for setting the initial active state',
         path: 'isActive',
         location: 'body',
+      },
+    ])
+  })
+})
+
+describe('DELETE /projects/:projectId/schedules/:scheduleId/events/:eventId/notification', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        schedules: {
+          create: {
+            title: 'Schedule #1',
+            events: {
+              create: {
+                ...EVENT,
+                notification: {
+                  create: NOTIFICATION,
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const event = (await prismaClient.event.findFirst())!
+    const res = await req
+      .delete(
+        `/api/projects/abc/schedules/${schedule.id}/events/${event.id}/notification`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        location: 'params',
+        msg: 'Project not found',
+        path: 'projectId',
+        type: 'field',
+        value: 'abc',
+      },
+      {
+        location: 'params',
+        msg: 'Schedule not found',
+        path: 'scheduleId',
+        type: 'field',
+        value: schedule.id,
+      },
+      {
+        location: 'params',
+        msg: 'Event not found',
+        path: 'eventId',
+        type: 'field',
+        value: event.id,
+      },
+      {
+        location: 'params',
+        msg: 'A notification for the specified event has not yet been created',
+        path: 'eventId',
+        type: 'field',
+        value: event.id,
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid schedule id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const event = (await prismaClient.event.findFirst())!
+    const res = await req
+      .delete(
+        `/api/projects/${project.id}/schedules/abc/events/${event.id}/notification`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        location: 'params',
+        msg: 'Schedule not found',
+        path: 'scheduleId',
+        type: 'field',
+        value: 'abc',
+      },
+      {
+        location: 'params',
+        msg: 'Event not found',
+        path: 'eventId',
+        type: 'field',
+        value: event.id,
+      },
+      {
+        location: 'params',
+        msg: 'A notification for the specified event has not yet been created',
+        path: 'eventId',
+        type: 'field',
+        value: event.id,
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid event id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const res = await req
+      .delete(
+        `/api/projects/${project.id}/schedules/${schedule.id}/events/abc/notification`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        location: 'params',
+        msg: 'Event not found',
+        path: 'eventId',
+        type: 'field',
+        value: 'abc',
+      },
+      {
+        location: 'params',
+        msg: 'A notification for the specified event has not yet been created',
+        path: 'eventId',
+        type: 'field',
+        value: 'abc',
+      },
+    ])
+  })
+
+  it('deletes a notification', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const event = (await prismaClient.event.findFirst())!
+    const notification = (await prismaClient.notification.findFirst({
+      select: notificationSelect,
+    }))!
+    const res = await req
+      .delete(
+        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(200)
+    expect(res.body).toMatchObject({
+      ...notification,
+      createdAt: notification.createdAt.toISOString(),
+      startsAt: notification.startsAt.toISOString(),
+    })
+  })
+
+  it('fails to delete a notification for a given event as it does not have one', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const schedule = (await prismaClient.schedule.findFirst())!
+    const event = await prismaClient.event.create({
+      data: {
+        ...EVENT,
+        title: 'Notification #2',
+        scheduleId: schedule.id,
+      },
+    })
+    const res = await req
+      .delete(
+        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: event.id,
+        msg: 'A notification for the specified event has not yet been created',
+        path: 'eventId',
+        location: 'params',
       },
     ])
   })
