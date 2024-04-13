@@ -5,7 +5,7 @@ import noteRoutes from './note'
 import notificationRoutes from './notification'
 import projectRoutes from './project'
 import scheduleRoutes from './schedule'
-// import pushSubscriptionRoutes from './pushSubscription'
+import pushSubscriptionRoutes from './pushSubscription'
 // import statusRoutes from './status'
 // import issueRoutes from './issue'
 // import contentRoutes from './content'
@@ -20,6 +20,8 @@ router.use('/projects', eventRoutes)
 
 router.use('/projects', notificationRoutes)
 
+router.use('/projects', pushSubscriptionRoutes)
+
 router.use('/projects', boardRoutes)
 
 // router.use('/projects', statusRoutes)
@@ -29,7 +31,5 @@ router.use('/projects', boardRoutes)
 router.use('/projects', noteRoutes)
 
 // router.use('/projects', contentRoutes)
-
-// router.use('/push-subscriptions', pushSubscriptionRoutes)
 
 export default router

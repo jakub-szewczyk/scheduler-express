@@ -50,24 +50,26 @@ model Event {
 }
 
 model Notification {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  title       String
-  description String?
-  startsAt    DateTime
-  isActive    Boolean  @default(true)
-  isSent      Boolean  @default(false)
-  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  eventId     String   @unique
+  id                String             @id @default(uuid())
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  title             String
+  description       String?
+  startsAt          DateTime
+  isActive          Boolean            @default(true)
+  isSent            Boolean            @default(false)
+  event             Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId           String             @unique
+  pushSubscriptions PushSubscription[]
 }
 
 model PushSubscription {
-  id               String   @id @default(uuid())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  authorId         String
-  pushSubscription Json
+  id             String       @id @default(uuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  entity         Json
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  notificationId String
 }
 
 model Board {
