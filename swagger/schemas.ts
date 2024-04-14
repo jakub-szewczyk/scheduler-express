@@ -190,6 +190,47 @@
  * @openapi
  * components:
  *   schemas:
+ *     PushSubscription:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 0d6e6bbd-a0bc-40cf-85e7-9ae3d89a85d5
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         entity:
+ *           $ref: '#/components/schemas/Entity'
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Entity:
+ *       type: object
+ *       properties:
+ *         endpoint:
+ *           type: string
+ *           example: https://fcm.googleapis.com/fcm/send/eNsunHSowLg:APA91bGvgTjCxTYkrZA6RBEFcEEfgiWsp-DCN9C51XfiV47d_sbV6vDxvjmzj_DJRVYJU4L_ogu4PWo5tlqM3kfrQbuArXw5X82oXUQqrjlg5oBAR0Ogg-1g6QAPtr5BkyjheMRD-54f
+ *         expirationTime:
+ *           type: string
+ *           example: null
+ *         keys:
+ *           type: object
+ *           properties:
+ *             p256dh:
+ *               type: string
+ *               example: BOwwPr9UuVb32HyG5oOuC9mFJVr8uDs_mdbBDEM5uG5xfE4E1N6DsO9vmTvtv18ZGmzuZPUcfsW2gxBiNa-daBA
+ *             auth:
+ *               type: string
+ *               example: B6hCa1S-W2CkCFyKs9h5qw
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
  *     Board:
  *       type: object
  *       properties:
