@@ -2,6 +2,16 @@ import { Prisma } from '@prisma/client'
 import webpush, { PushSubscription } from 'web-push'
 import prismaClient from '../client'
 
+export const PUSH_SUBSCRIPTION: Pick<PushSubscription, 'endpoint' | 'keys'> = {
+  endpoint:
+    'https://fcm.googleapis.com/fcm/send/eNsunHSowLg:APA91bGvgTjCxTYkrZA6RBEFcEEfgiWsp-DCN9C51XfiV47d_sbV6vDxvjmzj_DJRVYJU4L_ogu4PWo5tlqM3kfrQbuArXw5X82oXUQqrjlg5oBAR0Ogg-1g6QAPtr5BkyjheMRD-54f',
+  keys: {
+    p256dh:
+      'BOwwPr9UuVb32HyG5oOuC9mFJVr8uDs_mdbBDEM5uG5xfE4E1N6DsO9vmTvtv18ZGmzuZPUcfsW2gxBiNa-daBA',
+    auth: 'B6hCa1S-W2CkCFyKs9h5qw',
+  },
+}
+
 export const pushSubscriptionSelect = {
   id: true,
   createdAt: true,
