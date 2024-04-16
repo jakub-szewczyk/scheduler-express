@@ -128,6 +128,47 @@ export const updateNotificationController = async (
   }
 }
 
+type UpdateNotificationStatusControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; scheduleId: string; eventId: string },
+    object,
+    Pick<Notification, 'isActive'>
+  >
+>
+
+type UpdateNotificationStatusControllerResponse = Response<NotificationResponse>
+
+export const updateNotificationStatusController = async (
+  req: UpdateNotificationStatusControllerRequest,
+  res: UpdateNotificationStatusControllerResponse
+) => {
+  try {
+    const notification = await prismaClient.notification.update({
+      select: notificationSelect,
+      where: {
+        id: req.event!.notification.id,
+        event: {
+          id: req.params.eventId,
+          schedule: {
+            id: req.params.scheduleId,
+            project: {
+              id: req.params.projectId,
+              authorId: req.auth.userId!,
+            },
+          },
+        },
+      },
+      data: {
+        isActive: req.body.isActive,
+      },
+    })
+    return res.json(notification)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
+
 type DeleteNotificationControllerRequest = WithAuthProp<
   Request<{ projectId: string; scheduleId: string; eventId: string }>
 >
