@@ -1,25 +1,13 @@
-// import { Router } from 'express'
-// import {
-//   updateStatusController,
-//   updateStatusesController,
-// } from '../controllers/status'
-// import {
-//   updateStatusValidator,
-//   updateStatusesValidator,
-// } from '../validators/status'
-//
-// const router = Router()
-//
-// router.put(
-//   '/:projectId/boards/:boardId/statuses',
-//   updateStatusesValidator,
-//   updateStatusesController
-// )
-//
-// router.patch(
-//   '/:projectId/boards/:boardId/statuses/:statusId',
-//   updateStatusValidator,
-//   updateStatusController
-// )
-//
-// export default router
+import { Router } from 'express'
+import { getStatusesValidator } from '../validators/status'
+import { getStatusesController } from '../controllers/status'
+
+const router = Router()
+
+router.get(
+  '/:projectId/boards/:boardId/statuses',
+  getStatusesValidator,
+  getStatusesController
+)
+
+export default router

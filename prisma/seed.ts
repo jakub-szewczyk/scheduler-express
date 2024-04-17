@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker'
 import { Prisma, PrismaClient } from '@prisma/client'
 import { parseArgs } from 'node:util'
+import { RANKS } from '../src/modules/status'
 
 const prismaClient = new PrismaClient()
 
@@ -25,10 +26,10 @@ const seed = async () => {
           .map((_, index, array) =>
             prismaClient.project.create({
               data: {
+                createdAt: new Date(Date.now() - index * 1000000).toISOString(),
                 title: `Project #${array.length - index}`,
                 description: null,
                 authorId,
-                createdAt: new Date(Date.now() - index * 1000000).toISOString(),
               },
             })
           ),
@@ -39,8 +40,8 @@ const seed = async () => {
           .map((_, index, array) =>
             prismaClient.schedule.create({
               data: {
-                title: `Schedule #${array.length - index}`,
                 createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+                title: `Schedule #${array.length - index}`,
                 projectId: projects[0].id,
               },
             })
@@ -52,8 +53,8 @@ const seed = async () => {
           .map((_, index, array) =>
             prismaClient.event.create({
               data: {
-                title: `Event #${array.length - index}`,
                 createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+                title: `Event #${array.length - index}`,
                 startsAt: faker.date.recent().toISOString(),
                 endsAt: faker.date.soon().toISOString(),
                 scheduleId: schedules[0].id,
@@ -68,19 +69,30 @@ const seed = async () => {
           eventId: events[0].id,
         },
       })
-
-      /* const boards = */ await Promise.all([
+      const boards = await Promise.all([
         ...Array(100)
           .fill(null)
           .map((_, index, array) =>
             prismaClient.board.create({
               data: {
-                title: `Board #${array.length - index}`,
                 createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+                title: `Board #${array.length - index}`,
                 projectId: projects[0].id,
               },
             })
           ),
+      ])
+      /* const statuses = */ await Promise.all([
+        ...RANKS.map((_, index, array) =>
+          prismaClient.status.create({
+            data: {
+              createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+              title: `Status #${array.length - index}`,
+              rank: RANKS[index],
+              boardId: boards[0].id,
+            },
+          })
+        ),
       ])
       /* const notes = */ await Promise.all([
         ...Array(100)
@@ -88,8 +100,8 @@ const seed = async () => {
           .map((_, index, array) =>
             prismaClient.note.create({
               data: {
-                title: `Note #${array.length - index}`,
                 createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+                title: `Note #${array.length - index}`,
                 content: Prisma.JsonNull,
                 projectId: projects[0].id,
               },

@@ -91,12 +91,13 @@ model Status {
   updatedAt   DateTime @updatedAt
   title       String
   description String?
-  index       Int
+  rank        String
   issues      Issue[]
   board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
   boardId     String
 
   @@unique([title, boardId])
+  @@unique([rank, boardId])
 }
 
 model Issue {
@@ -105,11 +106,13 @@ model Issue {
   updatedAt   DateTime @updatedAt
   title       String
   description String?
-  index       Int
+  rank        String
   priorities  String[]
   attachments Bytes[]
   status      Status   @relation(fields: [statusId], references: [id], onDelete: Cascade)
   statusId    String
+
+  @@unique([rank, statusId])
 }
 
 model Note {

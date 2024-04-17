@@ -6,7 +6,7 @@ import notificationRoutes from './notification'
 import projectRoutes from './project'
 import scheduleRoutes from './schedule'
 import pushSubscriptionRoutes from './pushSubscription'
-// import statusRoutes from './status'
+import statusRoutes from './status'
 // import issueRoutes from './issue'
 // import contentRoutes from './content'
 
@@ -24,7 +24,7 @@ router.use('/projects', pushSubscriptionRoutes)
 
 router.use('/projects', boardRoutes)
 
-// router.use('/projects', statusRoutes)
+router.use('/projects', statusRoutes)
 
 // router.use('/projects', issueRoutes)
 
