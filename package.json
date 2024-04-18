@@ -22,14 +22,6 @@
     "commit": "commit",
     "prepare": "husky"
   },
-  "lint-staged": {
-    "src/**/*.ts": [
-      "bash -c 'npm run check'",
-      "npm run lint",
-      "npm run prettify",
-      "npm run test:integration -- related --run"
-    ]
-  },
   "author": "",
   "license": "ISC",
   "dependencies": {
