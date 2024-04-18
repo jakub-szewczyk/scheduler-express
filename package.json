@@ -14,7 +14,6 @@
     "studio:test": "dotenv -e .env.test -- npx prisma studio",
     "test:unit": "dotenv -e .env.test -- vitest -c ./vitest.config.unit.ts",
     "test:integration": "./scripts/integration.sh",
-    "test:integration:ui": "./scripts/integration.sh --ui",
     "start": "node dist/src/index.js",
     "build": "npx tsc",
     "check": "tsc --noEmit",
@@ -27,7 +26,8 @@
     "src/**/*.ts": [
       "npm run check",
       "npm run lint",
-      "npm run prettify"
+      "npm run prettify",
+      "npm run test:integration -- related --run"
     ]
   },
   "author": "",
