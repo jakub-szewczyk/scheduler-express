@@ -71,3 +71,34 @@ export const getStatusesController = async (
     return res.status(500).end()
   }
 }
+
+type GetStatusControllerRequest = WithAuthProp<
+  Request<{ projectId: string; boardId: string; statusId: string }>
+>
+
+type GetStatusControllerResponse = Response<StatusResponse>
+
+export const getStatusController = async (
+  req: GetStatusControllerRequest,
+  res: GetStatusControllerResponse
+) => {
+  try {
+    const status = await prismaClient.status.findUnique({
+      select: statusSelect,
+      where: {
+        id: req.params.statusId,
+        board: {
+          id: req.params.boardId,
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+      },
+    })
+    return status ? res.json(status) : res.status(404).end()
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}

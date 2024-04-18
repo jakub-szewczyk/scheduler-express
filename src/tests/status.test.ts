@@ -1,10 +1,11 @@
 import { Status } from '@prisma/client'
+import { omit } from 'ramda'
 import supertest from 'supertest'
 import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
 import { ordinals } from '../modules/common'
+import { RANKS, STATUS, statusSelect } from '../modules/status'
 import prismaClient from './client'
-import { RANKS } from '../modules/status'
 
 const AUTHOR_ID = process.env.AUTHOR_ID
 
@@ -459,5 +460,78 @@ describe('GET /projects/:projectId/boards/:boardId/statuses', () => {
         location: 'query',
       },
     ])
+  })
+})
+
+describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        boards: {
+          create: {
+            title: 'Board #1',
+            statuses: {
+              create: omit(['description'], STATUS),
+            },
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const board = (await prismaClient.board.findFirst())!
+    const status = (await prismaClient.status.findFirst())!
+    const res = await req
+      .get(`/api/projects/abc/boards/${board.id}/statuses/${status.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('returns 404 Not Found in case of invalid board id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const status = (await prismaClient.status.findFirst())!
+    const res = await req
+      .get(`/api/projects/${project.id}/boards/abc/statuses/${status.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('returns status by id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const status = (await prismaClient.status.findFirst({
+      select: statusSelect,
+    }))!
+    const res = await req
+      .get(
+        `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(200)
+    expect(res.body).toStrictEqual({
+      ...status,
+      createdAt: status.createdAt.toISOString(),
+    })
+  })
+
+  it('returns 404 Not Found in case of invalid status id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const res = await req
+      .get(`/api/projects/${project.id}/boards/${board.id}/statuses/abc`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
   })
 })

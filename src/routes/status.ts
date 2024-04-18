@@ -1,6 +1,9 @@
 import { Router } from 'express'
-import { getStatusesController } from '../controllers/status'
-import { getStatusesValidator } from '../validators/status'
+import {
+  getStatusController,
+  getStatusesController,
+} from '../controllers/status'
+import { getStatusValidator, getStatusesValidator } from '../validators/status'
 
 const router = Router()
 
@@ -99,6 +102,52 @@ router.get(
   '/:projectId/boards/:boardId/statuses',
   getStatusesValidator,
   getStatusesController
+)
+
+/**
+ * @openapi
+ * /api/projects/{projectId}/boards/{boardId}/statuses/{statusId}:
+ *   get:
+ *     security:
+ *       - bearerAuth: []
+ *     tags:
+ *       - Status
+ *     summary: Get one status
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         schema:
+ *           type: string
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
+ *         required: true
+ *       - in: path
+ *         name: boardId
+ *         schema:
+ *           type: string
+ *           example: 06f750b2-8815-461e-8b7f-f42e96ab973c
+ *         required: true
+ *       - in: path
+ *         name: statusId
+ *         schema:
+ *           type: string
+ *           example: 080434b9-5677-4879-a293-eb82a2d29e1e
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Returns one status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *               $ref: '#/components/schemas/Status'
+ *       404:
+ *         description: Status not found
+ */
+router.get(
+  '/:projectId/boards/:boardId/statuses/:statusId',
+  getStatusValidator,
+  getStatusController
 )
 
 export default router

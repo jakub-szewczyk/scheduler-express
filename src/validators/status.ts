@@ -46,3 +46,10 @@ export const getStatusesValidator = [
     .optional(),
   validationMiddleware,
 ]
+
+export const getStatusValidator = [
+  param('projectId').notEmpty(),
+  param('boardId').notEmpty(),
+  param('statusId').notEmpty(),
+  validationMiddleware,
+]
