@@ -18,7 +18,6 @@ const BEARER_TOKEN = `Bearer ${JWT_TOKEN}`
 
 const req = supertest(app)
 
-// TODO: Update assertions to check for ranks
 describe('GET /projects/:projectId/boards/:boardId/statuses', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
@@ -112,6 +111,7 @@ describe('GET /projects/:projectId/boards/:boardId/statuses', () => {
       expect(status).toMatchObject({
         title: `Status #${100 - index}`,
         description: null,
+        rank: RANKS[index],
       })
     })
   })
@@ -181,6 +181,7 @@ describe('GET /projects/:projectId/boards/:boardId/statuses', () => {
           expect(status).toMatchObject({
             title: `Status #${100 - index - page * 10}`,
             description: null,
+            rank: RANKS[index + page * 10],
           })
         })
       })
@@ -251,6 +252,7 @@ describe('GET /projects/:projectId/boards/:boardId/statuses', () => {
           expect(status).toMatchObject({
             title: `Status #${100 - index}`,
             description: null,
+            rank: RANKS[index],
           })
         })
       })
@@ -281,10 +283,12 @@ describe('GET /projects/:projectId/boards/:boardId/statuses', () => {
     expect(statuses[0]).toMatchObject({
       title: 'Status #100',
       description: null,
+      rank: RANKS[0],
     })
     expect(statuses[1]).toMatchObject({
       title: 'Status #10',
       description: null,
+      rank: RANKS[90],
     })
   })
 
@@ -309,6 +313,7 @@ describe('GET /projects/:projectId/boards/:boardId/statuses', () => {
     expect(statuses1[0]).toMatchObject({
       title: 'Status #69',
       description: null,
+      rank: RANKS[31],
     })
     const res2 = await req
       .get(`/api/projects/${project.id}/boards/${board.id}/statuses`)
@@ -328,6 +333,7 @@ describe('GET /projects/:projectId/boards/:boardId/statuses', () => {
     expect(statuses2[0]).toMatchObject({
       title: 'Status #69',
       description: null,
+      rank: RANKS[31],
     })
   })
 

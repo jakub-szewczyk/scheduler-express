@@ -269,6 +269,47 @@
  * @openapi
  * components:
  *   schemas:
+ *     Status:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 080434b9-5677-4879-a293-eb82a2d29e1e
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Status #1'
+ *         description:
+ *           type: string
+ *           example: Edit your status' title and description. Manage your issues within it.
+ *         rank:
+ *           type: string
+ *           example: '0|hzzzzz:'
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     StatusBody:
+ *       type: object
+ *       required:
+ *         - title
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: 'Status #1'
+ *         description:
+ *           type: string
+ *           example: Edit your status' title and description. Manage your issues within it.
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
  *     Note:
  *       type: object
  *       properties:
