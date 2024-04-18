@@ -19,7 +19,7 @@
     "build": "npx tsc",
     "check": "tsc --noEmit",
     "lint": "eslint --max-warnings=0 src",
-    "prettify": "prettier --write --ignore-unknown",
+    "prettify": "prettier ./src/**/*.ts --write",
     "commit": "commit",
     "prepare": "husky"
   },

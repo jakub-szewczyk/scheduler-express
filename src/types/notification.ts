@@ -7,7 +7,5 @@ declare module 'express' {
 }
 
 export type EventStartsAtWithNotificationId =
-  | (Pick<Event, 'startsAt'> & {
-    notification: Pick<Notification, 'id'>
-  })
+  | (Pick<Event, 'startsAt'> & { notification: Pick<Notification, 'id'> })
   | undefined
