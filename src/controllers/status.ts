@@ -3,7 +3,7 @@ import { Prisma, Status } from '@prisma/client'
 import { Request, Response } from 'express'
 import prismaClient from '../client'
 import { paginationParams } from '../modules/pagination'
-import { statusSelect } from '../modules/status'
+import { generateRank, statusSelect } from '../modules/status'
 import { PaginableResponse } from '../types/pagination'
 
 type StatusResponse = Pick<Status, keyof typeof statusSelect>
@@ -97,6 +97,51 @@ export const getStatusController = async (
       },
     })
     return status ? res.json(status) : res.status(404).end()
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
+
+type CreateStatusControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; boardId: string },
+    object,
+    Pick<Status, 'title' | 'description'> & {
+      prevStatusId: string | null
+      nextStatusId: string | null
+    }
+  >
+>
+
+type CreateStatusControllerResponse = Response<StatusResponse>
+
+export const createStatusController = async (
+  req: CreateStatusControllerRequest,
+  res: CreateStatusControllerResponse
+) => {
+  try {
+    const status = await prismaClient.status.create({
+      select: statusSelect,
+      data: {
+        title: req.body.title,
+        description: req.body.description || null,
+        rank: generateRank({
+          prevStatusRank: req.prevStatusRank,
+          nextStatusRank: req.nextStatusRank,
+        }).format(),
+        board: {
+          connect: {
+            id: req.params.boardId,
+            project: {
+              id: req.params.projectId,
+              authorId: req.auth.userId!,
+            },
+          },
+        },
+      },
+    })
+    return res.status(201).json(status)
   } catch (error) {
     console.error(error)
     return res.status(500).end()

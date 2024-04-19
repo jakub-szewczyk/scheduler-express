@@ -284,9 +284,6 @@
  *         description:
  *           type: string
  *           example: Edit your status' title and description. Manage your issues within it.
- *         rank:
- *           type: string
- *           example: '0|hzzzzz:'
  */
 
 /**

@@ -1,9 +1,14 @@
 import { Router } from 'express'
 import {
+  createStatusController,
   getStatusController,
   getStatusesController,
 } from '../controllers/status'
-import { getStatusValidator, getStatusesValidator } from '../validators/status'
+import {
+  createStatusValidator,
+  getStatusValidator,
+  getStatusesValidator,
+} from '../validators/status'
 
 const router = Router()
 
@@ -148,6 +153,12 @@ router.get(
   '/:projectId/boards/:boardId/statuses/:statusId',
   getStatusValidator,
   getStatusController
+)
+
+router.post(
+  '/:projectId/boards/:boardId/statuses',
+  createStatusValidator,
+  createStatusController
 )
 
 export default router

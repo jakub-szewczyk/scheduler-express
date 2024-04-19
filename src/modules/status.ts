@@ -21,5 +21,22 @@ export const statusSelect = {
   createdAt: true,
   title: true,
   description: true,
-  rank: true,
 } satisfies Prisma.StatusSelect
+
+export const generateRank = ({
+  prevStatusRank,
+  nextStatusRank,
+}: {
+  prevStatusRank: string | null | undefined
+  nextStatusRank: string | null | undefined
+}) => {
+  if (!prevStatusRank && nextStatusRank)
+    return LexoRank.parse(nextStatusRank).genPrev()
+  if (prevStatusRank && nextStatusRank)
+    return LexoRank.parse(prevStatusRank).between(
+      LexoRank.parse(nextStatusRank)
+    )
+  if (prevStatusRank && !nextStatusRank)
+    return LexoRank.parse(prevStatusRank).genNext()
+  return LexoRank.middle()
+}
