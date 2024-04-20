@@ -1,8 +1,10 @@
 import { Status } from '@prisma/client'
+import { LexoRank } from 'lexorank'
 import { omit } from 'ramda'
 import supertest from 'supertest'
 import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
+import { BOARD } from '../modules/board'
 import { ordinals } from '../modules/common'
 import { RANKS, STATUS, statusSelect } from '../modules/status'
 import prismaClient from './client'
@@ -526,5 +528,320 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
     expect(res.body).toStrictEqual({})
+  })
+})
+
+describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        boards: {
+          create: BOARD,
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const board = (await prismaClient.board.findFirst())!
+    const res = await req
+      .post(`/api/projects/abc/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(STATUS)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: board.id,
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid board id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/abc/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(STATUS)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('creates the first status', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const payload = omit(['rank'], STATUS)
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject(payload)
+    const statuses = await prismaClient.status.findMany()
+    expect(statuses).toMatchObject([STATUS])
+  })
+
+  it('creates the previous status', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const status = await prismaClient.status.create({
+      data: {
+        ...STATUS,
+        title: 'Status #2',
+        board: {
+          connect: {
+            id: board.id,
+            project: {
+              id: project.id,
+              authorId: AUTHOR_ID,
+            },
+          },
+        },
+      },
+    })
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #1',
+        nextStatusId: status.id,
+      })
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: 'Status #1',
+      description: null,
+    })
+    const statuses = await prismaClient.status.findMany({
+      select: { title: true, rank: true },
+    })
+    expect(statuses).toMatchObject([
+      {
+        title: 'Status #2',
+        rank: LexoRank.middle().format(),
+      },
+      {
+        title: 'Status #1',
+        rank: LexoRank.parse(STATUS.rank).genPrev().format(),
+      },
+    ])
+  })
+
+  it('creates the next status', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const status = await prismaClient.status.create({
+      data: {
+        ...STATUS,
+        title: 'Status #1',
+        board: {
+          connect: {
+            id: board.id,
+            project: {
+              id: project.id,
+              authorId: AUTHOR_ID,
+            },
+          },
+        },
+      },
+    })
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #2',
+        prevStatusId: status.id,
+      })
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: 'Status #2',
+      description: null,
+    })
+    const statuses = await prismaClient.status.findMany({
+      select: { title: true, rank: true },
+    })
+    expect(statuses).toMatchObject([
+      {
+        title: 'Status #1',
+        rank: LexoRank.middle().format(),
+      },
+      {
+        title: 'Status #2',
+        rank: LexoRank.parse(STATUS.rank).genNext().format(),
+      },
+    ])
+  })
+
+  it('creates the middle status', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const prevStatus = await prismaClient.status.create({
+      data: {
+        ...STATUS,
+        title: 'Status #1',
+        board: {
+          connect: {
+            id: board.id,
+            project: {
+              id: project.id,
+              authorId: AUTHOR_ID,
+            },
+          },
+        },
+      },
+    })
+    const nextStatus = await prismaClient.status.create({
+      data: {
+        ...STATUS,
+        rank: LexoRank.parse(STATUS.rank).genNext().genNext().format(),
+        title: 'Status #3',
+        board: {
+          connect: {
+            id: board.id,
+            project: {
+              id: project.id,
+              authorId: AUTHOR_ID,
+            },
+          },
+        },
+      },
+    })
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #2',
+        prevStatusId: prevStatus.id,
+        nextStatusId: nextStatus.id,
+      })
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: 'Status #2',
+      description: null,
+    })
+    const statuses = await prismaClient.status.findMany({
+      select: { title: true, rank: true },
+    })
+    expect(statuses).toMatchObject([
+      {
+        title: 'Status #1',
+        rank: LexoRank.middle().format(),
+      },
+      {
+        title: 'Status #3',
+        rank: LexoRank.parse(STATUS.rank).genNext().genNext().format(),
+      },
+      {
+        title: 'Status #2',
+        rank: LexoRank.parse(STATUS.rank).genNext().format(),
+      },
+    ])
+  })
+
+  test('`description` field in request body being optional', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const payload = omit(['rank', 'description'], STATUS)
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      ...payload,
+      description: null,
+    })
+  })
+
+  test('`title` field in request body being required', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const payload = omit(['rank', 'title'], STATUS)
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '',
+        msg: 'You have to give your status a unique title',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+  })
+
+  it('returns 400 Bad Request when the status title is already taken', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    await prismaClient.status.create({
+      data: {
+        ...STATUS,
+        board: {
+          connect: {
+            id: board.id,
+            project: {
+              id: project.id,
+              authorId: AUTHOR_ID,
+            },
+          },
+        },
+      },
+    })
+    const payload = omit(['rank'], STATUS)
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(400)
+    expect(res.body[0]).toStrictEqual({
+      type: 'field',
+      value: 'Status #1',
+      msg: 'This title has already been used by one of your statuses',
+      path: 'title',
+      location: 'body',
+    })
   })
 })

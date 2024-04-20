@@ -103,8 +103,20 @@ export const createStatusValidator = [
     }),
   body('description').trim().optional(),
   body(['prevStatusId', 'nextStatusId']).custom(async (_, { req }) => {
-    if (!req.body.prevStatusId && !req.body.nextStatusId)
-      throw new Error("Cannot determine status' position")
+    if (!req.body.prevStatusId && !req.body.nextStatusId) {
+      const status = await prismaClient.status.findFirst({
+        where: {
+          board: {
+            id: req.params!.boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
+          },
+        },
+      })
+      if (status) throw new Error("Cannot determine status' position")
+    }
   }),
   body('prevStatusId')
     .custom(async (prevStatusId: string, { req }) => {

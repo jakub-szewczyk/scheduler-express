@@ -32,11 +32,11 @@ export const generateRank = ({
 }) => {
   if (!prevStatusRank && nextStatusRank)
     return LexoRank.parse(nextStatusRank).genPrev()
+  if (prevStatusRank && !nextStatusRank)
+    return LexoRank.parse(prevStatusRank).genNext()
   if (prevStatusRank && nextStatusRank)
     return LexoRank.parse(prevStatusRank).between(
       LexoRank.parse(nextStatusRank)
     )
-  if (prevStatusRank && !nextStatusRank)
-    return LexoRank.parse(prevStatusRank).genNext()
   return LexoRank.middle()
 }
