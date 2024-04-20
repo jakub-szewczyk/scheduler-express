@@ -155,6 +155,68 @@ router.get(
   getStatusController
 )
 
+/**
+ * @openapi
+ * /api/projects/{projectId}/boards/{boardId}/statuses:
+ *   post:
+ *     security:
+ *       - bearerAuth: []
+ *     tags:
+ *       - Status
+ *     summary: Create status
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         schema:
+ *           type: string
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
+ *         required: true
+ *       - in: path
+ *         name: boardId
+ *         schema:
+ *           type: string
+ *           example: 06f750b2-8815-461e-8b7f-f42e96ab973c
+ *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/StatusBody'
+ *     responses:
+ *       201:
+ *         description: Returns created status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *               $ref: '#/components/schemas/Status'
+ *       400:
+ *         description: Invalid request body
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     example: field
+ *                   value:
+ *                     type: string
+ *                     example: 'Status #1'
+ *                   msg:
+ *                     type: string
+ *                     example: This title has already been used by one of your statuses
+ *                   path:
+ *                     type: string
+ *                     example: title
+ *                   location:
+ *                     type: string
+ *                     example: body
+ */
 router.post(
   '/:projectId/boards/:boardId/statuses',
   createStatusValidator,

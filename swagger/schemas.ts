@@ -301,6 +301,12 @@
  *         description:
  *           type: string
  *           example: Edit your status' title and description. Manage your issues within it.
+ *         prevStatusId:
+ *           type: string
+ *           example: 080434b9-5677-4879-a293-eb82a2d29e1e
+ *         nextStatusId:
+ *           type: string
+ *           example: 45e26c5f-5eee-4928-a24c-481fcec79993
  */
 
 /**
