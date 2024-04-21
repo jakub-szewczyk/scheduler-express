@@ -147,3 +147,49 @@ export const createStatusController = async (
     return res.status(500).end()
   }
 }
+
+type UpdateStatusControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; boardId: string; statusId: string },
+    object,
+    Pick<Status, 'title' | 'description'> & {
+      prevStatusId: string | null
+      nextStatusId: string | null
+    }
+  >
+>
+
+type UpdateStatusControllerResponse = Response<StatusResponse>
+
+export const updateStatusController = async (
+  req: UpdateStatusControllerRequest,
+  res: UpdateStatusControllerResponse
+) => {
+  try {
+    const status = await prismaClient.status.update({
+      select: statusSelect,
+      where: {
+        id: req.params.statusId,
+        board: {
+          id: req.params.boardId,
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+      },
+      data: {
+        title: req.body.title,
+        description: req.body.description,
+        rank: generateRank({
+          prevStatusRank: req.prevStatusRank,
+          nextStatusRank: req.nextStatusRank,
+        }).format(),
+      },
+    })
+    return res.json(status)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}

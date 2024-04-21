@@ -146,3 +146,105 @@ export const createStatusValidator = [
     .optional(),
   validationMiddleware,
 ]
+
+export const updateStatusValidator = [
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
+        where: {
+          id: projectId,
+          authorId: req.auth.userId,
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
+  param('boardId').custom(async (boardId: string, { req }) => {
+    try {
+      await prismaClient.board.findFirstOrThrow({
+        where: {
+          id: boardId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
+          },
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Board not found')
+    }
+  }),
+  param('statusId').custom(async (statusId: string, { req }) => {
+    try {
+      await prismaClient.status.findFirstOrThrow({
+        where: {
+          id: statusId,
+          board: {
+            id: req.params!.boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
+          },
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Status not found')
+    }
+  }),
+  body('title', 'You have to give your status a unique title')
+    .trim()
+    .notEmpty()
+    .custom(async (title: string, { req }) => {
+      const status = await prismaClient.status.findFirst({
+        where: {
+          id: { not: req.params!.statusId },
+          title,
+          board: {
+            id: req.params!.boardId,
+            projectId: req.params!.projectId,
+          },
+        },
+      })
+      if (status)
+        throw new Error(
+          'This title has already been used by one of your statuses'
+        )
+    }),
+  body('description').trim().optional(),
+  body(['prevStatusId', 'nextStatusId']).custom(async (_, { req }) => {
+    if (!req.body.prevStatusId && !req.body.nextStatusId)
+      throw new Error("Cannot determine status' position")
+  }),
+  body('prevStatusId')
+    .custom(async (prevStatusId: string, { req }) => {
+      const prevStatus = await prismaClient.status.findUnique({
+        select: { rank: true },
+        where: { id: prevStatusId },
+      })
+      if (!prevStatus) {
+        req.statusCode = 404
+        throw new Error('Status not found')
+      }
+      req.prevStatusRank = prevStatus.rank
+    })
+    .optional(),
+  body('nextStatusId')
+    .custom(async (nextStatusId: string, { req }) => {
+      const nextStatus = await prismaClient.status.findUnique({
+        select: { rank: true },
+        where: { id: nextStatusId },
+      })
+      if (!nextStatus) {
+        req.statusCode = 404
+        throw new Error('Status not found')
+      }
+      req.nextStatusRank = nextStatus.rank
+    })
+    .optional(),
+  validationMiddleware,
+]

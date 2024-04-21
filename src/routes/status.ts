@@ -3,15 +3,20 @@ import {
   createStatusController,
   getStatusController,
   getStatusesController,
+  updateStatusController,
 } from '../controllers/status'
 import {
   createStatusValidator,
   getStatusValidator,
   getStatusesValidator,
+  updateStatusValidator,
 } from '../validators/status'
 
 const router = Router()
 
+// TODO:
+// Sort only by rank.
+// Disallow sorting by creation date.
 /**
  * @openapi
  * /api/projects/{projectId}/boards/{boardId}/statuses:
@@ -155,6 +160,7 @@ router.get(
   getStatusController
 )
 
+// TODO: Validate neighbors
 /**
  * @openapi
  * /api/projects/{projectId}/boards/{boardId}/statuses:
@@ -221,6 +227,13 @@ router.post(
   '/:projectId/boards/:boardId/statuses',
   createStatusValidator,
   createStatusController
+)
+
+// TODO: Validate neighbors
+router.put(
+  '/:projectId/boards/:boardId/statuses/:statusId',
+  updateStatusValidator,
+  updateStatusController
 )
 
 export default router
