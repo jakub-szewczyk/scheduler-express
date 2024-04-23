@@ -6,6 +6,11 @@ import { paginationParams } from '../modules/pagination'
 import { generateRank, statusSelect } from '../modules/status'
 import { PaginableResponse } from '../types/pagination'
 
+export type StatusBody = Pick<Status, 'title' | 'description'> & {
+  prevStatusId?: string | null
+  nextStatusId?: string | null
+}
+
 type StatusResponse = Pick<Status, keyof typeof statusSelect>
 
 type GetStatusesControllerRequest = WithAuthProp<
@@ -104,14 +109,7 @@ export const getStatusController = async (
 }
 
 type CreateStatusControllerRequest = WithAuthProp<
-  Request<
-    { projectId: string; boardId: string },
-    object,
-    Pick<Status, 'title' | 'description'> & {
-      prevStatusId: string | null
-      nextStatusId: string | null
-    }
-  >
+  Request<{ projectId: string; boardId: string }, object, StatusBody>
 >
 
 type CreateStatusControllerResponse = Response<StatusResponse>
@@ -152,10 +150,7 @@ type UpdateStatusControllerRequest = WithAuthProp<
   Request<
     { projectId: string; boardId: string; statusId: string },
     object,
-    Pick<Status, 'title' | 'description'> & {
-      prevStatusId: string | null
-      nextStatusId: string | null
-    }
+    StatusBody
   >
 >
 

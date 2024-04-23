@@ -104,7 +104,8 @@ export const createStatusValidator = [
   body('description').trim().optional(),
   body(['prevStatusId', 'nextStatusId']).custom(async (_, { req }) => {
     if (!req.body.prevStatusId && !req.body.nextStatusId) {
-      const status = await prismaClient.status.findFirst({
+      const firstStatus = await prismaClient.status.findFirst({
+        select: { id: true, rank: true },
         where: {
           board: {
             id: req.params!.boardId,
@@ -114,36 +115,117 @@ export const createStatusValidator = [
             },
           },
         },
+        orderBy: { rank: 'asc' },
       })
-      if (status) throw new Error("Cannot determine status' position")
+      if (firstStatus) req.nextStatusRank = firstStatus.rank
+    } else if (req.body.prevStatusId && !req.body.nextStatusId) {
+      const lastStatus = await prismaClient.status.findFirst({
+        select: { id: true, rank: true },
+        where: {
+          board: {
+            id: req.params!.boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
+          },
+        },
+        orderBy: { rank: 'desc' },
+      })
+      const prevStatus = await prismaClient.status.findUnique({
+        select: { id: true, rank: true },
+        where: {
+          id: req.body.prevStatusId,
+          board: {
+            id: req.params!.boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
+          },
+        },
+      })
+      if (!lastStatus || !prevStatus) {
+        req.statusCode = 404
+        throw new Error('Status not found')
+      }
+      if (lastStatus.id !== prevStatus.id)
+        throw new Error("Cannot determine status' position when appending it")
+      req.prevStatusRank = prevStatus.rank
+    } else if (!req.body.prevStatusId && req.body.nextStatusId) {
+      const firstStatus = await prismaClient.status.findFirst({
+        select: { id: true, rank: true },
+        where: {
+          board: {
+            id: req.params!.boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
+          },
+        },
+        orderBy: { rank: 'asc' },
+      })
+      const nextStatus = await prismaClient.status.findUnique({
+        select: { id: true, rank: true },
+        where: {
+          id: req.body.nextStatusId,
+          board: {
+            id: req.params!.boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
+          },
+        },
+      })
+      if (!firstStatus || !nextStatus) {
+        req.statusCode = 404
+        throw new Error('Status not found')
+      }
+      if (firstStatus.id !== nextStatus.id)
+        throw new Error("Cannot determine status' position when prepending it")
+      req.nextStatusRank = nextStatus.rank
+    } else {
+      const [prevStatus, nextStatus] = await prismaClient.status.findMany({
+        select: { id: true, rank: true },
+        where: {
+          id: { in: [req.body.prevStatusId, req.body.nextStatusId] },
+          board: {
+            id: req.params!.boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
+          },
+        },
+      })
+      if (!prevStatus || !nextStatus) {
+        req.statusCode = 404
+        throw new Error('Status not found')
+      }
+      if (prevStatus.rank > nextStatus.rank)
+        throw new Error(
+          "Cannot determine status' position when putting one in between"
+        )
+      const statusInBetween = await prismaClient.status.findFirst({
+        select: { id: true },
+        where: {
+          rank: {
+            gt: prevStatus.rank,
+            lt: nextStatus.rank,
+          },
+        },
+        orderBy: { rank: 'asc' },
+      })
+      if (statusInBetween)
+        throw new Error(
+          "Cannot determine status' position when putting one in between"
+        )
+      req.nextStatusRank = nextStatus.rank
+      req.prevStatusRank = prevStatus.rank
     }
   }),
-  body('prevStatusId')
-    .custom(async (prevStatusId: string, { req }) => {
-      const prevStatus = await prismaClient.status.findUnique({
-        select: { rank: true },
-        where: { id: prevStatusId },
-      })
-      if (!prevStatus) {
-        req.statusCode = 404
-        throw new Error('Status not found')
-      }
-      req.prevStatusRank = prevStatus.rank
-    })
-    .optional(),
-  body('nextStatusId')
-    .custom(async (nextStatusId: string, { req }) => {
-      const nextStatus = await prismaClient.status.findUnique({
-        select: { rank: true },
-        where: { id: nextStatusId },
-      })
-      if (!nextStatus) {
-        req.statusCode = 404
-        throw new Error('Status not found')
-      }
-      req.nextStatusRank = nextStatus.rank
-    })
-    .optional(),
   validationMiddleware,
 ]
 

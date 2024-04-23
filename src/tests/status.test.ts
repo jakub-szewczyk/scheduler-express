@@ -591,7 +591,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
     ])
   })
 
-  it('creates the first status', async () => {
+  it('creates a status', async () => {
     const project = (await prismaClient.project.findFirst())!
     const board = (await prismaClient.board.findFirst())!
     const payload = omit(['rank'], STATUS)
@@ -608,13 +608,48 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
     expect(statuses).toMatchObject([STATUS])
   })
 
-  it('creates the previous status', async () => {
+  it('creates a status at a default position', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    await prismaClient.status.create({
+      data: {
+        ...STATUS,
+        board: {
+          connect: {
+            id: board.id,
+            project: {
+              id: project.id,
+              authorId: AUTHOR_ID,
+            },
+          },
+        },
+      },
+    })
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #2' })
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Status #2', description: null })
+    const statuses = await prismaClient.status.findMany({
+      select: { title: true, description: true, rank: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(statuses).toStrictEqual([
+      { title: 'Status #2', description: null, rank: '0|hzzzzr:' },
+      STATUS,
+    ])
+  })
+
+  it('prepends a status', async () => {
     const project = (await prismaClient.project.findFirst())!
     const board = (await prismaClient.board.findFirst())!
     const status = await prismaClient.status.create({
       data: {
         ...STATUS,
-        title: 'Status #2',
         board: {
           connect: {
             id: board.id,
@@ -631,14 +666,14 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({
-        title: 'Status #1',
+        title: 'Status #0',
         nextStatusId: status.id,
       })
     expect(res.status).toEqual(201)
     expect(res.body).toHaveProperty('id')
     expect(res.body).toHaveProperty('createdAt')
     expect(res.body).toMatchObject({
-      title: 'Status #1',
+      title: 'Status #0',
       description: null,
     })
     const statuses = await prismaClient.status.findMany({
@@ -646,23 +681,22 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
     })
     expect(statuses).toMatchObject([
       {
-        title: 'Status #2',
+        title: 'Status #1',
         rank: LexoRank.middle().format(),
       },
       {
-        title: 'Status #1',
+        title: 'Status #0',
         rank: LexoRank.parse(STATUS.rank).genPrev().format(),
       },
     ])
   })
 
-  it('creates the next status', async () => {
+  it('appends a status', async () => {
     const project = (await prismaClient.project.findFirst())!
     const board = (await prismaClient.board.findFirst())!
     const status = await prismaClient.status.create({
       data: {
         ...STATUS,
-        title: 'Status #1',
         board: {
           connect: {
             id: board.id,
@@ -704,13 +738,12 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
     ])
   })
 
-  it('creates the middle status', async () => {
+  it('inserts a status in between', async () => {
     const project = (await prismaClient.project.findFirst())!
     const board = (await prismaClient.board.findFirst())!
     const prevStatus = await prismaClient.status.create({
       data: {
         ...STATUS,
-        title: 'Status #1',
         board: {
           connect: {
             id: board.id,
@@ -771,6 +804,236 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
         rank: LexoRank.parse(STATUS.rank).genNext().format(),
       },
     ])
+  })
+
+  it("fails to append a status when the reference ain't on the last position", async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    await prismaClient.status.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Status #1',
+          rank: LexoRank.middle().format(),
+          boardId: board.id,
+        },
+        {
+          id: '2',
+          title: 'Status #2',
+          rank: LexoRank.middle().genNext().format(),
+          boardId: board.id,
+        },
+        {
+          id: '3',
+          title: 'Status #3',
+          rank: LexoRank.middle().genNext().genNext().format(),
+          boardId: board.id,
+        },
+        {
+          id: '4',
+          title: 'Status #4',
+          rank: LexoRank.middle().genNext().genNext().genNext().format(),
+          boardId: board.id,
+        },
+        {
+          id: '5',
+          title: 'Status #5',
+          rank: LexoRank.middle()
+            .genNext()
+            .genNext()
+            .genNext()
+            .genNext()
+            .format(),
+          boardId: board.id,
+        },
+      ],
+    })
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #6',
+        prevStatusId: '4',
+      })
+    expect(res.status).toEqual(400)
+    expect(res.body[0].msg).toEqual(
+      "Cannot determine status' position when appending it"
+    )
+  })
+
+  it("fails to prepend a status when the reference ain't on the first position", async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    await prismaClient.status.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Status #1',
+          rank: LexoRank.middle().format(),
+          boardId: board.id,
+        },
+        {
+          id: '2',
+          title: 'Status #2',
+          rank: LexoRank.middle().genNext().format(),
+          boardId: board.id,
+        },
+        {
+          id: '3',
+          title: 'Status #3',
+          rank: LexoRank.middle().genNext().genNext().format(),
+          boardId: board.id,
+        },
+        {
+          id: '4',
+          title: 'Status #4',
+          rank: LexoRank.middle().genNext().genNext().genNext().format(),
+          boardId: board.id,
+        },
+        {
+          id: '5',
+          title: 'Status #5',
+          rank: LexoRank.middle()
+            .genNext()
+            .genNext()
+            .genNext()
+            .genNext()
+            .format(),
+          boardId: board.id,
+        },
+      ],
+    })
+    const res = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #0',
+        nextStatusId: '2',
+      })
+    expect(res.status).toEqual(400)
+    expect(res.body[0].msg).toEqual(
+      "Cannot determine status' position when prepending it"
+    )
+  })
+
+  it('fails to insert a status in between when its neighbors are incorrectly provided', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    await prismaClient.status.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Status #1',
+          rank: LexoRank.middle().format(),
+          boardId: board.id,
+        },
+        {
+          id: '2',
+          title: 'Status #2',
+          rank: LexoRank.middle().genNext().format(),
+          boardId: board.id,
+        },
+        {
+          id: '3',
+          title: 'Status #3',
+          rank: LexoRank.middle().genNext().genNext().format(),
+          boardId: board.id,
+        },
+        {
+          id: '4',
+          title: 'Status #4',
+          rank: LexoRank.middle().genNext().genNext().genNext().format(),
+          boardId: board.id,
+        },
+        {
+          id: '5',
+          title: 'Status #5',
+          rank: LexoRank.middle()
+            .genNext()
+            .genNext()
+            .genNext()
+            .genNext()
+            .format(),
+          boardId: board.id,
+        },
+      ],
+    })
+    const res1 = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #1.5',
+        prevStatusId: '1',
+        nextStatusId: '3',
+      })
+    expect(res1.status).toEqual(400)
+    expect(res1.body[0].msg).toEqual(
+      "Cannot determine status' position when putting one in between"
+    )
+    const res2 = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #4.0',
+        prevStatusId: '3',
+        nextStatusId: '5',
+      })
+    expect(res2.status).toEqual(400)
+    expect(res2.body[0].msg).toEqual(
+      "Cannot determine status' position when putting one in between"
+    )
+    const res3 = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #3.0',
+        prevStatusId: '1',
+        nextStatusId: '5',
+      })
+    expect(res3.status).toEqual(400)
+    expect(res3.body[0].msg).toEqual(
+      "Cannot determine status' position when putting one in between"
+    )
+    const res4 = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #2.0',
+        prevStatusId: '3',
+        nextStatusId: '1',
+      })
+    expect(res4.status).toEqual(400)
+    expect(res4.body[0].msg).toEqual(
+      "Cannot determine status' position when putting one in between"
+    )
+    const res5 = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #3.0',
+        prevStatusId: '3',
+        nextStatusId: '3',
+      })
+    expect(res5.status).toEqual(404)
+    expect(res5.body[0].msg).toEqual('Status not found')
+    const res6 = await req
+      .post(`/api/projects/${project.id}/boards/${board.id}/statuses`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Status #5.0',
+        prevStatusId: '4',
+        nextStatusId: '6',
+      })
+    expect(res6.status).toEqual(404)
+    expect(res6.body[0].msg).toEqual('Status not found')
   })
 
   test('`description` field in request body being optional', async () => {

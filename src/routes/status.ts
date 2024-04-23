@@ -160,7 +160,6 @@ router.get(
   getStatusController
 )
 
-// TODO: Validate neighbors
 /**
  * @openapi
  * /api/projects/{projectId}/boards/{boardId}/statuses:
