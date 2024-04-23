@@ -1002,3 +1002,578 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
     })
   })
 })
+
+describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        boards: {
+          create: {
+            ...BOARD,
+            statuses: {
+              createMany: {
+                data: [
+                  {
+                    id: '1',
+                    title: 'Status #1',
+                    rank: LexoRank.middle().format(),
+                  },
+                  {
+                    id: '2',
+                    title: 'Status #2',
+                    rank: LexoRank.middle().genNext().format(),
+                  },
+                  {
+                    id: '3',
+                    title: 'Status #3',
+                    rank: LexoRank.middle().genNext().genNext().format(),
+                  },
+                  {
+                    id: '4',
+                    title: 'Status #4',
+                    rank: LexoRank.middle()
+                      .genNext()
+                      .genNext()
+                      .genNext()
+                      .format(),
+                  },
+                  {
+                    id: '5',
+                    title: 'Status #5',
+                    rank: LexoRank.middle()
+                      .genNext()
+                      .genNext()
+                      .genNext()
+                      .genNext()
+                      .format(),
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const board = (await prismaClient.board.findFirst())!
+    const res = await req
+      .put(`/api/projects/abc/boards/${board.id}/statuses/3`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #3.0', prevStatusId: '2', nextStatusId: '3' })
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: board.id,
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: '3',
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid board id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/abc/statuses/3`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #3.0', prevStatusId: '2', nextStatusId: '3' })
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: '3',
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid status id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/abc`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #3.0', prevStatusId: '2', nextStatusId: '3' })
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('moves the first status down by one', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const prevStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+    ])
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/1`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #1', prevStatusId: '2', nextStatusId: '3' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Status #1', description: null })
+    const nextStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextStatuses).toStrictEqual([
+      { id: '2', title: 'Status #2' },
+      { id: '1', title: 'Status #1' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+    ])
+  })
+
+  it('moves the first status down by two', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const prevStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+    ])
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/1`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #1', prevStatusId: '3', nextStatusId: '4' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Status #1', description: null })
+    const nextStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextStatuses).toStrictEqual([
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '1', title: 'Status #1' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+    ])
+  })
+
+  it('moves the first status down by three', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const prevStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+    ])
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/1`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #1', prevStatusId: '4', nextStatusId: '5' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Status #1', description: null })
+    const nextStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextStatuses).toStrictEqual([
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '1', title: 'Status #1' },
+      { id: '5', title: 'Status #5' },
+    ])
+  })
+
+  it('moves the first status down by four and puts it at the end', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const prevStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+    ])
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/1`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #1', prevStatusId: '5' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Status #1', description: null })
+    const nextStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextStatuses).toStrictEqual([
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+      { id: '1', title: 'Status #1' },
+    ])
+  })
+
+  it('moves the last status up by one', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const prevStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+    ])
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/5`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #5', prevStatusId: '3', nextStatusId: '4' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Status #5', description: null })
+    const nextStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '5', title: 'Status #5' },
+      { id: '4', title: 'Status #4' },
+    ])
+  })
+
+  it('moves the last status up by two', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const prevStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+    ])
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/5`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #5', prevStatusId: '2', nextStatusId: '3' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Status #5', description: null })
+    const nextStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '5', title: 'Status #5' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+    ])
+  })
+
+  it('moves the last status up by three', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const prevStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+    ])
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/5`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #5', prevStatusId: '1', nextStatusId: '2' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Status #5', description: null })
+    const nextStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '5', title: 'Status #5' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+    ])
+  })
+
+  it('moves the last status up by four and puts it at the beginning', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const prevStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevStatuses).toStrictEqual([
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+      { id: '5', title: 'Status #5' },
+    ])
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/5`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #5', nextStatusId: '1' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Status #5', description: null })
+    const nextStatuses = await prismaClient.status.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextStatuses).toStrictEqual([
+      { id: '5', title: 'Status #5' },
+      { id: '1', title: 'Status #1' },
+      { id: '2', title: 'Status #2' },
+      { id: '3', title: 'Status #3' },
+      { id: '4', title: 'Status #4' },
+    ])
+  })
+
+  it("fails to put a status at the end when the reference ain't on the last position", async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/1`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #1', prevStatusId: '4' })
+    expect(res.status).toEqual(400)
+    expect(res.body[0].msg).toEqual(
+      "Cannot determine status' position when putting it at the end"
+    )
+  })
+
+  it("fails to put a status at the beginning when the reference ain't on the first position", async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/5`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #5', nextStatusId: '2' })
+    expect(res.status).toEqual(400)
+    expect(res.body[0].msg).toEqual(
+      "Cannot determine status' position when putting it at the beginning"
+    )
+  })
+
+  it('fails to put a status in between when its neighbors are incorrectly provided', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const res1 = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #2', prevStatusId: '1', nextStatusId: '3' })
+    expect(res1.status).toEqual(400)
+    expect(res1.body[0].msg).toEqual(
+      "Cannot determine status' position when putting it at the beginning"
+    )
+    const res2 = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #2', prevStatusId: '3', nextStatusId: '5' })
+    expect(res2.status).toEqual(400)
+    expect(res2.body[0].msg).toEqual(
+      "Cannot determine status' position when putting it at the beginning"
+    )
+    const res3 = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #2', prevStatusId: '1', nextStatusId: '5' })
+    expect(res3.status).toEqual(400)
+    expect(res3.body[0].msg).toEqual(
+      "Cannot determine status' position when putting it at the beginning"
+    )
+    const res4 = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #2', prevStatusId: '3', nextStatusId: '1' })
+    expect(res4.status).toEqual(400)
+    expect(res4.body[0].msg).toEqual(
+      "Cannot determine status' position when putting it at the beginning"
+    )
+    const res5 = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #2', prevStatusId: '3', nextStatusId: '3' })
+    expect(res5.status).toEqual(404)
+    expect(res5.body[0].msg).toEqual('Status not found')
+    const res6 = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #2', prevStatusId: '4', nextStatusId: '6' })
+    expect(res6.status).toEqual(404)
+    expect(res6.body[0].msg).toEqual('Status not found')
+  })
+
+  test('`description` field in request body being optional', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/3`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #3.0', prevStatusId: '2', nextStatusId: '3' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: 'Status #3.0',
+      description: null,
+    })
+  })
+
+  test('`title` field in request body being required', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const res = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/3`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ prevStatusId: '2', nextStatusId: '3' })
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '',
+        msg: 'You have to give your status a unique title',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+  })
+
+  it('returns 400 Bad Request when the status title is already taken', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const res1 = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/3`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #3', prevStatusId: '2', nextStatusId: '3' })
+    expect(res1.status).toEqual(200)
+    expect(res1.body).toHaveProperty('id')
+    expect(res1.body).toHaveProperty('createdAt')
+    expect(res1.body).toMatchObject({
+      title: 'Status #3',
+      description: null,
+    })
+    const res2 = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/3`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #4', prevStatusId: '2', nextStatusId: '3' })
+    expect(res2.status).toEqual(400)
+    expect(res2.body[0]).toStrictEqual({
+      type: 'field',
+      value: 'Status #4',
+      msg: 'This title has already been used by one of your statuses',
+      path: 'title',
+      location: 'body',
+    })
+  })
+})

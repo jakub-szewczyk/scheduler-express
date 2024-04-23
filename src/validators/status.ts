@@ -292,6 +292,7 @@ export const updateStatusValidator = [
         )
     }),
   body('description').trim().optional(),
+  // TODO
   body(['prevStatusId', 'nextStatusId']).custom(async (_, { req }) => {
     if (!req.body.prevStatusId && !req.body.nextStatusId)
       throw new Error("Cannot determine status' position")
