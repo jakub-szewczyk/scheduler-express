@@ -14,9 +14,6 @@ import {
 
 const router = Router()
 
-// TODO:
-// Sort only by rank.
-// Disallow sorting by creation date.
 /**
  * @openapi
  * /api/projects/{projectId}/boards/{boardId}/statuses:
@@ -56,12 +53,6 @@ const router = Router()
  *         schema:
  *           type: string
  *           example: 'Status #10'
- *       - in: query
- *         name: createdAt
- *         schema:
- *           type: string
- *           enum: [ASC, DESC]
- *           default: DESC
  *     responses:
  *       200:
  *         description: Returns all statuses

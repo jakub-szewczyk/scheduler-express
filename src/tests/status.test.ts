@@ -93,7 +93,7 @@ describe('GET /projects/:projectId/boards/:boardId/statuses', () => {
     ])
   })
 
-  test('`page`, `size`, `title` and `createdAt` query param being optional', async () => {
+  test('`page`, `size` and `title`  query param being optional', async () => {
     const project = (await prismaClient.project.findFirst())!
     const board = (await prismaClient.board.findFirst())!
     const res = await req
@@ -349,112 +349,6 @@ describe('GET /projects/:projectId/boards/:boardId/statuses', () => {
       total: 0,
     })
     expect(statuses).toHaveLength(0)
-  })
-
-  it('returns statuses sorted by creation date in ascending order', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const res = await req
-      .get(`/api/projects/${project.id}/boards/${board.id}/statuses`)
-      .query({ createdAt: 'ASC' })
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-    const statuses: Status[] = res.body.content
-    expect(res.status).toEqual(200)
-    expect(res.body).toMatchObject({
-      page: 0,
-      size: 10,
-      total: 100,
-    })
-    expect(statuses).toHaveLength(10)
-    statuses.forEach((status) => {
-      expect(status).toHaveProperty('id')
-      expect(status).toHaveProperty('createdAt')
-    })
-    statuses
-      .slice(1)
-      .forEach((status, index) =>
-        expect(new Date(status.createdAt).getTime()).toBeGreaterThan(
-          new Date(statuses[index].createdAt).getTime()
-        )
-      )
-  })
-
-  it('returns statuses sorted by creation date in descending order', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const res = await req
-      .get(`/api/projects/${project.id}/boards/${board.id}/statuses`)
-      .query({ createdAt: 'DESC' })
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-    const statuses: Status[] = res.body.content
-    expect(res.status).toEqual(200)
-    expect(res.body).toMatchObject({
-      page: 0,
-      size: 10,
-      total: 100,
-    })
-    expect(statuses).toHaveLength(10)
-    statuses.forEach((status) => {
-      expect(status).toHaveProperty('id')
-      expect(status).toHaveProperty('createdAt')
-    })
-    statuses
-      .slice(1)
-      .forEach((status, index) =>
-        expect(new Date(status.createdAt).getTime()).toBeLessThan(
-          new Date(statuses[index].createdAt).getTime()
-        )
-      )
-  })
-
-  it('returns statuses sorted by creation date in descending order by default', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const res = await req
-      .get(`/api/projects/${project.id}/boards/${board.id}/statuses`)
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-    const statuses: Status[] = res.body.content
-    expect(res.status).toEqual(200)
-    expect(res.body).toMatchObject({
-      page: 0,
-      size: 10,
-      total: 100,
-    })
-    expect(statuses).toHaveLength(10)
-    statuses.forEach((status) => {
-      expect(status).toHaveProperty('id')
-      expect(status).toHaveProperty('createdAt')
-    })
-    statuses
-      .slice(1)
-      .forEach((status, index) =>
-        expect(new Date(status.createdAt).getTime()).toBeLessThan(
-          new Date(statuses[index].createdAt).getTime()
-        )
-      )
-  })
-
-  it("returns 400 Bad Request when the `createdAt` query param is not one of the following values: ['ASC', 'DESC']", async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const res = await req
-      .get(`/api/projects/${project.id}/boards/${board.id}/statuses`)
-      .query({ createdAt: 'abc' })
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-    expect(res.status).toEqual(400)
-    expect(res.body).toStrictEqual([
-      {
-        type: 'field',
-        value: 'abc',
-        msg: 'Invalid value was provided for sorting statuses by creation date',
-        path: 'createdAt',
-        location: 'query',
-      },
-    ])
   })
 })
 

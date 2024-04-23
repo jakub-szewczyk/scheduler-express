@@ -22,7 +22,6 @@ type GetStatusesControllerRequest = WithAuthProp<
       page?: string
       size?: string
       title?: string
-      createdAt?: 'ASC' | 'DESC'
     }
   >
 >
@@ -54,10 +53,7 @@ export const getStatusesController = async (
       prismaClient.status.findMany({
         select: statusSelect,
         where,
-        orderBy: {
-          createdAt: (req.query.createdAt?.toLowerCase() ||
-            'desc') as Prisma.SortOrder,
-        },
+        orderBy: { rank: 'asc' },
         take: size,
         skip: page * size,
       }),

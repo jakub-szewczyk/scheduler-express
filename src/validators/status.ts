@@ -38,12 +38,6 @@ export const getStatusesValidator = [
   query('size', 'Page size must be a non-negative integer')
     .isInt({ gt: -1 })
     .optional(),
-  query(
-    'createdAt',
-    'Invalid value was provided for sorting statuses by creation date'
-  )
-    .isIn(['ASC', 'DESC'])
-    .optional(),
   validationMiddleware,
 ]
 
