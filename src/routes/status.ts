@@ -219,7 +219,7 @@ router.post(
   createStatusController
 )
 
-// TODO: Validate neighbors
+// TODO: Document
 router.put(
   '/:projectId/boards/:boardId/statuses/:statusId',
   updateStatusValidator,

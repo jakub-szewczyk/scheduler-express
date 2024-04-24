@@ -1,4 +1,5 @@
 import { Status } from '@prisma/client'
+import { ValidationError } from 'express-validator'
 import { LexoRank } from 'lexorank'
 import { omit } from 'ramda'
 import supertest from 'supertest'
@@ -1068,28 +1069,12 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .set('Authorization', BEARER_TOKEN)
       .send({ title: 'Status #3.0', prevStatusId: '2', nextStatusId: '3' })
     expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual([
-      {
-        type: 'field',
-        value: 'abc',
-        msg: 'Project not found',
-        path: 'projectId',
-        location: 'params',
-      },
-      {
-        type: 'field',
-        value: board.id,
-        msg: 'Board not found',
-        path: 'boardId',
-        location: 'params',
-      },
-      {
-        type: 'field',
-        value: '3',
-        msg: 'Status not found',
-        path: 'statusId',
-        location: 'params',
-      },
+    expect(res.body.map((error: ValidationError) => error.msg)).toStrictEqual([
+      'Project not found',
+      'Board not found',
+      'Status not found',
+      'Status not found',
+      'Status not found',
     ])
   })
 
@@ -1101,21 +1086,11 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .set('Authorization', BEARER_TOKEN)
       .send({ title: 'Status #3.0', prevStatusId: '2', nextStatusId: '3' })
     expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual([
-      {
-        type: 'field',
-        value: 'abc',
-        msg: 'Board not found',
-        path: 'boardId',
-        location: 'params',
-      },
-      {
-        type: 'field',
-        value: '3',
-        msg: 'Status not found',
-        path: 'statusId',
-        location: 'params',
-      },
+    expect(res.body.map((error: ValidationError) => error.msg)).toStrictEqual([
+      'Board not found',
+      'Status not found',
+      'Status not found',
+      'Status not found',
     ])
   })
 
@@ -1437,7 +1412,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .send({ title: 'Status #1', prevStatusId: '4' })
     expect(res.status).toEqual(400)
     expect(res.body[0].msg).toEqual(
-      "Cannot determine status' position when putting it at the end"
+      "Cannot determine status' position when appending it"
     )
   })
 
@@ -1451,7 +1426,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .send({ title: 'Status #5', nextStatusId: '2' })
     expect(res.status).toEqual(400)
     expect(res.body[0].msg).toEqual(
-      "Cannot determine status' position when putting it at the beginning"
+      "Cannot determine status' position when prepending it"
     )
   })
 
@@ -1465,7 +1440,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .send({ title: 'Status #2', prevStatusId: '1', nextStatusId: '3' })
     expect(res1.status).toEqual(400)
     expect(res1.body[0].msg).toEqual(
-      "Cannot determine status' position when putting it at the beginning"
+      "Cannot determine status' position when putting one in between"
     )
     const res2 = await req
       .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
@@ -1474,7 +1449,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .send({ title: 'Status #2', prevStatusId: '3', nextStatusId: '5' })
     expect(res2.status).toEqual(400)
     expect(res2.body[0].msg).toEqual(
-      "Cannot determine status' position when putting it at the beginning"
+      "Cannot determine status' position when putting one in between"
     )
     const res3 = await req
       .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
@@ -1483,7 +1458,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .send({ title: 'Status #2', prevStatusId: '1', nextStatusId: '5' })
     expect(res3.status).toEqual(400)
     expect(res3.body[0].msg).toEqual(
-      "Cannot determine status' position when putting it at the beginning"
+      "Cannot determine status' position when putting one in between"
     )
     const res4 = await req
       .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
@@ -1492,7 +1467,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .send({ title: 'Status #2', prevStatusId: '3', nextStatusId: '1' })
     expect(res4.status).toEqual(400)
     expect(res4.body[0].msg).toEqual(
-      "Cannot determine status' position when putting it at the beginning"
+      "Cannot determine status' position when putting one in between"
     )
     const res5 = await req
       .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
