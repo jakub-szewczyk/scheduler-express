@@ -184,3 +184,34 @@ export const updateStatusController = async (
     return res.status(500).end()
   }
 }
+
+type DeleteStatusControllerRequest = WithAuthProp<
+  Request<{ projectId: string; boardId: string; statusId: string }>
+>
+
+type DeleteStatusControllerResponse = Response<StatusResponse>
+
+export const deleteStatusController = async (
+  req: DeleteStatusControllerRequest,
+  res: DeleteStatusControllerResponse
+) => {
+  try {
+    const status = await prismaClient.status.delete({
+      select: statusSelect,
+      where: {
+        id: req.params.statusId,
+        board: {
+          id: req.params.boardId,
+          project: {
+            id: req.params.projectId,
+            authorId: req.auth.userId!,
+          },
+        },
+      },
+    })
+    return res.json(status)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}

@@ -1571,3 +1571,151 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
     })
   })
 })
+
+describe('DELETE /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        boards: {
+          create: {
+            title: 'Board #1',
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const status = await prismaClient.status.create({
+      select: statusSelect,
+      data: {
+        ...STATUS,
+        board: {
+          connect: {
+            id: board.id,
+            projectId: project.id,
+          },
+        },
+      },
+    })
+    const res = await req
+      .delete(`/api/projects/abc/boards/${board.id}/statuses/${status.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: board.id,
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: status.id,
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid board id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const status = await prismaClient.status.create({
+      select: statusSelect,
+      data: {
+        ...STATUS,
+        board: {
+          connect: {
+            id: board.id,
+            projectId: project.id,
+          },
+        },
+      },
+    })
+    const res = await req
+      .delete(`/api/projects/${project.id}/boards/abc/statuses/${status.id}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: status.id,
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('deletes a status', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const status = await prismaClient.status.create({
+      select: statusSelect,
+      data: {
+        ...STATUS,
+        board: {
+          connect: {
+            id: board.id,
+            projectId: project.id,
+          },
+        },
+      },
+    })
+    const res = await req
+      .delete(
+        `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(200)
+    expect(res.body).toMatchObject({
+      ...status,
+      createdAt: status.createdAt.toISOString(),
+    })
+  })
+
+  it('returns 404 Not Found in case of invalid status id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const board = (await prismaClient.board.findFirst())!
+    const res = await req
+      .delete(`/api/projects/${project.id}/boards/${board.id}/statuses/abc`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+    ])
+  })
+})

@@ -318,3 +318,55 @@ export const updateStatusValidator = [
   neighborValidation,
   validationMiddleware,
 ]
+
+export const deleteStatusValidator = [
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
+        where: {
+          id: projectId,
+          authorId: req.auth.userId,
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
+  param('boardId').custom(async (boardId: string, { req }) => {
+    try {
+      await prismaClient.board.findFirstOrThrow({
+        where: {
+          id: boardId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
+          },
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Board not found')
+    }
+  }),
+  param('statusId').custom(async (statusId: string, { req }) => {
+    try {
+      await prismaClient.status.findFirstOrThrow({
+        where: {
+          id: statusId,
+          board: {
+            id: req.params!.boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
+          },
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Status not found')
+    }
+  }),
+  validationMiddleware,
+]
