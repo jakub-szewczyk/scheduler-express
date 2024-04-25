@@ -258,23 +258,42 @@ export const updateStatusValidator = [
     }
   }),
   param('statusId').custom(async (statusId: string, { req }) => {
-    try {
-      await prismaClient.status.findFirstOrThrow({
-        where: {
-          id: statusId,
-          board: {
-            id: req.params!.boardId,
-            project: {
-              id: req.params!.projectId,
-              authorId: req.auth.userId,
-            },
+    const status = await prismaClient.status.findFirst({
+      where: {
+        id: statusId,
+        board: {
+          id: req.params!.boardId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
           },
         },
-      })
-    } catch (error) {
+      },
+    })
+    if (!status) {
       req.statusCode = 404
       throw new Error('Status not found')
     }
+    if (
+      req.body.prevStatusId &&
+      req.body.nextStatusId &&
+      (statusId === req.body.prevStatusId || statusId === req.body.nextStatusId)
+    )
+      throw new Error(
+        "Cannot determine status' position when putting one in between"
+      )
+    if (
+      !req.body.prevStatusId &&
+      req.body.nextStatusId &&
+      statusId === req.body.nextStatusId
+    )
+      throw new Error("Cannot determine status' position when appending it")
+    if (
+      req.body.prevStatusId &&
+      !req.body.nextStatusId &&
+      statusId === req.body.nextStatusId
+    )
+      throw new Error("Cannot determine status' position when prepending it")
   }),
   body('title', 'You have to give your status a unique title')
     .trim()

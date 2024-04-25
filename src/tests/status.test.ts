@@ -1474,16 +1474,34 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send({ title: 'Status #2', prevStatusId: '3', nextStatusId: '3' })
-    expect(res5.status).toEqual(404)
-    expect(res5.body[0].msg).toEqual('Status not found')
+      .send({ title: 'Status #2', prevStatusId: '2', nextStatusId: '3' })
+    expect(res5.status).toEqual(400)
+    expect(res5.body[0].msg).toEqual(
+      "Cannot determine status' position when putting one in between"
+    )
     const res6 = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/3`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #3', prevStatusId: '2', nextStatusId: '3' })
+    expect(res6.status).toEqual(400)
+    expect(res6.body[0].msg).toEqual(
+      "Cannot determine status' position when putting one in between"
+    )
+    const res7 = await req
+      .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Status #2', prevStatusId: '3', nextStatusId: '3' })
+    expect(res7.status).toEqual(404)
+    expect(res7.body[0].msg).toEqual('Status not found')
+    const res8 = await req
       .put(`/api/projects/${project.id}/boards/${board.id}/statuses/2`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({ title: 'Status #2', prevStatusId: '4', nextStatusId: '6' })
-    expect(res6.status).toEqual(404)
-    expect(res6.body[0].msg).toEqual('Status not found')
+    expect(res8.status).toEqual(404)
+    expect(res8.body[0].msg).toEqual('Status not found')
   })
 
   test('`description` field in request body being optional', async () => {
@@ -1493,12 +1511,12 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .put(`/api/projects/${project.id}/boards/${board.id}/statuses/3`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send({ title: 'Status #3.0', prevStatusId: '2', nextStatusId: '3' })
+      .send({ title: 'Status #3', prevStatusId: '4', nextStatusId: '5' })
     expect(res.status).toEqual(200)
     expect(res.body).toHaveProperty('id')
     expect(res.body).toHaveProperty('createdAt')
     expect(res.body).toMatchObject({
-      title: 'Status #3.0',
+      title: 'Status #3',
       description: null,
     })
   })
@@ -1510,7 +1528,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .put(`/api/projects/${project.id}/boards/${board.id}/statuses/3`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send({ prevStatusId: '2', nextStatusId: '3' })
+      .send({ prevStatusId: '4', nextStatusId: '5' })
     expect(res.status).toEqual(400)
     expect(res.body).toStrictEqual([
       {
@@ -1530,7 +1548,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .put(`/api/projects/${project.id}/boards/${board.id}/statuses/3`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send({ title: 'Status #3', prevStatusId: '2', nextStatusId: '3' })
+      .send({ title: 'Status #3', prevStatusId: '4', nextStatusId: '5' })
     expect(res1.status).toEqual(200)
     expect(res1.body).toHaveProperty('id')
     expect(res1.body).toHaveProperty('createdAt')
@@ -1542,7 +1560,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
       .put(`/api/projects/${project.id}/boards/${board.id}/statuses/3`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send({ title: 'Status #4', prevStatusId: '2', nextStatusId: '3' })
+      .send({ title: 'Status #4', prevStatusId: '4', nextStatusId: '5' })
     expect(res2.status).toEqual(400)
     expect(res2.body[0]).toStrictEqual({
       type: 'field',
