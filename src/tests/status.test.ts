@@ -653,7 +653,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
     const nextStatus = await prismaClient.status.create({
       data: {
         ...STATUS,
-        rank: LexoRank.parse(STATUS.rank).genNext().genNext().format(),
+        rank: LexoRank.parse(STATUS.rank).genNext().format(),
         title: 'Status #3',
         board: {
           connect: {
@@ -684,6 +684,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
     })
     const statuses = await prismaClient.status.findMany({
       select: { title: true, rank: true },
+      orderBy: { rank: 'asc' },
     })
     expect(statuses).toMatchObject([
       {
@@ -691,12 +692,12 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
         rank: LexoRank.middle().format(),
       },
       {
-        title: 'Status #3',
-        rank: LexoRank.parse(STATUS.rank).genNext().genNext().format(),
+        title: 'Status #2',
+        rank: LexoRank.middle().between(LexoRank.middle().genNext()).format(),
       },
       {
-        title: 'Status #2',
-        rank: LexoRank.parse(STATUS.rank).genNext().format(),
+        title: 'Status #3',
+        rank: LexoRank.middle().genNext().format(),
       },
     ])
   })
