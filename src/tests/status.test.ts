@@ -6,8 +6,8 @@ import supertest from 'supertest'
 import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
 import { BOARD } from '../modules/board'
-import { ordinals } from '../modules/common'
-import { RANKS, STATUS, statusSelect } from '../modules/status'
+import { RANKS, ordinals } from '../modules/common'
+import { STATUS, statusSelect } from '../modules/status'
 import prismaClient from './client'
 
 const AUTHOR_ID = process.env.AUTHOR_ID

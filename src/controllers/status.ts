@@ -2,8 +2,9 @@ import { WithAuthProp } from '@clerk/clerk-sdk-node'
 import { Prisma, Status } from '@prisma/client'
 import { Request, Response } from 'express'
 import prismaClient from '../client'
+import { generateRank } from '../modules/common'
 import { paginationParams } from '../modules/pagination'
-import { generateRank, statusSelect } from '../modules/status'
+import { statusSelect } from '../modules/status'
 import { PaginableResponse } from '../types/pagination'
 
 export type StatusBody = Pick<Status, 'title' | 'description'> & {
@@ -121,8 +122,8 @@ export const createStatusController = async (
         title: req.body.title,
         description: req.body.description || null,
         rank: generateRank({
-          prevStatusRank: req.prevStatusRank,
-          nextStatusRank: req.nextStatusRank,
+          prevRank: req.prevStatusRank,
+          nextRank: req.nextStatusRank,
         }).format(),
         board: {
           connect: {
@@ -173,8 +174,8 @@ export const updateStatusController = async (
         title: req.body.title,
         description: req.body.description,
         rank: generateRank({
-          prevStatusRank: req.prevStatusRank,
-          nextStatusRank: req.nextStatusRank,
+          prevRank: req.prevStatusRank,
+          nextRank: req.nextStatusRank,
         }).format(),
       },
     })

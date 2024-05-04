@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker'
 import { Prisma, PrismaClient } from '@prisma/client'
 import { parseArgs } from 'node:util'
-import { RANKS } from '../src/modules/status'
+import { RANKS } from '../src/modules/common'
 
 const prismaClient = new PrismaClient()
 
@@ -82,7 +82,7 @@ const seed = async () => {
             })
           ),
       ])
-      /* const statuses = */ await Promise.all([
+      const statuses = await Promise.all([
         ...RANKS.map((_, index, array) =>
           prismaClient.status.create({
             data: {
@@ -90,6 +90,19 @@ const seed = async () => {
               title: `Status #${array.length - index}`,
               rank: RANKS[index],
               boardId: boards[0].id,
+            },
+          })
+        ),
+      ])
+      /* const issues = */ await Promise.all([
+        ...RANKS.map((_, index, array) =>
+          prismaClient.issue.create({
+            data: {
+              createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+              title: `Issue #${array.length - index}`,
+              rank: RANKS[index],
+              priority: 'MEDIUM',
+              statusId: statuses[0].id,
             },
           })
         ),

@@ -6,13 +6,9 @@ Express REST API v2.0.0
 
 ### Refactor
 
-- Schedules module.
+- Issues module.
 
-- Boards module.
-
-- Notes module.
-
-- Notification cron job.
+- Note's content module.
 
 ### Test
 
@@ -20,12 +16,8 @@ Express REST API v2.0.0
 
 - Notification cron job.
 
-- Figure out how to pass vitest CLI args to a bash script.
-
 - Exclude non-testable files from coverage report.
 
 ### Other
 
 - Document all endpoints.
-
-- Configure pre-commit git hook.

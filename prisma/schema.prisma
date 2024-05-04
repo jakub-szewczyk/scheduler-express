@@ -100,6 +100,16 @@ model Status {
   @@unique([rank, boardId])
 }
 
+enum Priority {
+  TRIVIAL
+  MINOR
+  LOW
+  MEDIUM
+  HIGH
+  MAJOR
+  CRITICAL
+}
+
 model Issue {
   id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
@@ -107,7 +117,7 @@ model Issue {
   title       String
   description String?
   rank        String
-  priorities  String[]
+  priority    Priority
   attachments Bytes[]
   status      Status   @relation(fields: [statusId], references: [id], onDelete: Cascade)
   statusId    String
