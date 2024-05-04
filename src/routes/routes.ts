@@ -8,7 +8,6 @@ import projectRoutes from './project'
 import pushSubscriptionRoutes from './pushSubscription'
 import scheduleRoutes from './schedule'
 import statusRoutes from './status'
-// import contentRoutes from './content'
 
 const router = Router()
 
@@ -29,7 +28,5 @@ router.use('/projects', statusRoutes)
 router.use('/projects', issueRoutes)
 
 router.use('/projects', noteRoutes)
-
-// router.use('/projects', contentRoutes)
 
 export default router
