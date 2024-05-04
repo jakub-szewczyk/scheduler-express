@@ -313,6 +313,31 @@
  * @openapi
  * components:
  *   schemas:
+ *     Issue:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 36681b55-a2a9-4e72-b7b5-225bd515cb4a
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Issue #1'
+ *         description:
+ *           type: string
+ *           example: Edit your issue's title and description. Prioritize them based on your needs.
+ *         priority:
+ *           type: string
+ *           enum: [TRIVIAL, MINOR, LOW, MEDIUM, HIGH, MAJOR, CRITICAL]
+ *           example: MEDIUM
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
  *     Note:
  *       type: object
  *       properties:

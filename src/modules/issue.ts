@@ -4,7 +4,7 @@ import { LexoRank } from 'lexorank'
 export const ISSUE: Pick<Issue, 'title' | 'description' | 'rank'> = {
   title: 'Issue #1',
   description:
-    "Edit your issue's title and description. Prioritize your tasks.",
+    "Edit your issue's title and description. Prioritize them based on your needs.",
   rank: LexoRank.middle().format(),
 }
 
