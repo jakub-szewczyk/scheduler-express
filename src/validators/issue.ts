@@ -59,3 +59,10 @@ export const getIssuesValidator = [
     .optional(),
   validationMiddleware,
 ]
+
+export const getIssueValidator = [
+  param('projectId').notEmpty(),
+  param('boardId').notEmpty(),
+  param('issueId').notEmpty(),
+  validationMiddleware,
+]

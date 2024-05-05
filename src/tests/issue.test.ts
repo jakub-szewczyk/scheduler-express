@@ -1,9 +1,12 @@
 import { Issue } from '@prisma/client'
 import { LexoRank } from 'lexorank'
+import { omit } from 'ramda'
 import supertest from 'supertest'
 import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
 import { RANKS, ordinals } from '../modules/common'
+import { ISSUE, issueSelect } from '../modules/issue'
+import { STATUS } from '../modules/status'
 import prismaClient from './client'
 
 const AUTHOR_ID = process.env.AUTHOR_ID
@@ -54,10 +57,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
   })
 
   it('returns 404 Not Found in case of invalid project id', async () => {
-    const board = (await prismaClient.board.findFirst())!
-    const status = (await prismaClient.status.findFirst())!
+    const [board, status] = await Promise.all([
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
     const res = await req
-      .get(`/api/projects/abc/boards/${board.id}/statuses/${status.id}/issues`)
+      .get(
+        `/api/projects/abc/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
@@ -71,14 +78,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
       },
       {
         type: 'field',
-        value: board.id,
+        value: board!.id,
         msg: 'Board not found',
         path: 'boardId',
         location: 'params',
       },
       {
         type: 'field',
-        value: status.id,
+        value: status!.id,
         msg: 'Status not found',
         path: 'statusId',
         location: 'params',
@@ -87,11 +94,13 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
   })
 
   it('returns 404 Not Found in case of invalid board id', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const status = (await prismaClient.status.findFirst())!
+    const [project, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
     const res = await req
       .get(
-        `/api/projects/${project.id}/boards/abc/statuses/${status.id}/issues`
+        `/api/projects/${project!.id}/boards/abc/statuses/${status!.id}/issues`
       )
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
@@ -106,7 +115,7 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
       },
       {
         type: 'field',
-        value: status.id,
+        value: status!.id,
         msg: 'Status not found',
         path: 'statusId',
         location: 'params',
@@ -115,10 +124,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
   })
 
   it('returns 404 Not Found in case of invalid status id', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
+    const [project, board] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+    ])
     const res = await req
-      .get(`/api/projects/${project.id}/boards/${board.id}/statuses/abc/issues`)
+      .get(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/abc/issues`
+      )
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     expect(res.status).toEqual(404)
@@ -134,12 +147,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
   })
 
   test('`page`, `size` and `title`  query param being optional', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const status = (await prismaClient.status.findFirst())!
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
     const res = await req
       .get(
-        `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}/issues`
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
       )
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
@@ -163,12 +178,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
   })
 
   it('returns 400 Bad Request when the page number is negative', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const status = (await prismaClient.status.findFirst())!
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
     const res = await req
       .get(
-        `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}/issues`
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
       )
       .query({ page: -1 })
       .set('Accept', 'application/json')
@@ -186,12 +203,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
   })
 
   it('returns 400 Bad Request when the page number is not an integer', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const status = (await prismaClient.status.findFirst())!
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
     const res = await req
       .get(
-        `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}/issues`
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
       )
       .query({ page: 'abc' })
       .set('Accept', 'application/json')
@@ -212,12 +231,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
     .fill(null)
     .forEach((_, page) =>
       it(`returns ${ordinals(page + 1)} issue page`, async () => {
-        const project = (await prismaClient.project.findFirst())!
-        const board = (await prismaClient.board.findFirst())!
-        const status = (await prismaClient.status.findFirst())!
+        const [project, board, status] = await Promise.all([
+          prismaClient.project.findFirst(),
+          prismaClient.board.findFirst(),
+          prismaClient.status.findFirst(),
+        ])
         const res = await req
           .get(
-            `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}/issues`
+            `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
           )
           .query({ page })
           .set('Accept', 'application/json')
@@ -243,12 +264,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
     )
 
   it('returns 400 Bad Request when the page size is negative', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const status = (await prismaClient.status.findFirst())!
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
     const res = await req
       .get(
-        `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}/issues`
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
       )
       .query({ size: -1 })
       .set('Accept', 'application/json')
@@ -266,12 +289,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
   })
 
   it('returns 400 Bad Request when the page size is not an integer', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const status = (await prismaClient.status.findFirst())!
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
     const res = await req
       .get(
-        `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}/issues`
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
       )
       .query({ size: 'abc' })
       .set('Accept', 'application/json')
@@ -292,12 +317,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
     .fill(null)
     .forEach((_, size) =>
       it(`returns ${size} ${size === 1 ? 'issue' : 'issues'}`, async () => {
-        const project = (await prismaClient.project.findFirst())!
-        const board = (await prismaClient.board.findFirst())!
-        const status = (await prismaClient.status.findFirst())!
+        const [project, board, status] = await Promise.all([
+          prismaClient.project.findFirst(),
+          prismaClient.board.findFirst(),
+          prismaClient.status.findFirst(),
+        ])
         const res = await req
           .get(
-            `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}/issues`
+            `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
           )
           .query({ size })
           .set('Accept', 'application/json')
@@ -322,12 +349,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
     )
 
   it('returns issues filtered by title', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const status = (await prismaClient.status.findFirst())!
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
     const res = await req
       .get(
-        `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}/issues`
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
       )
       .query({
         title: 'issue #10',
@@ -357,12 +386,14 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
   })
 
   test('case insensitivity in issue search by title', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const board = (await prismaClient.board.findFirst())!
-    const status = (await prismaClient.status.findFirst())!
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
     const res1 = await req
       .get(
-        `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}/issues`
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
       )
       .query({ title: 'issue #69' })
       .set('Accept', 'application/json')
@@ -383,7 +414,7 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
     })
     const res2 = await req
       .get(
-        `/api/projects/${project.id}/boards/${board.id}/statuses/${status.id}/issues`
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
       )
       .query({ title: 'Issue #69' })
       .set('Accept', 'application/json')
@@ -423,5 +454,115 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
       total: 0,
     })
     expect(issues).toHaveLength(0)
+  })
+})
+
+describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:issueId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        boards: {
+          create: {
+            title: 'Board #1',
+            statuses: {
+              create: {
+                ...omit(['description'], STATUS),
+                issues: {
+                  create: ISSUE,
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const [board, status, issue] = await Promise.all([
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+      prismaClient.issue.findFirst(),
+    ])
+    const res = await req
+      .get(
+        `/api/projects/abc/boards/${board!.id}/statuses/${status!.id}/issues/${issue!.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('returns 404 Not Found in case of invalid board id', async () => {
+    const [project, status, issue] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.status.findFirst(),
+      prismaClient.issue.findFirst(),
+    ])
+    const res = await req
+      .get(
+        `/api/projects/${project!.id}/boards/abc/statuses/${status!.id}/issues/${issue!.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('returns 404 Not Found in case of invalid status id', async () => {
+    const [project, board, issue] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.issue.findFirst(),
+    ])
+    const res = await req
+      .get(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/abc/issues/${issue!.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('returns 404 Not Found in case of invalid issue id', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .get(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/abc`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual({})
+  })
+
+  it('returns issue by id', async () => {
+    const [project, board, status, issue] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+      prismaClient.issue.findFirst({ select: issueSelect }),
+    ])
+    const res = await req
+      .get(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/${issue!.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(200)
+    expect(res.body).toStrictEqual({
+      ...issue,
+      createdAt: issue!.createdAt.toISOString(),
+    })
   })
 })
