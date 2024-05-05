@@ -1,6 +1,14 @@
 import { Router } from 'express'
-import { getIssueController, getIssuesController } from '../controllers/issue'
-import { getIssueValidator, getIssuesValidator } from '../validators/issue'
+import {
+  createIssueController,
+  getIssueController,
+  getIssuesController,
+} from '../controllers/issue'
+import {
+  createIssueValidator,
+  getIssueValidator,
+  getIssuesValidator,
+} from '../validators/issue'
 
 const router = Router()
 
@@ -151,6 +159,13 @@ router.get(
   '/:projectId/boards/:boardId/statuses/:statusId/issues/:issueId',
   getIssueValidator,
   getIssueController
+)
+
+// TODO: Document
+router.post(
+  '/:projectId/boards/:boardId/statuses/:statusId/issues',
+  createIssueValidator,
+  createIssueController
 )
 
 export default router

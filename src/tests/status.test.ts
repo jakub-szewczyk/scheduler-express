@@ -486,7 +486,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
     ])
   })
 
-  it('creates a status', async () => {
+  it('creates the first status', async () => {
     const project = (await prismaClient.project.findFirst())!
     const board = (await prismaClient.board.findFirst())!
     const payload = omit(['rank'], STATUS)
@@ -971,7 +971,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
     ])
   })
 
-  it('returns 400 Bad Request when the status title is already taken', async () => {
+  it("returns 400 Bad Request when the status' title is already taken", async () => {
     const project = (await prismaClient.project.findFirst())!
     const board = (await prismaClient.board.findFirst())!
     await prismaClient.status.create({
@@ -1541,7 +1541,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId', () => {
     ])
   })
 
-  it('returns 400 Bad Request when the status title is already taken', async () => {
+  it("returns 400 Bad Request when the status' title is already taken", async () => {
     const project = (await prismaClient.project.findFirst())!
     const board = (await prismaClient.board.findFirst())!
     const res1 = await req

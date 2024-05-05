@@ -2,9 +2,15 @@ import { WithAuthProp } from '@clerk/clerk-sdk-node'
 import { Issue, Prisma } from '@prisma/client'
 import { Request, Response } from 'express'
 import prismaClient from '../client'
+import { generateRank } from '../modules/common'
 import { issueSelect } from '../modules/issue'
 import { paginationParams } from '../modules/pagination'
 import { PaginableResponse } from '../types/pagination'
+
+export type IssueBody = Pick<Issue, 'title' | 'description' | 'priority'> & {
+  prevIssueId?: string | null
+  nextIssueId?: string | null
+}
 
 type IssueResponse = Pick<Issue, keyof typeof issueSelect>
 
@@ -104,6 +110,52 @@ export const getIssueController = async (
       },
     })
     return issue ? res.json(issue) : res.status(404).end()
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
+
+type CreateIssueControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; boardId: string; statusId: string },
+    object,
+    IssueBody
+  >
+>
+
+type CreateIssueControllerResponse = Response<IssueResponse>
+
+export const createIssueController = async (
+  req: CreateIssueControllerRequest,
+  res: CreateIssueControllerResponse
+) => {
+  try {
+    const issue = await prismaClient.issue.create({
+      select: issueSelect,
+      data: {
+        title: req.body.title,
+        description: req.body.description || null,
+        rank: generateRank({
+          prevRank: req.prevIssueRank,
+          nextRank: req.nextIssueRank,
+        }).format(),
+        priority: req.body.priority,
+        status: {
+          connect: {
+            id: req.params.statusId,
+            board: {
+              id: req.params.boardId,
+              project: {
+                id: req.params.projectId,
+                authorId: req.auth.userId!,
+              },
+            },
+          },
+        },
+      },
+    })
+    return res.status(201).json(issue)
   } catch (error) {
     console.error(error)
     return res.status(500).end()

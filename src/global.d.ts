@@ -6,6 +6,8 @@ declare global {
       event?: EventStartsAtWithNotificationId
       prevStatusRank?: string | null
       nextStatusRank?: string | null
+      prevIssueRank?: string | null
+      nextIssueRank?: string | null
     }
   }
 }

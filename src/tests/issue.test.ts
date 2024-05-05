@@ -1,9 +1,10 @@
-import { Issue } from '@prisma/client'
+import { Issue, Priority } from '@prisma/client'
 import { LexoRank } from 'lexorank'
 import { omit } from 'ramda'
 import supertest from 'supertest'
 import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
+import { BOARD } from '../modules/board'
 import { RANKS, ordinals } from '../modules/common'
 import { ISSUE, issueSelect } from '../modules/issue'
 import { STATUS } from '../modules/status'
@@ -564,5 +565,731 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
       ...issue,
       createdAt: issue!.createdAt.toISOString(),
     })
+  })
+})
+
+describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        boards: {
+          create: {
+            ...BOARD,
+            statuses: { create: STATUS },
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const [board, status] = await Promise.all([
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .post(
+        `/api/projects/abc/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(ISSUE)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: board!.id,
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: status!.id,
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid board id', async () => {
+    const [project, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/abc/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(ISSUE)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: status!.id,
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('creates the first issue', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const payload = omit(['rank'], ISSUE)
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject(payload)
+    const issues = await prismaClient.issue.findMany()
+    expect(issues).toMatchObject([ISSUE])
+  })
+
+  it('creates an issue at a default position', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    await prismaClient.issue.create({
+      data: {
+        ...ISSUE,
+        status: { connect: { id: status!.id } },
+      },
+    })
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Issue #2', priority: 'MEDIUM' })
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Issue #2', description: null })
+    const issues = await prismaClient.issue.findMany({
+      select: { title: true, description: true, rank: true, priority: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(issues).toStrictEqual([
+      {
+        title: 'Issue #2',
+        description: null,
+        rank: '0|hzzzzr:',
+        priority: 'MEDIUM',
+      },
+      ISSUE,
+    ])
+  })
+
+  it('prepends an issue', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const issue = await prismaClient.issue.create({
+      data: {
+        ...ISSUE,
+        status: { connect: { id: status!.id } },
+      },
+    })
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #0',
+        priority: 'MEDIUM',
+        nextIssueId: issue.id,
+      })
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: 'Issue #0',
+      description: null,
+      priority: 'MEDIUM',
+    })
+    const issues = await prismaClient.issue.findMany({
+      select: { title: true, rank: true },
+    })
+    expect(issues).toMatchObject([
+      {
+        title: 'Issue #1',
+        rank: LexoRank.middle().format(),
+      },
+      {
+        title: 'Issue #0',
+        rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+      },
+    ])
+  })
+
+  it('appends an issue', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const issue = await prismaClient.issue.create({
+      data: {
+        ...ISSUE,
+        status: { connect: { id: status!.id } },
+      },
+    })
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #2',
+        priority: 'MEDIUM',
+        prevIssueId: issue.id,
+      })
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: 'Issue #2',
+      description: null,
+      priority: 'MEDIUM',
+    })
+    const issues = await prismaClient.issue.findMany({
+      select: { title: true, rank: true },
+    })
+    expect(issues).toMatchObject([
+      {
+        title: 'Issue #1',
+        rank: LexoRank.middle().format(),
+      },
+      {
+        title: 'Issue #2',
+        rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+      },
+    ])
+  })
+
+  it('inserts an issue in between', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const prevIssue = await prismaClient.issue.create({
+      data: {
+        ...ISSUE,
+        status: { connect: { id: status!.id } },
+      },
+    })
+    const nextIssue = await prismaClient.issue.create({
+      data: {
+        ...ISSUE,
+        rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+        title: 'Issue #3',
+        status: { connect: { id: status!.id } },
+      },
+    })
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #2',
+        priority: 'MEDIUM',
+        prevIssueId: prevIssue.id,
+        nextIssueId: nextIssue.id,
+      })
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: 'Issue #2',
+      description: null,
+      priority: 'MEDIUM',
+    })
+    const issues = await prismaClient.issue.findMany({
+      select: { title: true, rank: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(issues).toMatchObject([
+      {
+        title: 'Issue #1',
+        rank: LexoRank.middle().format(),
+      },
+      {
+        title: 'Issue #2',
+        rank: LexoRank.middle().between(LexoRank.middle().genNext()).format(),
+      },
+      {
+        title: 'Issue #3',
+        rank: LexoRank.middle().genNext().format(),
+      },
+    ])
+  })
+
+  it("fails to append an issue when the reference ain't on the last position", async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    await prismaClient.issue.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Issue #1',
+          rank: LexoRank.middle().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '2',
+          title: 'Issue #2',
+          rank: LexoRank.middle().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '3',
+          title: 'Issue #3',
+          rank: LexoRank.middle().genNext().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '4',
+          title: 'Issue #4',
+          rank: LexoRank.middle().genNext().genNext().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '5',
+          title: 'Issue #5',
+          rank: LexoRank.middle()
+            .genNext()
+            .genNext()
+            .genNext()
+            .genNext()
+            .format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+      ],
+    })
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #6',
+        priority: 'MEDIUM',
+        prevIssueId: '4',
+      })
+    expect(res.status).toEqual(400)
+    expect(res.body[0].msg).toEqual(
+      "Cannot determine issue's position when appending it"
+    )
+  })
+
+  it("fails to prepend an issue when the reference ain't on the first position", async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    await prismaClient.issue.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Issue #1',
+          rank: LexoRank.middle().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '2',
+          title: 'Issue #2',
+          rank: LexoRank.middle().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '3',
+          title: 'Issue #3',
+          rank: LexoRank.middle().genNext().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '4',
+          title: 'Issue #4',
+          rank: LexoRank.middle().genNext().genNext().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '5',
+          title: 'Issue #5',
+          rank: LexoRank.middle()
+            .genNext()
+            .genNext()
+            .genNext()
+            .genNext()
+            .format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+      ],
+    })
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Issue #0', priority: 'MEDIUM', nextIssueId: '2' })
+    expect(res.status).toEqual(400)
+    expect(res.body[0].msg).toEqual(
+      "Cannot determine issue's position when prepending it"
+    )
+  })
+
+  it('fails to insert an issue in between when its neighbors are incorrectly provided', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    await prismaClient.issue.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Issue #1',
+          rank: LexoRank.middle().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '2',
+          title: 'Issue #2',
+          rank: LexoRank.middle().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '3',
+          title: 'Issue #3',
+          rank: LexoRank.middle().genNext().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '4',
+          title: 'Issue #4',
+          rank: LexoRank.middle().genNext().genNext().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+        {
+          id: '5',
+          title: 'Issue #5',
+          rank: LexoRank.middle()
+            .genNext()
+            .genNext()
+            .genNext()
+            .genNext()
+            .format(),
+          priority: 'MEDIUM',
+          statusId: status!.id,
+        },
+      ],
+    })
+    const res1 = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #1.5',
+        priority: 'MEDIUM',
+        prevIssueId: '1',
+        nextIssueId: '3',
+      })
+    expect(res1.status).toEqual(400)
+    expect(res1.body[0].msg).toEqual(
+      "Cannot determine issue's position when putting one in between"
+    )
+    const res2 = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #4.0',
+        priority: 'MEDIUM',
+        prevIssueId: '3',
+        nextIssueId: '5',
+      })
+    expect(res2.status).toEqual(400)
+    expect(res2.body[0].msg).toEqual(
+      "Cannot determine issue's position when putting one in between"
+    )
+    const res3 = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #3.0',
+        priority: 'MEDIUM',
+        prevIssueId: '1',
+        nextIssueId: '5',
+      })
+    expect(res3.status).toEqual(400)
+    expect(res3.body[0].msg).toEqual(
+      "Cannot determine issue's position when putting one in between"
+    )
+    const res4 = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #2.0',
+        priority: 'MEDIUM',
+        prevIssueId: '3',
+        nextIssueId: '1',
+      })
+    expect(res4.status).toEqual(400)
+    expect(res4.body[0].msg).toEqual(
+      "Cannot determine issue's position when putting one in between"
+    )
+    const res5 = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #3.0',
+        priority: 'MEDIUM',
+        prevIssueId: '3',
+        nextIssueId: '3',
+      })
+    expect(res5.status).toEqual(404)
+    expect(res5.body[0].msg).toEqual('Issue not found')
+    const res6 = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #5.0',
+        priority: 'MEDIUM',
+        prevIssueId: '4',
+        nextIssueId: '6',
+      })
+    expect(res6.status).toEqual(404)
+    expect(res6.body[0].msg).toEqual('Issue not found')
+  })
+
+  test('`description` field in request body being optional', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const payload = omit(['rank', 'description'], ISSUE)
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(201)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      ...payload,
+      description: null,
+      priority: 'MEDIUM',
+    })
+  })
+
+  test('`title` field in request body being required', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const payload = omit(['rank', 'title'], ISSUE)
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '',
+        msg: 'You have to give your issue a unique title',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+  })
+
+  it("returns 400 Bad Request when the issue's title is already taken", async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    await prismaClient.issue.create({
+      data: {
+        ...ISSUE,
+        status: { connect: { id: status!.id } },
+      },
+    })
+    const payload = omit(['rank'], ISSUE)
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(400)
+    expect(res.body[0]).toStrictEqual({
+      type: 'field',
+      value: 'Issue #1',
+      msg: 'This title has already been used by one of your issues',
+      path: 'title',
+      location: 'body',
+    })
+  })
+
+  test('`priority` field in request body being required', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const payload = omit(['rank', 'priority'], ISSUE)
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(400)
+    expect(res.body[0]).toStrictEqual({
+      type: 'field',
+      msg: 'You have to assign your issue a priority',
+      path: 'priority',
+      location: 'body',
+    })
+  })
+
+  test('`priority` field in request body being an enum', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const payload = { ...omit(['rank'], ISSUE), priority: 'BLOCKER' }
+    const res = await req
+      .post(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'BLOCKER',
+        msg: "Invalid value was provided for the issue's priority",
+        path: 'priority',
+        location: 'body',
+      },
+    ])
+    // FIXME: Async loop issue
+    Object.values(Priority).reduce(
+      (promise, priority, index) =>
+        promise.then(async () => {
+          const payload = {
+            ...omit(['rank'], ISSUE),
+            title: `Issue #${index + 1}`,
+            priority,
+          }
+          const res = await req
+            .post(
+              `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues`
+            )
+            .set('Accept', 'application/json')
+            .set('Authorization', BEARER_TOKEN)
+            .send(payload)
+          expect(res.status).toEqual(201)
+          expect(res.body).toHaveProperty('id')
+          expect(res.body).toHaveProperty('createdAt')
+          expect(res.body).toMatchObject(payload)
+        }),
+      Promise.resolve()
+    )
   })
 })
