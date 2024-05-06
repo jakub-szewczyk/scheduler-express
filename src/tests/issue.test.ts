@@ -1,4 +1,5 @@
 import { Issue, Priority } from '@prisma/client'
+import { ValidationError } from 'express-validator'
 import { LexoRank } from 'lexorank'
 import { omit } from 'ramda'
 import supertest from 'supertest'
@@ -1291,4 +1292,814 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
       Promise.resolve()
     )
   })
+})
+
+describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:issueId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        boards: {
+          create: {
+            ...BOARD,
+            statuses: {
+              create: {
+                ...STATUS,
+                issues: {
+                  createMany: {
+                    data: [
+                      {
+                        id: '1',
+                        title: 'Issue #1',
+                        rank: LexoRank.middle().format(),
+                        priority: 'MEDIUM',
+                      },
+                      {
+                        id: '2',
+                        title: 'Issue #2',
+                        rank: LexoRank.middle().genNext().format(),
+                        priority: 'MEDIUM',
+                      },
+                      {
+                        id: '3',
+                        title: 'Issue #3',
+                        rank: LexoRank.middle().genNext().genNext().format(),
+                        priority: 'MEDIUM',
+                      },
+                      {
+                        id: '4',
+                        title: 'Issue #4',
+                        rank: LexoRank.middle()
+                          .genNext()
+                          .genNext()
+                          .genNext()
+                          .format(),
+                        priority: 'MEDIUM',
+                      },
+                      {
+                        id: '5',
+                        title: 'Issue #5',
+                        rank: LexoRank.middle()
+                          .genNext()
+                          .genNext()
+                          .genNext()
+                          .genNext()
+                          .format(),
+                        priority: 'MEDIUM',
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const [board, status] = await Promise.all([
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .put(
+        `/api/projects/abc/boards/${board!.id}/statuses/${status!.id}/issues/3`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #3.0',
+        priority: 'MEDIUM',
+        prevIssueId: '2',
+        nextIssueId: '3',
+      })
+    expect(res.status).toEqual(404)
+    expect(res.body.map((error: ValidationError) => error.msg)).toStrictEqual([
+      'Project not found',
+      'Board not found',
+      'Status not found',
+      'Issue not found',
+      'Issue not found',
+      'Issue not found',
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid board id', async () => {
+    const [project, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/abc/statuses/${status!.id}/issues/3`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #3.0',
+        priority: 'MEDIUM',
+        prevIssueId: '2',
+        nextIssueId: '3',
+      })
+    expect(res.status).toEqual(404)
+    expect(res.body.map((error: ValidationError) => error.msg)).toStrictEqual([
+      'Board not found',
+      'Status not found',
+      'Issue not found',
+      'Issue not found',
+      'Issue not found',
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid status id', async () => {
+    const [project, board] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/abc/issues/3`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #3.0',
+        priority: 'MEDIUM',
+        prevIssueId: '2',
+        nextIssueId: '3',
+      })
+    expect(res.status).toEqual(404)
+    expect(res.body.map((error: ValidationError) => error.msg)).toStrictEqual([
+      'Status not found',
+      'Issue not found',
+      'Issue not found',
+      'Issue not found',
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid issue id', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/abc`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #3.0',
+        priority: 'MEDIUM',
+        prevIssueId: '2',
+        nextIssueId: '3',
+      })
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Issue not found',
+        path: 'issueId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('moves the first issue down by one', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const prevIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/1`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #1',
+        priority: 'MEDIUM',
+        prevIssueId: '2',
+        nextIssueId: '3',
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Issue #1', description: null })
+    const nextIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextIssues).toStrictEqual([
+      { id: '2', title: 'Issue #2' },
+      { id: '1', title: 'Issue #1' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+    ])
+  })
+
+  it('moves the first issue down by two', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const prevIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/1`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #1',
+        priority: 'MEDIUM',
+        prevIssueId: '3',
+        nextIssueId: '4',
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Issue #1', description: null })
+    const nextIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextIssues).toStrictEqual([
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '1', title: 'Issue #1' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+    ])
+  })
+
+  it('moves the first issue down by three', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const prevIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/1`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #1',
+        priority: 'MEDIUM',
+        prevIssueId: '4',
+        nextIssueId: '5',
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Issue #1', description: null })
+    const nextIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextIssues).toStrictEqual([
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '1', title: 'Issue #1' },
+      { id: '5', title: 'Issue #5' },
+    ])
+  })
+
+  it('moves the first issue down by four and puts it at the end', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const prevIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/1`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Issue #1', priority: 'MEDIUM', prevIssueId: '5' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Issue #1', description: null })
+    const nextIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextIssues).toStrictEqual([
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+      { id: '1', title: 'Issue #1' },
+    ])
+  })
+
+  it('moves the last issue up by one', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const prevIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/5`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #5',
+        priority: 'MEDIUM',
+        prevIssueId: '3',
+        nextIssueId: '4',
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Issue #5', description: null })
+    const nextIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '5', title: 'Issue #5' },
+      { id: '4', title: 'Issue #4' },
+    ])
+  })
+
+  it('moves the last issue up by two', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const prevIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/5`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #5',
+        priority: 'MEDIUM',
+        prevIssueId: '2',
+        nextIssueId: '3',
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Issue #5', description: null })
+    const nextIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '5', title: 'Issue #5' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+    ])
+  })
+
+  it('moves the last issue up by three', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const prevIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/5`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #5',
+        priority: 'MEDIUM',
+        prevIssueId: '1',
+        nextIssueId: '2',
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Issue #5', description: null })
+    const nextIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '5', title: 'Issue #5' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+    ])
+  })
+
+  it('moves the last issue up by four and puts it at the beginning', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const prevIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(prevIssues).toStrictEqual([
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+      { id: '5', title: 'Issue #5' },
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/5`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Issue #5', priority: 'MEDIUM', nextIssueId: '1' })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({ title: 'Issue #5', description: null })
+    const nextIssues = await prismaClient.issue.findMany({
+      select: { id: true, title: true },
+      orderBy: { rank: 'asc' },
+    })
+    expect(nextIssues).toStrictEqual([
+      { id: '5', title: 'Issue #5' },
+      { id: '1', title: 'Issue #1' },
+      { id: '2', title: 'Issue #2' },
+      { id: '3', title: 'Issue #3' },
+      { id: '4', title: 'Issue #4' },
+    ])
+  })
+
+  it("fails to put an issue at the end when the reference ain't on the last position", async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/1`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Issue #1', priority: 'MEDIUM', prevIssueId: '4' })
+    expect(res.status).toEqual(400)
+    expect(res.body[0].msg).toEqual(
+      "Cannot determine issue's position when appending it"
+    )
+  })
+
+  it("fails to put an issue at the beginning when the reference ain't on the first position", async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/5`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ title: 'Issue #5', priority: 'MEDIUM', nextIssueId: '2' })
+    expect(res.status).toEqual(400)
+    expect(res.body[0].msg).toEqual(
+      "Cannot determine issue's position when prepending it"
+    )
+  })
+
+  it('fails to put an issue in between when its neighbors are incorrectly provided', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res1 = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/2`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #2',
+        priority: 'MEDIUM',
+        prevIssueId: '1',
+        nextIssueId: '3',
+      })
+    expect(res1.status).toEqual(400)
+    expect(res1.body[0].msg).toEqual(
+      "Cannot determine issue's position when putting one in between"
+    )
+    const res2 = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/2`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #2',
+        priority: 'MEDIUM',
+        prevIssueId: '3',
+        nextIssueId: '5',
+      })
+    expect(res2.status).toEqual(400)
+    expect(res2.body[0].msg).toEqual(
+      "Cannot determine issue's position when putting one in between"
+    )
+    const res3 = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/2`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #2',
+        priority: 'MEDIUM',
+        prevIssueId: '1',
+        nextIssueId: '5',
+      })
+    expect(res3.status).toEqual(400)
+    expect(res3.body[0].msg).toEqual(
+      "Cannot determine issue's position when putting one in between"
+    )
+    const res4 = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/2`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #2',
+        priority: 'MEDIUM',
+        prevIssueId: '3',
+        nextIssueId: '1',
+      })
+    expect(res4.status).toEqual(400)
+    expect(res4.body[0].msg).toEqual(
+      "Cannot determine issue's position when putting one in between"
+    )
+    const res5 = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/2`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #2',
+        priority: 'MEDIUM',
+        prevIssueId: '2',
+        nextIssueId: '3',
+      })
+    expect(res5.status).toEqual(400)
+    expect(res5.body[0].msg).toEqual(
+      "Cannot determine issue's position when putting one in between"
+    )
+    const res6 = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/3`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #3',
+        priority: 'MEDIUM',
+        prevIssueId: '2',
+        nextIssueId: '3',
+      })
+    expect(res6.status).toEqual(400)
+    expect(res6.body[0].msg).toEqual(
+      "Cannot determine issue's position when putting one in between"
+    )
+    const res7 = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/2`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #2',
+        priority: 'MEDIUM',
+        prevIssueId: '3',
+        nextIssueId: '3',
+      })
+    expect(res7.status).toEqual(404)
+    expect(res7.body[0].msg).toEqual('Issue not found')
+    const res8 = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/2`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #2',
+        priority: 'MEDIUM',
+        prevIssueId: '4',
+        nextIssueId: '6',
+      })
+    expect(res8.status).toEqual(404)
+    expect(res8.body[0].msg).toEqual('Issue not found')
+  })
+
+  test('`description` field in request body being optional', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/3`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #3',
+        priority: 'MEDIUM',
+        prevIssueId: '4',
+        nextIssueId: '5',
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: 'Issue #3',
+      description: null,
+    })
+  })
+
+  test('`title` field in request body being required', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/3`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({ priority: 'MEDIUM', prevIssueId: '4', nextIssueId: '5' })
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: '',
+        msg: 'You have to give your issue a unique title',
+        path: 'title',
+        location: 'body',
+      },
+    ])
+  })
+
+  it("returns 400 Bad Request when the issue's title is already taken", async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res1 = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/3`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #3',
+        priority: 'MEDIUM',
+        prevIssueId: '4',
+        nextIssueId: '5',
+      })
+    expect(res1.status).toEqual(200)
+    expect(res1.body).toHaveProperty('id')
+    expect(res1.body).toHaveProperty('createdAt')
+    expect(res1.body).toMatchObject({
+      title: 'Issue #3',
+      description: null,
+    })
+    const res2 = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/3`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #4',
+        priority: 'MEDIUM',
+        prevIssueId: '4',
+        nextIssueId: '5',
+      })
+    expect(res2.status).toEqual(400)
+    expect(res2.body[0]).toStrictEqual({
+      type: 'field',
+      value: 'Issue #4',
+      msg: 'This title has already been used by one of your issues',
+      path: 'title',
+      location: 'body',
+    })
+  })
+
+  // TODO:
+  // Test priority field.
+  // Test drag & drop between statuses.
 })

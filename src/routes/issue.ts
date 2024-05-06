@@ -3,11 +3,13 @@ import {
   createIssueController,
   getIssueController,
   getIssuesController,
+  updateIssueController,
 } from '../controllers/issue'
 import {
   createIssueValidator,
   getIssueValidator,
   getIssuesValidator,
+  updateIssueValidator,
 } from '../validators/issue'
 
 const router = Router()
@@ -233,6 +235,13 @@ router.post(
   '/:projectId/boards/:boardId/statuses/:statusId/issues',
   createIssueValidator,
   createIssueController
+)
+
+// TODO: Document
+router.put(
+  '/:projectId/boards/:boardId/statuses/:statusId/issues/:issueId',
+  updateIssueValidator,
+  updateIssueController
 )
 
 export default router

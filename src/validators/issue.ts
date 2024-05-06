@@ -294,3 +294,124 @@ export const createIssueValidator = [
   neighborValidation,
   validationMiddleware,
 ]
+
+export const updateIssueValidator = [
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
+        where: {
+          id: projectId,
+          authorId: req.auth.userId,
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
+  param('boardId').custom(async (boardId: string, { req }) => {
+    try {
+      await prismaClient.board.findFirstOrThrow({
+        where: {
+          id: boardId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
+          },
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Board not found')
+    }
+  }),
+  param('statusId').custom(async (statusId: string, { req }) => {
+    try {
+      await prismaClient.status.findFirstOrThrow({
+        where: {
+          id: statusId,
+          board: {
+            id: req.params!.boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
+          },
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Status not found')
+    }
+  }),
+  param('issueId').custom(async (issueId: string, { req }) => {
+    const issue = await prismaClient.issue.findFirst({
+      where: {
+        id: issueId,
+        status: {
+          id: req.params!.statusId,
+          board: {
+            id: req.params!.boardId,
+            project: {
+              id: req.params!.projectId,
+              authorId: req.auth.userId,
+            },
+          },
+        },
+      },
+    })
+    if (!issue) {
+      req.statusCode = 404
+      throw new Error('Issue not found')
+    }
+    if (
+      req.body.prevIssueId &&
+      req.body.nextIssueId &&
+      (issueId === req.body.prevIssueId || issueId === req.body.nextIssueId)
+    )
+      throw new Error(
+        "Cannot determine issue's position when putting one in between"
+      )
+    if (
+      !req.body.prevIssueId &&
+      req.body.nextIssueId &&
+      issueId === req.body.nextIssueId
+    )
+      throw new Error("Cannot determine issue's position when appending it")
+    if (
+      req.body.prevIssueId &&
+      !req.body.nextIssueId &&
+      issueId === req.body.nextIssueId
+    )
+      throw new Error("Cannot determine issue's position when prepending it")
+  }),
+  body('title', 'You have to give your issue a unique title')
+    .trim()
+    .notEmpty()
+    .custom(async (title: string, { req }) => {
+      const issue = await prismaClient.issue.findFirst({
+        where: {
+          id: { not: req.params!.issueId },
+          title,
+          status: {
+            id: req.params!.statusId,
+            board: {
+              id: req.params!.boardId,
+              projectId: req.params!.projectId,
+            },
+          },
+        },
+      })
+      if (issue)
+        throw new Error(
+          'This title has already been used by one of your issues'
+        )
+    }),
+  body('description').trim().optional(),
+  body('priority', 'You have to assign your issue a priority')
+    .notEmpty()
+    .isIn(Object.values(Priority))
+    .withMessage("Invalid value was provided for the issue's priority"),
+  neighborValidation,
+  validationMiddleware,
+]

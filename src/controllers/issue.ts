@@ -161,3 +161,50 @@ export const createIssueController = async (
     return res.status(500).end()
   }
 }
+
+type UpdateIssueControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; boardId: string; statusId: string; issueId: string },
+    object,
+    IssueBody
+  >
+>
+
+type UpdateIssueControllerResponse = Response<IssueResponse>
+
+export const updateIssueController = async (
+  req: UpdateIssueControllerRequest,
+  res: UpdateIssueControllerResponse
+) => {
+  try {
+    const issue = await prismaClient.issue.update({
+      select: issueSelect,
+      where: {
+        id: req.params.issueId,
+        status: {
+          id: req.params.statusId,
+          board: {
+            id: req.params.boardId,
+            project: {
+              id: req.params.projectId,
+              authorId: req.auth.userId!,
+            },
+          },
+        },
+      },
+      data: {
+        title: req.body.title,
+        description: req.body.description,
+        rank: generateRank({
+          prevRank: req.prevIssueRank,
+          nextRank: req.nextIssueRank,
+        }).format(),
+        priority: req.body.priority,
+      },
+    })
+    return res.json(issue)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
