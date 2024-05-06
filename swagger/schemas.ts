@@ -338,6 +338,34 @@
  * @openapi
  * components:
  *   schemas:
+ *     IssueBody:
+ *       type: object
+ *       required:
+ *         - title
+ *         - priority
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: 'Issue #1'
+ *         description:
+ *           type: string
+ *           example: Edit your issue's title and description. Prioritize them based on your needs.
+ *         priority:
+ *           type: string
+ *           enum: [TRIVIAL, MINOR, LOW, MEDIUM, HIGH, MAJOR, CRITICAL]
+ *           example: MEDIUM
+ *         prevIssueId:
+ *           type: string
+ *           example: 36681b55-a2a9-4e72-b7b5-225bd515cb4a
+ *         nextIssueId:
+ *           type: string
+ *           example: 740a7ce7-a2da-4450-8c76-d70c272fe093
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
  *     Note:
  *       type: object
  *       properties:

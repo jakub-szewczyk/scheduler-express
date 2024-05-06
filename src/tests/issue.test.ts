@@ -1268,8 +1268,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
         location: 'body',
       },
     ])
-    // FIXME: Async loop issue
-    Object.values(Priority).reduce(
+    await Object.values(Priority).reduce(
       (promise, priority, index) =>
         promise.then(async () => {
           const payload = {
