@@ -10,6 +10,7 @@ import { PaginableResponse } from '../types/pagination'
 export type IssueBody = Pick<Issue, 'title' | 'description' | 'priority'> & {
   prevIssueId?: string | null
   nextIssueId?: string | null
+  statusId?: string | null
 }
 
 type IssueResponse = Pick<Issue, keyof typeof issueSelect>
@@ -200,6 +201,7 @@ export const updateIssueController = async (
           nextRank: req.nextIssueRank,
         }).format(),
         priority: req.body.priority,
+        ...(req.body.statusId && { statusId: req.body.statusId }),
       },
     })
     return res.json(issue)

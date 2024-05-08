@@ -287,13 +287,13 @@ export const updateStatusValidator = [
       req.body.nextStatusId &&
       statusId === req.body.nextStatusId
     )
-      throw new Error("Cannot determine status' position when appending it")
+      throw new Error("Cannot determine status' position when prepending it")
     if (
       req.body.prevStatusId &&
       !req.body.nextStatusId &&
-      statusId === req.body.nextStatusId
+      statusId === req.body.prevStatusId
     )
-      throw new Error("Cannot determine status' position when prepending it")
+      throw new Error("Cannot determine status' position when appending it")
   }),
   body('title', 'You have to give your status a unique title')
     .trim()

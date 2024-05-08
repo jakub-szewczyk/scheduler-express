@@ -620,6 +620,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses', () => {
     })
     const statuses = await prismaClient.status.findMany({
       select: { title: true, rank: true },
+      orderBy: { rank: 'asc' },
     })
     expect(statuses).toMatchObject([
       {

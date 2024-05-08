@@ -75,7 +75,7 @@ const neighborValidation = body(['prevIssueId', 'nextIssueId']).custom(
         select: { id: true, rank: true },
         where: {
           status: {
-            id: req.params!.statusId,
+            id: req.body.statusId || req.params!.statusId,
             board: {
               id: req.params!.boardId,
               project: {
@@ -93,7 +93,7 @@ const neighborValidation = body(['prevIssueId', 'nextIssueId']).custom(
         select: { id: true, rank: true },
         where: {
           status: {
-            id: req.params!.statusId,
+            id: req.body.statusId || req.params!.statusId,
             board: {
               id: req.params!.boardId,
               project: {
@@ -110,7 +110,7 @@ const neighborValidation = body(['prevIssueId', 'nextIssueId']).custom(
         where: {
           id: req.body.prevIssueId,
           status: {
-            id: req.params!.statusId,
+            id: req.body.statusId || req.params!.statusId,
             board: {
               id: req.params!.boardId,
               project: {
@@ -133,7 +133,7 @@ const neighborValidation = body(['prevIssueId', 'nextIssueId']).custom(
         select: { id: true, rank: true },
         where: {
           status: {
-            id: req.params!.statusId,
+            id: req.body.statusId || req.params!.statusId,
             board: {
               id: req.params!.boardId,
               project: {
@@ -150,7 +150,7 @@ const neighborValidation = body(['prevIssueId', 'nextIssueId']).custom(
         where: {
           id: req.body.nextIssueId,
           status: {
-            id: req.params!.statusId,
+            id: req.body.statusId || req.params!.statusId,
             board: {
               id: req.params!.boardId,
               project: {
@@ -174,7 +174,7 @@ const neighborValidation = body(['prevIssueId', 'nextIssueId']).custom(
         where: {
           id: { in: [req.body.prevIssueId, req.body.nextIssueId] },
           status: {
-            id: req.params!.statusId,
+            id: req.body.statusId || req.params!.statusId,
             board: {
               id: req.params!.boardId,
               project: {
@@ -377,13 +377,13 @@ export const updateIssueValidator = [
       req.body.nextIssueId &&
       issueId === req.body.nextIssueId
     )
-      throw new Error("Cannot determine issue's position when appending it")
+      throw new Error("Cannot determine issue's position when prepending it")
     if (
       req.body.prevIssueId &&
       !req.body.nextIssueId &&
-      issueId === req.body.nextIssueId
+      issueId === req.body.prevStatusId
     )
-      throw new Error("Cannot determine issue's position when prepending it")
+      throw new Error("Cannot determine issue's position when appending it")
   }),
   body('title', 'You have to give your issue a unique title')
     .trim()
@@ -412,6 +412,7 @@ export const updateIssueValidator = [
     .notEmpty()
     .isIn(Object.values(Priority))
     .withMessage("Invalid value was provided for the issue's priority"),
+  // TODO: Validate `req.body.statusId`
   neighborValidation,
   validationMiddleware,
 ]
