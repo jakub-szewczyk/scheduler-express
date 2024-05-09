@@ -23,6 +23,191 @@ const BEARER_TOKEN = `Bearer ${JWT_TOKEN}`
 
 const req = supertest(app)
 
+const itMovesIssueToTheBeginning = async ({
+  sourceStatusIndex,
+  sourceIssueIndex,
+  targetStatusIndex,
+  targetIssueIndex,
+  assert,
+}: {
+  sourceStatusIndex: number
+  sourceIssueIndex: number
+  targetStatusIndex: number
+  targetIssueIndex: number
+  assert: ([nextStatus1Issues, nextStatus2Issues, nextStatus3Issues]: {
+    id: string
+    title: string
+  }[][]) => Promise<void>
+}) =>
+  it(`moves the ${ordinals((sourceIssueIndex % 3) + 1)} issue of the ${ordinals(sourceStatusIndex + 1)} status to the ${ordinals(targetStatusIndex + 1)} status and puts it at the beginning`, async () => {
+    const [project, board] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+    ])
+    await prismaClient.status.deleteMany()
+    await prismaClient.status.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Status #1',
+          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
+          boardId: board!.id,
+        },
+        {
+          id: '2',
+          title: 'Status #2',
+          rank: STATUS.rank,
+          boardId: board!.id,
+        },
+        {
+          id: '3',
+          title: 'Status #3',
+          rank: LexoRank.parse(STATUS.rank).genNext().format(),
+          boardId: board!.id,
+        },
+      ],
+    })
+    await prismaClient.issue.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Issue #1.1',
+          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+          priority: 'MEDIUM',
+          statusId: '1',
+        },
+        {
+          id: '2',
+          title: 'Issue #1.2',
+          rank: ISSUE.rank,
+          priority: 'MEDIUM',
+          statusId: '1',
+        },
+        {
+          id: '3',
+          title: 'Issue #1.3',
+          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+          priority: 'MEDIUM',
+          statusId: '1',
+        },
+        {
+          id: '4',
+          title: 'Issue #2.1',
+          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+          priority: 'MEDIUM',
+          statusId: '2',
+        },
+        {
+          id: '5',
+          title: 'Issue #2.2',
+          rank: ISSUE.rank,
+          priority: 'MEDIUM',
+          statusId: '2',
+        },
+        {
+          id: '6',
+          title: 'Issue #2.3',
+          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+          priority: 'MEDIUM',
+          statusId: '2',
+        },
+        {
+          id: '7',
+          title: 'Issue #3.1',
+          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+          priority: 'MEDIUM',
+          statusId: '3',
+        },
+        {
+          id: '8',
+          title: 'Issue #3.2',
+          rank: ISSUE.rank,
+          priority: 'MEDIUM',
+          statusId: '3',
+        },
+        {
+          id: '9',
+          title: 'Issue #3.3',
+          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+          priority: 'MEDIUM',
+          statusId: '3',
+        },
+      ],
+    })
+    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
+      await Promise.all([
+        prismaClient.issue.findMany({
+          select: { id: true, title: true },
+          where: { statusId: '1' },
+          orderBy: { rank: 'asc' },
+        }),
+        prismaClient.issue.findMany({
+          select: { id: true, title: true },
+          where: { statusId: '2' },
+          orderBy: { rank: 'asc' },
+        }),
+        prismaClient.issue.findMany({
+          select: { id: true, title: true },
+          where: { statusId: '3' },
+          orderBy: { rank: 'asc' },
+        }),
+      ])
+    expect(prevStatus1Issues).toStrictEqual([
+      { id: '1', title: 'Issue #1.1' },
+      { id: '2', title: 'Issue #1.2' },
+      { id: '3', title: 'Issue #1.3' },
+    ])
+    expect(prevStatus2Issues).toStrictEqual([
+      { id: '4', title: 'Issue #2.1' },
+      { id: '5', title: 'Issue #2.2' },
+      { id: '6', title: 'Issue #2.3' },
+    ])
+    expect(prevStatus3Issues).toStrictEqual([
+      { id: '7', title: 'Issue #3.1' },
+      { id: '8', title: 'Issue #3.2' },
+      { id: '9', title: 'Issue #3.3' },
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${sourceStatusIndex + 1}/issues/${sourceIssueIndex + 1}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: `Issue #${sourceStatusIndex + 1}.${(sourceIssueIndex % 3) + 1}`,
+        priority: 'MEDIUM',
+        nextIssueId: `${targetIssueIndex + 1}`,
+        statusId: `${targetStatusIndex + 1}`,
+      })
+    expect(res.status).toEqual(200)
+    expect(res.body).toHaveProperty('id')
+    expect(res.body).toHaveProperty('createdAt')
+    expect(res.body).toMatchObject({
+      title: `Issue #${sourceStatusIndex + 1}.${(sourceIssueIndex % 3) + 1}`,
+      description: null,
+      priority: 'MEDIUM',
+    })
+    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
+      await Promise.all([
+        prismaClient.issue.findMany({
+          select: { id: true, title: true },
+          where: { statusId: '1' },
+          orderBy: { rank: 'asc' },
+        }),
+        prismaClient.issue.findMany({
+          select: { id: true, title: true },
+          where: { statusId: '2' },
+          orderBy: { rank: 'asc' },
+        }),
+        prismaClient.issue.findMany({
+          select: { id: true, title: true },
+          where: { statusId: '3' },
+          orderBy: { rank: 'asc' },
+        }),
+      ])
+    await assert([nextStatus1Issues, nextStatus2Issues, nextStatus3Issues])
+  })
+
 describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
@@ -2001,2207 +2186,1060 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
     expect(res8.body[0].msg).toEqual('Issue not found')
   })
 
-  it('moves the first issue of the first status to the second status and puts it at the beginning', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 0,
+    sourceIssueIndex: 0,
+    targetStatusIndex: 1,
+    targetIssueIndex: 3,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/1`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.1',
-        priority: 'MEDIUM',
-        nextIssueId: '4',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.1',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the first issue of the first status to the second status and puts it in between the first and the second issue of that status', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 0,
+    sourceIssueIndex: 1,
+    targetStatusIndex: 1,
+    targetIssueIndex: 3,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '3', title: 'Issue #1.3' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/1`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.1',
-        priority: 'MEDIUM',
-        prevIssueId: '4',
-        nextIssueId: '5',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.1',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '2', title: 'Issue #1.2' },
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '1', title: 'Issue #1.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the first issue of the first status to the second status and puts it in between the second and the third issue of that status', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 0,
+    sourceIssueIndex: 2,
+    targetStatusIndex: 1,
+    targetIssueIndex: 3,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/1`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.1',
-        priority: 'MEDIUM',
-        prevIssueId: '5',
-        nextIssueId: '6',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.1',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '3', title: 'Issue #1.3' },
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '1', title: 'Issue #1.1' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the first issue of the first status to the second status and puts it at the end', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 0,
+    sourceIssueIndex: 0,
+    targetStatusIndex: 2,
+    targetIssueIndex: 6,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/1`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.1',
-        priority: 'MEDIUM',
-        prevIssueId: '6',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.1',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-      { id: '1', title: 'Issue #1.1' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the second issue of the first status to the second status and puts it at the beginning', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 0,
+    sourceIssueIndex: 1,
+    targetStatusIndex: 2,
+    targetIssueIndex: 6,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '3', title: 'Issue #1.3' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/2`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.2',
-        priority: 'MEDIUM',
-        nextIssueId: '4',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.2',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '2', title: 'Issue #1.2' },
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '2', title: 'Issue #1.2' },
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the second issue of the first status to the second status and puts it in between the first and the second issue of that status', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 0,
+    sourceIssueIndex: 2,
+    targetStatusIndex: 2,
+    targetIssueIndex: 6,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/2`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.2',
-        priority: 'MEDIUM',
-        prevIssueId: '4',
-        nextIssueId: '5',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.2',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '3', title: 'Issue #1.3' },
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the second issue of the first status to the second status and puts it in between the second and the third issue of that status', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 1,
+    sourceIssueIndex: 3,
+    targetStatusIndex: 0,
+    targetIssueIndex: 0,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/2`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.2',
-        priority: 'MEDIUM',
-        prevIssueId: '5',
-        nextIssueId: '6',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.2',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the second issue of the first status to the second status and puts it at the end', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 1,
+    sourceIssueIndex: 4,
+    targetStatusIndex: 0,
+    targetIssueIndex: 0,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '5', title: 'Issue #2.2' },
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/2`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.2',
-        priority: 'MEDIUM',
-        prevIssueId: '6',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.2',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '6', title: 'Issue #2.3' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-      { id: '2', title: 'Issue #1.2' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the third issue of the first status to the second status and puts it at the beginning', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 1,
+    sourceIssueIndex: 5,
+    targetStatusIndex: 0,
+    targetIssueIndex: 0,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '6', title: 'Issue #2.3' },
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/3`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.3',
-        priority: 'MEDIUM',
-        nextIssueId: '4',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.3',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '3', title: 'Issue #1.3' },
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the third issue of the first status to the second status and puts it in between the first and the second issue of that status', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 1,
+    sourceIssueIndex: 3,
+    targetStatusIndex: 2,
+    targetIssueIndex: 6,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/3`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.3',
-        priority: 'MEDIUM',
-        prevIssueId: '4',
-        nextIssueId: '5',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.3',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '3', title: 'Issue #1.3' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the third issue of the first status to the second status and puts it in between the second and the third issue of that status', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 1,
+    sourceIssueIndex: 4,
+    targetStatusIndex: 2,
+    targetIssueIndex: 6,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/3`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.3',
-        priority: 'MEDIUM',
-        prevIssueId: '5',
-        nextIssueId: '6',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.3',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '6', title: 'Issue #2.3' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '3', title: 'Issue #1.3' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '5', title: 'Issue #2.2' },
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
 
-  it('moves the third issue of the first status to the second status and puts it at the end', async () => {
-    const [project, board] = await Promise.all([
-      prismaClient.project.findFirst(),
-      prismaClient.board.findFirst(),
-    ])
-    await prismaClient.status.deleteMany()
-    await prismaClient.status.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Status #1',
-          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
-          boardId: board!.id,
-        },
-        {
-          id: '2',
-          title: 'Status #2',
-          rank: STATUS.rank,
-          boardId: board!.id,
-        },
-        {
-          id: '3',
-          title: 'Status #3',
-          rank: LexoRank.parse(STATUS.rank).genNext().format(),
-          boardId: board!.id,
-        },
-      ],
-    })
-    await prismaClient.issue.createMany({
-      data: [
-        {
-          id: '1',
-          title: 'Issue #1.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '2',
-          title: 'Issue #1.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '3',
-          title: 'Issue #1.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '1',
-        },
-        {
-          id: '4',
-          title: 'Issue #2.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '5',
-          title: 'Issue #2.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '6',
-          title: 'Issue #2.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '2',
-        },
-        {
-          id: '7',
-          title: 'Issue #3.1',
-          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '8',
-          title: 'Issue #3.2',
-          rank: ISSUE.rank,
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-        {
-          id: '9',
-          title: 'Issue #3.3',
-          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
-          priority: 'MEDIUM',
-          statusId: '3',
-        },
-      ],
-    })
-    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 1,
+    sourceIssueIndex: 5,
+    targetStatusIndex: 2,
+    targetIssueIndex: 6,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
       ])
-    expect(prevStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(prevStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-    ])
-    expect(prevStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
-    const res = await req
-      .put(
-        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/3`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({
-        title: 'Issue #1.3',
-        priority: 'MEDIUM',
-        prevIssueId: '6',
-        statusId: '2',
-      })
-    expect(res.status).toEqual(200)
-    expect(res.body).toHaveProperty('id')
-    expect(res.body).toHaveProperty('createdAt')
-    expect(res.body).toMatchObject({
-      title: 'Issue #1.3',
-      description: null,
-      priority: 'MEDIUM',
-    })
-    const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
-      await Promise.all([
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '1' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '2' },
-          orderBy: { rank: 'asc' },
-        }),
-        prismaClient.issue.findMany({
-          select: { id: true, title: true },
-          where: { statusId: '3' },
-          orderBy: { rank: 'asc' },
-        }),
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
       ])
-    expect(nextStatus1Issues).toStrictEqual([
-      { id: '1', title: 'Issue #1.1' },
-      { id: '2', title: 'Issue #1.2' },
-    ])
-    expect(nextStatus2Issues).toStrictEqual([
-      { id: '4', title: 'Issue #2.1' },
-      { id: '5', title: 'Issue #2.2' },
-      { id: '6', title: 'Issue #2.3' },
-      { id: '3', title: 'Issue #1.3' },
-    ])
-    expect(nextStatus3Issues).toStrictEqual([
-      { id: '7', title: 'Issue #3.1' },
-      { id: '8', title: 'Issue #3.2' },
-      { id: '9', title: 'Issue #3.3' },
-    ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '6', title: 'Issue #2.3' },
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
   })
+
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 2,
+    sourceIssueIndex: 6,
+    targetStatusIndex: 1,
+    targetIssueIndex: 3,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
+      ])
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
+      ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
+  })
+
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 2,
+    sourceIssueIndex: 7,
+    targetStatusIndex: 1,
+    targetIssueIndex: 3,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
+      ])
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '8', title: 'Issue #3.2' },
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
+      ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
+  })
+
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 2,
+    sourceIssueIndex: 8,
+    targetStatusIndex: 1,
+    targetIssueIndex: 3,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
+      ])
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '9', title: 'Issue #3.3' },
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
+      ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+      ])
+    },
+  })
+
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 2,
+    sourceIssueIndex: 6,
+    targetStatusIndex: 0,
+    targetIssueIndex: 0,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
+      ])
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
+      ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '8', title: 'Issue #3.2' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
+  })
+
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 2,
+    sourceIssueIndex: 7,
+    targetStatusIndex: 0,
+    targetIssueIndex: 0,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '8', title: 'Issue #3.2' },
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
+      ])
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
+      ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '9', title: 'Issue #3.3' },
+      ])
+    },
+  })
+
+  itMovesIssueToTheBeginning({
+    sourceStatusIndex: 2,
+    sourceIssueIndex: 8,
+    targetStatusIndex: 0,
+    targetIssueIndex: 0,
+    assert: async ([
+      nextStatus1Issues,
+      nextStatus2Issues,
+      nextStatus3Issues,
+    ]) => {
+      expect(nextStatus1Issues).toStrictEqual([
+        { id: '9', title: 'Issue #3.3' },
+        { id: '1', title: 'Issue #1.1' },
+        { id: '2', title: 'Issue #1.2' },
+        { id: '3', title: 'Issue #1.3' },
+      ])
+      expect(nextStatus2Issues).toStrictEqual([
+        { id: '4', title: 'Issue #2.1' },
+        { id: '5', title: 'Issue #2.2' },
+        { id: '6', title: 'Issue #2.3' },
+      ])
+      expect(nextStatus3Issues).toStrictEqual([
+        { id: '7', title: 'Issue #3.1' },
+        { id: '8', title: 'Issue #3.2' },
+      ])
+    },
+  })
+
+  // it('moves the first issue of the first status to the second status and puts it in between the first and the second issue of that status', async () => {
+  //   const [project, board] = await Promise.all([
+  //     prismaClient.project.findFirst(),
+  //     prismaClient.board.findFirst(),
+  //   ])
+  //   await prismaClient.status.deleteMany()
+  //   await prismaClient.status.createMany({
+  //     data: [
+  //       {
+  //         id: '1',
+  //         title: 'Status #1',
+  //         rank: LexoRank.parse(STATUS.rank).genPrev().format(),
+  //         boardId: board!.id,
+  //       },
+  //       {
+  //         id: '2',
+  //         title: 'Status #2',
+  //         rank: STATUS.rank,
+  //         boardId: board!.id,
+  //       },
+  //       {
+  //         id: '3',
+  //         title: 'Status #3',
+  //         rank: LexoRank.parse(STATUS.rank).genNext().format(),
+  //         boardId: board!.id,
+  //       },
+  //     ],
+  //   })
+  //   await prismaClient.issue.createMany({
+  //     data: [
+  //       {
+  //         id: '1',
+  //         title: 'Issue #1.1',
+  //         rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '1',
+  //       },
+  //       {
+  //         id: '2',
+  //         title: 'Issue #1.2',
+  //         rank: ISSUE.rank,
+  //         priority: 'MEDIUM',
+  //         statusId: '1',
+  //       },
+  //       {
+  //         id: '3',
+  //         title: 'Issue #1.3',
+  //         rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '1',
+  //       },
+  //       {
+  //         id: '4',
+  //         title: 'Issue #2.1',
+  //         rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '2',
+  //       },
+  //       {
+  //         id: '5',
+  //         title: 'Issue #2.2',
+  //         rank: ISSUE.rank,
+  //         priority: 'MEDIUM',
+  //         statusId: '2',
+  //       },
+  //       {
+  //         id: '6',
+  //         title: 'Issue #2.3',
+  //         rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '2',
+  //       },
+  //       {
+  //         id: '7',
+  //         title: 'Issue #3.1',
+  //         rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '3',
+  //       },
+  //       {
+  //         id: '8',
+  //         title: 'Issue #3.2',
+  //         rank: ISSUE.rank,
+  //         priority: 'MEDIUM',
+  //         statusId: '3',
+  //       },
+  //       {
+  //         id: '9',
+  //         title: 'Issue #3.3',
+  //         rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '3',
+  //       },
+  //     ],
+  //   })
+  //   const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
+  //     await Promise.all([
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '1' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '2' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '3' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //     ])
+  //   expect(prevStatus1Issues).toStrictEqual([
+  //     { id: '1', title: 'Issue #1.1' },
+  //     { id: '2', title: 'Issue #1.2' },
+  //     { id: '3', title: 'Issue #1.3' },
+  //   ])
+  //   expect(prevStatus2Issues).toStrictEqual([
+  //     { id: '4', title: 'Issue #2.1' },
+  //     { id: '5', title: 'Issue #2.2' },
+  //     { id: '6', title: 'Issue #2.3' },
+  //   ])
+  //   expect(prevStatus3Issues).toStrictEqual([
+  //     { id: '7', title: 'Issue #3.1' },
+  //     { id: '8', title: 'Issue #3.2' },
+  //     { id: '9', title: 'Issue #3.3' },
+  //   ])
+  //   const res = await req
+  //     .put(
+  //       `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/1`
+  //     )
+  //     .set('Accept', 'application/json')
+  //     .set('Authorization', BEARER_TOKEN)
+  //     .send({
+  //       title: 'Issue #1.1',
+  //       priority: 'MEDIUM',
+  //       prevIssueId: '4',
+  //       nextIssueId: '5',
+  //       statusId: '2',
+  //     })
+  //   expect(res.status).toEqual(200)
+  //   expect(res.body).toHaveProperty('id')
+  //   expect(res.body).toHaveProperty('createdAt')
+  //   expect(res.body).toMatchObject({
+  //     title: 'Issue #1.1',
+  //     description: null,
+  //     priority: 'MEDIUM',
+  //   })
+  //   const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
+  //     await Promise.all([
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '1' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '2' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '3' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //     ])
+  //   expect(nextStatus1Issues).toStrictEqual([
+  //     { id: '2', title: 'Issue #1.2' },
+  //     { id: '3', title: 'Issue #1.3' },
+  //   ])
+  //   expect(nextStatus2Issues).toStrictEqual([
+  //     { id: '4', title: 'Issue #2.1' },
+  //     { id: '1', title: 'Issue #1.1' },
+  //     { id: '5', title: 'Issue #2.2' },
+  //     { id: '6', title: 'Issue #2.3' },
+  //   ])
+  //   expect(nextStatus3Issues).toStrictEqual([
+  //     { id: '7', title: 'Issue #3.1' },
+  //     { id: '8', title: 'Issue #3.2' },
+  //     { id: '9', title: 'Issue #3.3' },
+  //   ])
+  // })
+
+  // it('moves the first issue of the first status to the second status and puts it in between the second and the third issue of that status', async () => {
+  //   const [project, board] = await Promise.all([
+  //     prismaClient.project.findFirst(),
+  //     prismaClient.board.findFirst(),
+  //   ])
+  //   await prismaClient.status.deleteMany()
+  //   await prismaClient.status.createMany({
+  //     data: [
+  //       {
+  //         id: '1',
+  //         title: 'Status #1',
+  //         rank: LexoRank.parse(STATUS.rank).genPrev().format(),
+  //         boardId: board!.id,
+  //       },
+  //       {
+  //         id: '2',
+  //         title: 'Status #2',
+  //         rank: STATUS.rank,
+  //         boardId: board!.id,
+  //       },
+  //       {
+  //         id: '3',
+  //         title: 'Status #3',
+  //         rank: LexoRank.parse(STATUS.rank).genNext().format(),
+  //         boardId: board!.id,
+  //       },
+  //     ],
+  //   })
+  //   await prismaClient.issue.createMany({
+  //     data: [
+  //       {
+  //         id: '1',
+  //         title: 'Issue #1.1',
+  //         rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '1',
+  //       },
+  //       {
+  //         id: '2',
+  //         title: 'Issue #1.2',
+  //         rank: ISSUE.rank,
+  //         priority: 'MEDIUM',
+  //         statusId: '1',
+  //       },
+  //       {
+  //         id: '3',
+  //         title: 'Issue #1.3',
+  //         rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '1',
+  //       },
+  //       {
+  //         id: '4',
+  //         title: 'Issue #2.1',
+  //         rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '2',
+  //       },
+  //       {
+  //         id: '5',
+  //         title: 'Issue #2.2',
+  //         rank: ISSUE.rank,
+  //         priority: 'MEDIUM',
+  //         statusId: '2',
+  //       },
+  //       {
+  //         id: '6',
+  //         title: 'Issue #2.3',
+  //         rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '2',
+  //       },
+  //       {
+  //         id: '7',
+  //         title: 'Issue #3.1',
+  //         rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '3',
+  //       },
+  //       {
+  //         id: '8',
+  //         title: 'Issue #3.2',
+  //         rank: ISSUE.rank,
+  //         priority: 'MEDIUM',
+  //         statusId: '3',
+  //       },
+  //       {
+  //         id: '9',
+  //         title: 'Issue #3.3',
+  //         rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '3',
+  //       },
+  //     ],
+  //   })
+  //   const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
+  //     await Promise.all([
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '1' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '2' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '3' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //     ])
+  //   expect(prevStatus1Issues).toStrictEqual([
+  //     { id: '1', title: 'Issue #1.1' },
+  //     { id: '2', title: 'Issue #1.2' },
+  //     { id: '3', title: 'Issue #1.3' },
+  //   ])
+  //   expect(prevStatus2Issues).toStrictEqual([
+  //     { id: '4', title: 'Issue #2.1' },
+  //     { id: '5', title: 'Issue #2.2' },
+  //     { id: '6', title: 'Issue #2.3' },
+  //   ])
+  //   expect(prevStatus3Issues).toStrictEqual([
+  //     { id: '7', title: 'Issue #3.1' },
+  //     { id: '8', title: 'Issue #3.2' },
+  //     { id: '9', title: 'Issue #3.3' },
+  //   ])
+  //   const res = await req
+  //     .put(
+  //       `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/1`
+  //     )
+  //     .set('Accept', 'application/json')
+  //     .set('Authorization', BEARER_TOKEN)
+  //     .send({
+  //       title: 'Issue #1.1',
+  //       priority: 'MEDIUM',
+  //       prevIssueId: '5',
+  //       nextIssueId: '6',
+  //       statusId: '2',
+  //     })
+  //   expect(res.status).toEqual(200)
+  //   expect(res.body).toHaveProperty('id')
+  //   expect(res.body).toHaveProperty('createdAt')
+  //   expect(res.body).toMatchObject({
+  //     title: 'Issue #1.1',
+  //     description: null,
+  //     priority: 'MEDIUM',
+  //   })
+  //   const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
+  //     await Promise.all([
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '1' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '2' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '3' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //     ])
+  //   expect(nextStatus1Issues).toStrictEqual([
+  //     { id: '2', title: 'Issue #1.2' },
+  //     { id: '3', title: 'Issue #1.3' },
+  //   ])
+  //   expect(nextStatus2Issues).toStrictEqual([
+  //     { id: '4', title: 'Issue #2.1' },
+  //     { id: '5', title: 'Issue #2.2' },
+  //     { id: '1', title: 'Issue #1.1' },
+  //     { id: '6', title: 'Issue #2.3' },
+  //   ])
+  //   expect(nextStatus3Issues).toStrictEqual([
+  //     { id: '7', title: 'Issue #3.1' },
+  //     { id: '8', title: 'Issue #3.2' },
+  //     { id: '9', title: 'Issue #3.3' },
+  //   ])
+  // })
+
+  // it('moves the first issue of the first status to the second status and puts it at the end', async () => {
+  //   const [project, board] = await Promise.all([
+  //     prismaClient.project.findFirst(),
+  //     prismaClient.board.findFirst(),
+  //   ])
+  //   await prismaClient.status.deleteMany()
+  //   await prismaClient.status.createMany({
+  //     data: [
+  //       {
+  //         id: '1',
+  //         title: 'Status #1',
+  //         rank: LexoRank.parse(STATUS.rank).genPrev().format(),
+  //         boardId: board!.id,
+  //       },
+  //       {
+  //         id: '2',
+  //         title: 'Status #2',
+  //         rank: STATUS.rank,
+  //         boardId: board!.id,
+  //       },
+  //       {
+  //         id: '3',
+  //         title: 'Status #3',
+  //         rank: LexoRank.parse(STATUS.rank).genNext().format(),
+  //         boardId: board!.id,
+  //       },
+  //     ],
+  //   })
+  //   await prismaClient.issue.createMany({
+  //     data: [
+  //       {
+  //         id: '1',
+  //         title: 'Issue #1.1',
+  //         rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '1',
+  //       },
+  //       {
+  //         id: '2',
+  //         title: 'Issue #1.2',
+  //         rank: ISSUE.rank,
+  //         priority: 'MEDIUM',
+  //         statusId: '1',
+  //       },
+  //       {
+  //         id: '3',
+  //         title: 'Issue #1.3',
+  //         rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '1',
+  //       },
+  //       {
+  //         id: '4',
+  //         title: 'Issue #2.1',
+  //         rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '2',
+  //       },
+  //       {
+  //         id: '5',
+  //         title: 'Issue #2.2',
+  //         rank: ISSUE.rank,
+  //         priority: 'MEDIUM',
+  //         statusId: '2',
+  //       },
+  //       {
+  //         id: '6',
+  //         title: 'Issue #2.3',
+  //         rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '2',
+  //       },
+  //       {
+  //         id: '7',
+  //         title: 'Issue #3.1',
+  //         rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '3',
+  //       },
+  //       {
+  //         id: '8',
+  //         title: 'Issue #3.2',
+  //         rank: ISSUE.rank,
+  //         priority: 'MEDIUM',
+  //         statusId: '3',
+  //       },
+  //       {
+  //         id: '9',
+  //         title: 'Issue #3.3',
+  //         rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+  //         priority: 'MEDIUM',
+  //         statusId: '3',
+  //       },
+  //     ],
+  //   })
+  //   const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
+  //     await Promise.all([
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '1' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '2' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '3' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //     ])
+  //   expect(prevStatus1Issues).toStrictEqual([
+  //     { id: '1', title: 'Issue #1.1' },
+  //     { id: '2', title: 'Issue #1.2' },
+  //     { id: '3', title: 'Issue #1.3' },
+  //   ])
+  //   expect(prevStatus2Issues).toStrictEqual([
+  //     { id: '4', title: 'Issue #2.1' },
+  //     { id: '5', title: 'Issue #2.2' },
+  //     { id: '6', title: 'Issue #2.3' },
+  //   ])
+  //   expect(prevStatus3Issues).toStrictEqual([
+  //     { id: '7', title: 'Issue #3.1' },
+  //     { id: '8', title: 'Issue #3.2' },
+  //     { id: '9', title: 'Issue #3.3' },
+  //   ])
+  //   const res = await req
+  //     .put(
+  //       `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/1`
+  //     )
+  //     .set('Accept', 'application/json')
+  //     .set('Authorization', BEARER_TOKEN)
+  //     .send({
+  //       title: 'Issue #1.1',
+  //       priority: 'MEDIUM',
+  //       prevIssueId: '6',
+  //       statusId: '2',
+  //     })
+  //   expect(res.status).toEqual(200)
+  //   expect(res.body).toHaveProperty('id')
+  //   expect(res.body).toHaveProperty('createdAt')
+  //   expect(res.body).toMatchObject({
+  //     title: 'Issue #1.1',
+  //     description: null,
+  //     priority: 'MEDIUM',
+  //   })
+  //   const [nextStatus1Issues, nextStatus2Issues, nextStatus3Issues] =
+  //     await Promise.all([
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '1' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '2' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //       prismaClient.issue.findMany({
+  //         select: { id: true, title: true },
+  //         where: { statusId: '3' },
+  //         orderBy: { rank: 'asc' },
+  //       }),
+  //     ])
+  //   expect(nextStatus1Issues).toStrictEqual([
+  //     { id: '2', title: 'Issue #1.2' },
+  //     { id: '3', title: 'Issue #1.3' },
+  //   ])
+  //   expect(nextStatus2Issues).toStrictEqual([
+  //     { id: '4', title: 'Issue #2.1' },
+  //     { id: '5', title: 'Issue #2.2' },
+  //     { id: '6', title: 'Issue #2.3' },
+  //     { id: '1', title: 'Issue #1.1' },
+  //   ])
+  //   expect(nextStatus3Issues).toStrictEqual([
+  //     { id: '7', title: 'Issue #3.1' },
+  //     { id: '8', title: 'Issue #3.2' },
+  //     { id: '9', title: 'Issue #3.3' },
+  //   ])
+  // })
 
   // TODO:
   // Test priority field.
