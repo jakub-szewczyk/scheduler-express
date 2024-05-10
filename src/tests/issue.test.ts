@@ -5149,7 +5149,77 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
     })
   })
 
+  test('`priority` field in request body being required', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const payload = omit(['rank', 'priority'], ISSUE)
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/1`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(400)
+    expect(res.body[0]).toStrictEqual({
+      type: 'field',
+      msg: 'You have to assign your issue a priority',
+      path: 'priority',
+      location: 'body',
+    })
+  })
+
+  test('`priority` field in request body being an enum', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const payload = { ...omit(['rank'], ISSUE), priority: 'BLOCKER' }
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/1`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'BLOCKER',
+        msg: "Invalid value was provided for the issue's priority",
+        path: 'priority',
+        location: 'body',
+      },
+    ])
+    await Object.values(Priority).reduce(
+      (promise, priority) =>
+        promise.then(async () => {
+          const payload = {
+            ...omit(['rank'], ISSUE),
+            title: 'Issue #1',
+            priority,
+          }
+          const res = await req
+            .put(
+              `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/1`
+            )
+            .set('Accept', 'application/json')
+            .set('Authorization', BEARER_TOKEN)
+            .send(payload)
+          expect(res.status).toEqual(200)
+          expect(res.body).toHaveProperty('id')
+          expect(res.body).toHaveProperty('createdAt')
+          expect(res.body).toMatchObject(payload)
+        }),
+      Promise.resolve()
+    )
+  })
+
   // TODO:
-  // Test `req.body.priority` field.
   // Test `req.body.statusId` field.
 })
