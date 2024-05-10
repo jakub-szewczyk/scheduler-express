@@ -412,7 +412,27 @@ export const updateIssueValidator = [
     .notEmpty()
     .isIn(Object.values(Priority))
     .withMessage("Invalid value was provided for the issue's priority"),
-  // TODO: Validate `req.body.statusId`
+  body('statusId')
+    .custom(async (statusId: string, { req }) => {
+      try {
+        await prismaClient.status.findFirstOrThrow({
+          where: {
+            id: statusId,
+            board: {
+              id: req.params!.boardId,
+              project: {
+                id: req.params!.projectId,
+                authorId: req.auth.userId,
+              },
+            },
+          },
+        })
+      } catch (error) {
+        req.statusCode = 404
+        throw new Error('Status not found')
+      }
+    })
+    .optional(),
   neighborValidation,
   validationMiddleware,
 ]

@@ -5220,6 +5220,154 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
     )
   })
 
-  // TODO:
-  // Test `req.body.statusId` field.
+  it('returns 404 Not Found in case of invalid status id inside the request body', async () => {
+    const [project, board] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+    ])
+    await prismaClient.status.deleteMany()
+    await prismaClient.status.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Status #1',
+          rank: LexoRank.parse(STATUS.rank).genPrev().format(),
+          boardId: board!.id,
+        },
+        {
+          id: '2',
+          title: 'Status #2',
+          rank: STATUS.rank,
+          boardId: board!.id,
+        },
+        {
+          id: '3',
+          title: 'Status #3',
+          rank: LexoRank.parse(STATUS.rank).genNext().format(),
+          boardId: board!.id,
+        },
+      ],
+    })
+    await prismaClient.issue.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Issue #1.1',
+          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+          priority: 'MEDIUM',
+          statusId: '1',
+        },
+        {
+          id: '2',
+          title: 'Issue #1.2',
+          rank: ISSUE.rank,
+          priority: 'MEDIUM',
+          statusId: '1',
+        },
+        {
+          id: '3',
+          title: 'Issue #1.3',
+          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+          priority: 'MEDIUM',
+          statusId: '1',
+        },
+        {
+          id: '4',
+          title: 'Issue #2.1',
+          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+          priority: 'MEDIUM',
+          statusId: '2',
+        },
+        {
+          id: '5',
+          title: 'Issue #2.2',
+          rank: ISSUE.rank,
+          priority: 'MEDIUM',
+          statusId: '2',
+        },
+        {
+          id: '6',
+          title: 'Issue #2.3',
+          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+          priority: 'MEDIUM',
+          statusId: '2',
+        },
+        {
+          id: '7',
+          title: 'Issue #3.1',
+          rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
+          priority: 'MEDIUM',
+          statusId: '3',
+        },
+        {
+          id: '8',
+          title: 'Issue #3.2',
+          rank: ISSUE.rank,
+          priority: 'MEDIUM',
+          statusId: '3',
+        },
+        {
+          id: '9',
+          title: 'Issue #3.3',
+          rank: LexoRank.parse(ISSUE.rank).genNext().format(),
+          priority: 'MEDIUM',
+          statusId: '3',
+        },
+      ],
+    })
+    const [prevStatus1Issues, prevStatus2Issues, prevStatus3Issues] =
+      await Promise.all([
+        prismaClient.issue.findMany({
+          select: { id: true, title: true },
+          where: { statusId: '1' },
+          orderBy: { rank: 'asc' },
+        }),
+        prismaClient.issue.findMany({
+          select: { id: true, title: true },
+          where: { statusId: '2' },
+          orderBy: { rank: 'asc' },
+        }),
+        prismaClient.issue.findMany({
+          select: { id: true, title: true },
+          where: { statusId: '3' },
+          orderBy: { rank: 'asc' },
+        }),
+      ])
+    expect(prevStatus1Issues).toStrictEqual([
+      { id: '1', title: 'Issue #1.1' },
+      { id: '2', title: 'Issue #1.2' },
+      { id: '3', title: 'Issue #1.3' },
+    ])
+    expect(prevStatus2Issues).toStrictEqual([
+      { id: '4', title: 'Issue #2.1' },
+      { id: '5', title: 'Issue #2.2' },
+      { id: '6', title: 'Issue #2.3' },
+    ])
+    expect(prevStatus3Issues).toStrictEqual([
+      { id: '7', title: 'Issue #3.1' },
+      { id: '8', title: 'Issue #3.2' },
+      { id: '9', title: 'Issue #3.3' },
+    ])
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/1/issues/1`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        title: 'Issue #1',
+        priority: 'MEDIUM',
+        prevIssueId: '2',
+        nextIssueId: '3',
+        statusId: '4',
+      })
+    expect(res.statusCode).toBe(404)
+    expect(res.body[0]).toStrictEqual({
+      type: 'field',
+      value: '4',
+      msg: 'Status not found',
+      path: 'statusId',
+      location: 'body',
+    })
+  })
 })
