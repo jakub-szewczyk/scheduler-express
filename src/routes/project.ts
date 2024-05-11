@@ -39,10 +39,10 @@ const router = Router()
  *           minimum: 0
  *           default: 10
  *       - in: query
- *         name: name
+ *         name: title
  *         schema:
  *           type: string
- *           default: 'Project #10'
+ *           example: 'Project #10'
  *       - in: query
  *         name: createdAt
  *         schema:
@@ -111,7 +111,7 @@ router.get('/', getProjectsValidator, getProjectsController)
  *         name: projectId
  *         schema:
  *           type: string
- *           example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         required: true
  *     responses:
  *       200:
@@ -168,10 +168,10 @@ router.get('/:projectId', getProjectValidator, getProjectController)
  *                     example: 'Project #1'
  *                   msg:
  *                     type: string
- *                     example: This name has already been used by one of your projects
+ *                     example: This title has already been used by one of your projects
  *                   path:
  *                     type: string
- *                     example: name
+ *                     example: title
  *                   location:
  *                     type: string
  *                     example: body
@@ -192,7 +192,7 @@ router.post('/', createProjectValidator, createProjectController)
  *         name: projectId
  *         schema:
  *           type: string
- *           example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         required: true
  *     requestBody:
  *       required: true
@@ -226,10 +226,10 @@ router.post('/', createProjectValidator, createProjectController)
  *                     example: 'Project #1'
  *                   msg:
  *                     type: string
- *                     example: This name has already been used by one of your projects
+ *                     example: This title has already been used by one of your projects
  *                   path:
  *                     type: string
- *                     example: name
+ *                     example: title
  *                   location:
  *                     type: string
  *                     example: body
@@ -250,7 +250,7 @@ router.put('/:projectId', updateProjectValidator, updateProjectController)
  *         name: projectId
  *         schema:
  *           type: string
- *           example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         required: true
  *     responses:
  *       200:
@@ -275,7 +275,7 @@ router.put('/:projectId', updateProjectValidator, updateProjectController)
  *                     example: field
  *                   value:
  *                     type: string
- *                     example: '074da7fd-a939-4879-a1d6-e2671a82cdfa'
+ *                     example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *                   msg:
  *                     type: string
  *                     example: Project not found

@@ -24,21 +24,21 @@ export const getProjectValidator = [
 ]
 
 export const createProjectValidator = [
-  body('name', 'You have to give your project a unique name')
+  body('title', 'You have to give your project a unique title')
     .trim()
     .notEmpty()
-    .custom(async (name: string, { req }) => {
+    .custom(async (title: string, { req }) => {
       const project = await prismaClient.project.findUnique({
         where: {
-          name_authorId: {
-            name,
+          title_authorId: {
+            title,
             authorId: req.auth.userId,
           },
         },
       })
       if (project)
         throw new Error(
-          'This name has already been used by one of your projects'
+          'This title has already been used by one of your projects'
         )
     }),
   body('description').trim().optional(),
@@ -59,20 +59,20 @@ export const updateProjectValidator = [
       throw new Error('Project not found')
     }
   }),
-  body('name', 'You have to give your project a unique name')
+  body('title', 'You have to give your project a unique title')
     .trim()
     .notEmpty()
-    .custom(async (name: string, { req }) => {
+    .custom(async (title: string, { req }) => {
       const project = await prismaClient.project.findFirst({
         where: {
           id: { not: req.params!.projectId },
-          name,
+          title,
           authorId: req.auth.userId,
         },
       })
       if (project)
         throw new Error(
-          'This name has already been used by one of your projects'
+          'This title has already been used by one of your projects'
         )
     }),
   body('description').trim().optional(),

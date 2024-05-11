@@ -6,21 +6,11 @@ Express REST API v2.0.0
 
 ### Refactor
 
-- Schedules module.
-
-- Boards module.
-
-- Notes module.
-
-- Notification cron job.
+- Note's content module.
 
 ### Test
 
-- Schedules module.
-
-- Boards module.
-
-- Notes module.
+- Entity ownership.
 
 - Notification cron job.
 
@@ -29,5 +19,3 @@ Express REST API v2.0.0
 ### Other
 
 - Document all endpoints.
-
-- Configure pre-commit git hook.

@@ -1,10 +1,9 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
 import { Prisma, Project } from '@prisma/client'
 import { Request, Response } from 'express'
-import { validationResult } from 'express-validator'
 import prismaClient from '../client'
 import { paginationParams } from '../modules/pagination'
-import { projectData, projectSelect } from '../modules/project'
+import { projectSelect } from '../modules/project'
 import { PaginableResponse } from '../types/pagination'
 
 type ProjectResponse = Pick<Project, keyof typeof projectSelect>
@@ -17,7 +16,7 @@ type GetProjectsControllerRequest = WithAuthProp<
     {
       page?: string
       size?: string
-      name?: string
+      title?: string
       createdAt?: 'ASC' | 'DESC'
     }
   >
@@ -32,16 +31,16 @@ export const getProjectsController = async (
   res: GetProjectsControllerResponse
 ) => {
   const { page, size } = paginationParams(req)
+  const where: Prisma.ProjectWhereInput = {
+    authorId: req.auth.userId!,
+    ...(req.query.title && {
+      title: {
+        contains: req.query.title,
+        mode: 'insensitive',
+      },
+    }),
+  }
   try {
-    const where: Prisma.ProjectWhereInput = {
-      authorId: req.auth.userId!,
-      ...(req.query.name && {
-        name: {
-          contains: req.query.name,
-          mode: 'insensitive',
-        },
-      }),
-    }
     const [projects, total] = await Promise.all([
       prismaClient.project.findMany({
         select: projectSelect,
@@ -93,7 +92,7 @@ export const getProjectController = async (
 }
 
 type CreateProjectControllerRequest = WithAuthProp<
-  Request<object, object, Pick<Project, 'name' | 'description'>>
+  Request<object, object, Pick<Project, 'title' | 'description'>>
 >
 
 type CreateProjectControllerResponse = Response<ProjectResponse>
@@ -105,11 +104,11 @@ export const createProjectController = async (
   try {
     const project = await prismaClient.project.create({
       select: projectSelect,
-      data: projectData({
-        name: req.body.name,
+      data: {
+        title: req.body.title,
         description: req.body.description,
         authorId: req.auth.userId!,
-      }),
+      },
     })
     return res.status(201).json(project)
   } catch (error) {
@@ -119,7 +118,7 @@ export const createProjectController = async (
 }
 
 type UpdateProjectControllerRequest = WithAuthProp<
-  Request<{ projectId: string }, object, Pick<Project, 'name' | 'description'>>
+  Request<{ projectId: string }, object, Pick<Project, 'title' | 'description'>>
 >
 
 type UpdateProjectControllerResponse = Response<ProjectResponse>
@@ -136,11 +135,11 @@ export const updateProjectController = async (
         authorId: req.auth.userId!,
       },
       data: {
-        name: req.body.name,
-        description: req.body.description,
+        title: req.body.title,
+        description: req.body.description || null,
       },
     })
-    return res.status(200).json(project)
+    return res.json(project)
   } catch (error) {
     console.error(error)
     return res.status(500).end()

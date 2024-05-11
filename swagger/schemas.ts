@@ -17,11 +17,11 @@
  *       properties:
  *         id:
  *           type: string
- *           example: 074da7fd-a939-4879-a1d6-e2671a82cdfa
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
  *         createdAt:
  *           type: string
- *           example: 2023-12-31T12:41:53.207Z
- *         name:
+ *           example: 2024-03-29T06:33:22.879Z
+ *         title:
  *           type: string
  *           example: 'Project #1'
  *         description:
@@ -36,9 +36,9 @@
  *     ProjectBody:
  *       type: object
  *       required:
- *         - name
+ *         - title
  *       properties:
- *         name:
+ *         title:
  *           type: string
  *           example: 'Project #1'
  *         description:
@@ -55,81 +55,16 @@
  *       properties:
  *         id:
  *           type: string
- *           example: clrssbi1c02m02uhbxrgdhnk3
+ *           example: 44bc0029-14b2-4dd4-a538-99fbac92ef48
  *         createdAt:
  *           type: string
- *           example: 2023-12-31T12:41:53.207Z
- *         name:
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
  *           type: string
  *           example: 'Schedule #1'
- */
-
-/**
- * @openapi
- * components:
- *   schemas:
- *     ScheduleDetails:
- *       type: object
- *       properties:
- *         id:
+ *         description:
  *           type: string
- *           example: clrssbi1c02m02uhbxrgdhnk3
- *         createdAt:
- *           type: string
- *           example: 2023-12-31T12:41:53.207Z
- *         name:
- *           type: string
- *           example: 'Schedule #1'
- *         rows:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Row'
- *           example:
- *             - id: clrssbi1c02m12uhb4oymnoqc
- *               rowId: null
- *               index: 0
- *               day: Monday
- *               starts: null
- *               ends: null
- *               room: null
- *               subject: null
- *               notification: null
- *             - id: clrssbi1c02m22uhbdy1w65e2
- *               rowId: null
- *               index: 1
- *               day: Tuesday
- *               starts: null
- *               ends: null
- *               room: null
- *               subject: null
- *               notification: null
- *             - id: clrssbi1c02m32uhbdt9fejkd
- *               rowId: null
- *               index: 2
- *               day: Wednesday
- *               starts: null
- *               ends: null
- *               room: null
- *               subject: null
- *               notification: null
- *             - id: clrssbi1c02m42uhb5wq6esbv
- *               rowId: null
- *               index: 3
- *               day: Thursday
- *               starts: null
- *               ends: null
- *               room: null
- *               subject: null
- *               notification: null
- *             - id: clrssbi1c02m52uhb6t5bfplr
- *               rowId: null
- *               index: 4
- *               day: Friday
- *               starts: null
- *               ends: null
- *               room: null
- *               subject: null
- *               notification: null
+ *           example: Edit your schedule's title and description. Manage your events within it.
  */
 
 /**
@@ -139,52 +74,359 @@
  *     ScheduleBody:
  *       type: object
  *       required:
- *         - name
+ *         - title
  *       properties:
- *         name:
+ *         title:
  *           type: string
  *           example: 'Schedule #1'
+ *         description:
+ *           type: string
+ *           example: Edit your schedule's title and description. Manage your events within it.
  */
 
 /**
  * @openapi
  * components:
  *   schemas:
- *     Row:
+ *     Event:
  *       type: object
  *       properties:
  *         id:
  *           type: string
- *           example: clrssbi1c02m12uhb4oymnoqc
- *         rowId:
+ *           example: 4a6e7431-6ef3-42d2-b608-70cdd2fe21bf
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Event #1'
+ *         description:
+ *           type: string
+ *           example: Edit your event's title and description. Manage your notification within it.
+ *         startsAt:
+ *           type: string
+ *           example: 2024-04-02T13:07:37.603Z
+ *         endsAt:
+ *           type: string
+ *           example: 2024-04-03T03:51:13.040Z
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     EventBody:
+ *       type: object
+ *       required:
+ *         - title
+ *         - startsAt
+ *         - endsAt
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: 'Event #1'
+ *         description:
+ *           type: string
+ *           example: Edit your event's title and description. Manage your notification within it.
+ *         startsAt:
+ *           type: string
+ *           example: 2024-04-02T13:07:37.603Z
+ *         endsAt:
+ *           type: string
+ *           example: 2024-04-03T03:51:13.040Z
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Notification:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 119b58d1-82a2-44eb-ab2b-e5ba8ae1e870
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Notification #1'
+ *         description:
+ *           type: string
+ *           example: Edit your notification's details. By subscribing to it, you'll receive reminders about your events.
+ *         startsAt:
+ *           type: string
+ *           example: 2024-04-02T13:07:37.603Z
+ *         isActive:
+ *           type: boolean
+ *           example: true
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     NotificationBody:
+ *       type: object
+ *       required:
+ *         - startsAt
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: 'Notification #1'
+ *         description:
+ *           type: string
+ *           example: Edit your notification's details. By subscribing to it, you'll receive reminders about your events.
+ *         startsAt:
+ *           type: string
+ *           example: 2024-04-02T13:07:37.603Z
+ *         isActive:
+ *           type: boolean
+ *           example: true
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     PushSubscription:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 0d6e6bbd-a0bc-40cf-85e7-9ae3d89a85d5
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         entity:
+ *           $ref: '#/components/schemas/Entity'
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Entity:
+ *       type: object
+ *       properties:
+ *         endpoint:
+ *           type: string
+ *           example: https://fcm.googleapis.com/fcm/send/eNsunHSowLg:APA91bGvgTjCxTYkrZA6RBEFcEEfgiWsp-DCN9C51XfiV47d_sbV6vDxvjmzj_DJRVYJU4L_ogu4PWo5tlqM3kfrQbuArXw5X82oXUQqrjlg5oBAR0Ogg-1g6QAPtr5BkyjheMRD-54f
+ *         expirationTime:
  *           type: string
  *           example: null
- *           nullable: true
- *         index:
- *           type: integer
- *           example: 0
- *         day:
+ *         keys:
+ *           type: object
+ *           properties:
+ *             p256dh:
+ *               type: string
+ *               example: BOwwPr9UuVb32HyG5oOuC9mFJVr8uDs_mdbBDEM5uG5xfE4E1N6DsO9vmTvtv18ZGmzuZPUcfsW2gxBiNa-daBA
+ *             auth:
+ *               type: string
+ *               example: B6hCa1S-W2CkCFyKs9h5qw
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Board:
+ *       type: object
+ *       properties:
+ *         id:
  *           type: string
- *           enum: [Monday, Tuesday, Wednesday, Thursday, Friday]
- *           example: Monday
- *         starts:
+ *           example: 06f750b2-8815-461e-8b7f-f42e96ab973c
+ *         createdAt:
  *           type: string
- *           nullable: true
- *           example: null
- *         ends:
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
  *           type: string
- *           nullable: true
- *           example: null
- *         room:
+ *           example: 'Board #1'
+ *         description:
  *           type: string
- *           nullable: true
- *           example: null
- *         subject:
+ *           example: Edit your board's title and description. Manage your issues within it.
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     BoardBody:
+ *       type: object
+ *       required:
+ *         - title
+ *       properties:
+ *         title:
  *           type: string
- *           nullable: true
- *           example: null
- *         notification:
+ *           example: 'Board #1'
+ *         description:
  *           type: string
- *           nullable: true
- *           example: null
+ *           example: Edit your board's title and description. Manage your issues within it.
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Status:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 080434b9-5677-4879-a293-eb82a2d29e1e
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Status #1'
+ *         description:
+ *           type: string
+ *           example: Edit your status' title and description. Manage your issues within it.
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     StatusBody:
+ *       type: object
+ *       required:
+ *         - title
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: 'Status #1'
+ *         description:
+ *           type: string
+ *           example: Edit your status' title and description. Manage your issues within it.
+ *         prevStatusId:
+ *           type: string
+ *           example: 080434b9-5677-4879-a293-eb82a2d29e1e
+ *         nextStatusId:
+ *           type: string
+ *           example: 45e26c5f-5eee-4928-a24c-481fcec79993
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Issue:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: 36681b55-a2a9-4e72-b7b5-225bd515cb4a
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Issue #1'
+ *         description:
+ *           type: string
+ *           example: Edit your issue's title and description. Prioritize them based on your needs.
+ *         priority:
+ *           type: string
+ *           enum: [TRIVIAL, MINOR, LOW, MEDIUM, HIGH, MAJOR, CRITICAL]
+ *           example: MEDIUM
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     CreateIssueBody:
+ *       type: object
+ *       required:
+ *         - title
+ *         - priority
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: 'Issue #1'
+ *         description:
+ *           type: string
+ *           example: Edit your issue's title and description. Prioritize them based on your needs.
+ *         priority:
+ *           type: string
+ *           enum: [TRIVIAL, MINOR, LOW, MEDIUM, HIGH, MAJOR, CRITICAL]
+ *           example: MEDIUM
+ *         prevIssueId:
+ *           type: string
+ *           example: 36681b55-a2a9-4e72-b7b5-225bd515cb4a
+ *         nextIssueId:
+ *           type: string
+ *           example: 740a7ce7-a2da-4450-8c76-d70c272fe093
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     UpdateIssueBody:
+ *       type: object
+ *       required:
+ *         - title
+ *         - priority
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: 'Issue #1'
+ *         description:
+ *           type: string
+ *           example: Edit your issue's title and description. Prioritize them based on your needs.
+ *         priority:
+ *           type: string
+ *           enum: [TRIVIAL, MINOR, LOW, MEDIUM, HIGH, MAJOR, CRITICAL]
+ *           example: MEDIUM
+ *         prevIssueId:
+ *           type: string
+ *           example: 36681b55-a2a9-4e72-b7b5-225bd515cb4a
+ *         nextIssueId:
+ *           type: string
+ *           example: 740a7ce7-a2da-4450-8c76-d70c272fe093
+ *         statusId:
+ *           type: string
+ *           example: 45e26c5f-5eee-4928-a24c-481fcec79993
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Note:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: e3e6f9dc-6f32-4fb5-8da2-c7bfa29dc120
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Note #1'
+ *         description:
+ *           type: string
+ *           example: Edit your note's title and description. Manage your content within it.
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     NoteBody:
+ *       type: object
+ *       required:
+ *         - title
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: 'Note #1'
+ *         description:
+ *           type: string
+ *           example: Edit your note's title and description. Manage your content within it.
  */

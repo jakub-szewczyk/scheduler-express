@@ -3,8 +3,8 @@ import supertest from 'supertest'
 import { beforeEach, describe, expect, it, test } from 'vitest'
 import app from '../app'
 import { ordinals } from '../modules/common'
-import prismaClient from './client'
 import { PROJECT, projectSelect } from '../modules/project'
+import prismaClient from './client'
 
 const AUTHOR_ID = process.env.AUTHOR_ID
 
@@ -25,7 +25,7 @@ describe('GET /projects', () => {
       data: Array(100)
         .fill(null)
         .map((_, index, array) => ({
-          name: `Project #${array.length - index}`,
+          title: `Project #${array.length - index}`,
           authorId: AUTHOR_ID,
           createdAt: new Date(Date.now() - index * 1000000).toISOString(),
         })),
@@ -33,7 +33,7 @@ describe('GET /projects', () => {
     console.log('✅[test]: seeding finished')
   })
 
-  it('returns default projects', async () => {
+  test('`page`, `size`, `title` and `createdAt` query param being optional', async () => {
     const res = await req
       .get('/api/projects')
       .set('Accept', 'application/json')
@@ -50,30 +50,7 @@ describe('GET /projects', () => {
       expect(project).toHaveProperty('id')
       expect(project).toHaveProperty('createdAt')
       expect(project).toMatchObject({
-        name: `Project #${100 - index}`,
-        description: null,
-      })
-    })
-  })
-
-  test('`page`, `size`, `name` and `createdAt` query param being optional', async () => {
-    const res = await req
-      .get('/api/projects')
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-    const projects: Project[] = res.body.content
-    expect(res.status).toEqual(200)
-    expect(res.body).toMatchObject({
-      page: 0,
-      size: 10,
-      total: 100,
-    })
-    expect(projects).toHaveLength(10)
-    projects.forEach((project, index) => {
-      expect(project).toHaveProperty('id')
-      expect(project).toHaveProperty('createdAt')
-      expect(project).toMatchObject({
-        name: `Project #${100 - index}`,
+        title: `Project #${100 - index}`,
         description: null,
       })
     })
@@ -136,7 +113,7 @@ describe('GET /projects', () => {
           expect(project).toHaveProperty('id')
           expect(project).toHaveProperty('createdAt')
           expect(project).toMatchObject({
-            name: `Project #${100 - index - page * 10}`,
+            title: `Project #${100 - index - page * 10}`,
             description: null,
           })
         })
@@ -185,9 +162,7 @@ describe('GET /projects', () => {
       it(`returns ${size} ${size === 1 ? 'project' : 'projects'}`, async () => {
         const res = await req
           .get('/api/projects')
-          .query({
-            size,
-          })
+          .query({ size })
           .set('Accept', 'application/json')
           .set('Authorization', BEARER_TOKEN)
         const projects: Project[] = res.body.content
@@ -202,19 +177,17 @@ describe('GET /projects', () => {
           expect(project).toHaveProperty('id')
           expect(project).toHaveProperty('createdAt')
           expect(project).toMatchObject({
-            name: `Project #${100 - index}`,
+            title: `Project #${100 - index}`,
             description: null,
           })
         })
       })
     )
 
-  it('returns projects filtered by name', async () => {
+  it('returns projects filtered by title', async () => {
     const res = await req
       .get('/api/projects')
-      .query({
-        name: 'project #10',
-      })
+      .query({ title: 'project #10' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects: Project[] = res.body.content
@@ -230,21 +203,19 @@ describe('GET /projects', () => {
       expect(project).toHaveProperty('createdAt')
     })
     expect(projects[0]).toMatchObject({
-      name: 'Project #100',
+      title: 'Project #100',
       description: null,
     })
     expect(projects[1]).toMatchObject({
-      name: 'Project #10',
+      title: 'Project #10',
       description: null,
     })
   })
 
-  test('case insensitivity in project search by name', async () => {
+  test('case insensitivity in project search by title', async () => {
     const res1 = await req
       .get('/api/projects')
-      .query({
-        name: 'project #69',
-      })
+      .query({ title: 'project #69' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects1: Project[] = res1.body.content
@@ -258,14 +229,12 @@ describe('GET /projects', () => {
     expect(projects1[0]).toHaveProperty('id')
     expect(projects1[0]).toHaveProperty('createdAt')
     expect(projects1[0]).toMatchObject({
-      name: 'Project #69',
+      title: 'Project #69',
       description: null,
     })
     const res2 = await req
       .get('/api/projects')
-      .query({
-        name: 'Project #69',
-      })
+      .query({ title: 'Project #69' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects2: Project[] = res2.body.content
@@ -279,7 +248,7 @@ describe('GET /projects', () => {
     expect(projects2[0]).toHaveProperty('id')
     expect(projects2[0]).toHaveProperty('createdAt')
     expect(projects2[0]).toMatchObject({
-      name: 'Project #69',
+      title: 'Project #69',
       description: null,
     })
   })
@@ -287,9 +256,7 @@ describe('GET /projects', () => {
   it('returns an empty projects array if none are found', async () => {
     const res = await req
       .get('/api/projects')
-      .query({
-        name: 'project #420',
-      })
+      .query({ title: 'project #420' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects: Project[] = res.body.content
@@ -305,9 +272,7 @@ describe('GET /projects', () => {
   it('returns projects sorted by creation date in ascending order', async () => {
     const res = await req
       .get('/api/projects')
-      .query({
-        createdAt: 'ASC',
-      })
+      .query({ createdAt: 'ASC' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects: Project[] = res.body.content
@@ -334,9 +299,7 @@ describe('GET /projects', () => {
   it('returns projects sorted by creation date in descending order', async () => {
     const res = await req
       .get('/api/projects')
-      .query({
-        createdAt: 'DESC',
-      })
+      .query({ createdAt: 'DESC' })
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
     const projects: Project[] = res.body.content
@@ -461,56 +424,38 @@ describe('POST /projects', () => {
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({
-        name: 'Project #1',
+        title: 'Project #1',
       })
     expect(res.status).toEqual(201)
     expect(res.body).toHaveProperty('id')
     expect(res.body).toHaveProperty('createdAt')
     expect(res.body).toMatchObject({
-      name: 'Project #1',
+      title: 'Project #1',
     })
   })
 
-  test('`name` field in request body being required', async () => {
+  test('`title` field in request body being required', async () => {
     const res = await req
       .post('/api/projects')
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send({ name: '' })
+      .send({ title: '' })
     expect(res.status).toEqual(400)
     expect(res.body).toStrictEqual([
       {
         type: 'field',
         value: '',
-        msg: 'You have to give your project a unique name',
-        path: 'name',
+        msg: 'You have to give your project a unique title',
+        path: 'title',
         location: 'body',
       },
     ])
   })
 
-  test('`name` field in request body being required', async () => {
-    const res = await req
-      .post('/api/projects')
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send({ name: '' })
-    expect(res.status).toEqual(400)
-    expect(res.body).toStrictEqual([
-      {
-        type: 'field',
-        value: '',
-        msg: 'You have to give your project a unique name',
-        path: 'name',
-        location: 'body',
-      },
-    ])
-  })
-
-  it('returns 400 Bad Request when the project name is already taken', async () => {
+  it('returns 400 Bad Request when the project title is already taken', async () => {
     await prismaClient.project.create({
       data: {
-        name: 'Project #1',
+        title: 'Project #1',
         authorId: AUTHOR_ID,
       },
     })
@@ -518,14 +463,14 @@ describe('POST /projects', () => {
       .post('/api/projects')
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send({ name: 'Project #1' })
+      .send({ title: 'Project #1' })
     expect(res.status).toEqual(400)
     expect(res.body).toStrictEqual([
       {
         type: 'field',
         value: 'Project #1',
-        msg: 'This name has already been used by one of your projects',
-        path: 'name',
+        msg: 'This title has already been used by one of your projects',
+        path: 'title',
         location: 'body',
       },
     ])
@@ -537,7 +482,7 @@ describe('PUT /projects/:projectId', () => {
     const project = await prismaClient.project.create({
       select: projectSelect,
       data: {
-        name: 'Project #1',
+        title: 'Project #1',
         authorId: AUTHOR_ID,
       },
     })
@@ -546,13 +491,13 @@ describe('PUT /projects/:projectId', () => {
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({
-        name: 'Project #2',
+        title: 'Project #2',
         description: 'This is the second project',
       })
     expect(res.status).toEqual(200)
     expect(res.body).toStrictEqual({
       ...project,
-      name: 'Project #2',
+      title: 'Project #2',
       description: 'This is the second project',
       createdAt: project.createdAt.toISOString(),
     })
@@ -564,7 +509,7 @@ describe('PUT /projects/:projectId', () => {
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({
-        name: 'Project #2',
+        title: 'Project #2',
         description: 'This is the second project',
       })
     expect(res.status).toEqual(404)
@@ -579,11 +524,11 @@ describe('PUT /projects/:projectId', () => {
     ])
   })
 
-  test('`name` field in request body being required', async () => {
+  test('`title` field in request body being required', async () => {
     const project = await prismaClient.project.create({
       select: projectSelect,
       data: {
-        name: 'Project #1',
+        title: 'Project #1',
         authorId: AUTHOR_ID,
       },
     })
@@ -597,15 +542,15 @@ describe('PUT /projects/:projectId', () => {
         .put(`/api/projects/${project.id}`)
         .set('Accept', 'application/json')
         .set('Authorization', BEARER_TOKEN)
-        .send({ name: '' }),
+        .send({ title: '' }),
     ])
     expect(res1.status).toEqual(400)
     expect(res1.body).toStrictEqual([
       {
         type: 'field',
         value: '',
-        msg: 'You have to give your project a unique name',
-        path: 'name',
+        msg: 'You have to give your project a unique title',
+        path: 'title',
         location: 'body',
       },
     ])
@@ -614,22 +559,22 @@ describe('PUT /projects/:projectId', () => {
       {
         type: 'field',
         value: '',
-        msg: 'You have to give your project a unique name',
-        path: 'name',
+        msg: 'You have to give your project a unique title',
+        path: 'title',
         location: 'body',
       },
     ])
   })
 
-  it('returns 400 Bad Request when the project name is already taken', async () => {
+  it('returns 400 Bad Request when the project title is already taken', async () => {
     await prismaClient.project.createMany({
       data: [
         {
-          name: 'Project #1',
+          title: 'Project #1',
           authorId: AUTHOR_ID,
         },
         {
-          name: 'Project #2',
+          title: 'Project #2',
           authorId: AUTHOR_ID,
         },
       ],
@@ -641,14 +586,14 @@ describe('PUT /projects/:projectId', () => {
       .put(`/api/projects/${project.id}`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
-      .send({ name: 'Project #2' })
+      .send({ title: 'Project #2' })
     expect(res.status).toEqual(400)
     expect(res.body).toStrictEqual([
       {
         type: 'field',
         value: 'Project #2',
-        msg: 'This name has already been used by one of your projects',
-        path: 'name',
+        msg: 'This title has already been used by one of your projects',
+        path: 'title',
         location: 'body',
       },
     ])
@@ -658,7 +603,7 @@ describe('PUT /projects/:projectId', () => {
     const project = await prismaClient.project.create({
       select: projectSelect,
       data: {
-        name: 'Project #1',
+        title: 'Project #1',
         authorId: AUTHOR_ID,
       },
     })
@@ -667,12 +612,12 @@ describe('PUT /projects/:projectId', () => {
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({
-        name: 'Project #2',
+        title: 'Project #2',
       })
     expect(res.status).toEqual(200)
     expect(res.body).toMatchObject({
       ...project,
-      name: 'Project #2',
+      title: 'Project #2',
       createdAt: project.createdAt.toISOString(),
     })
   })
@@ -683,7 +628,7 @@ describe('DELETE /projects/:projectId', () => {
     const project = await prismaClient.project.create({
       select: projectSelect,
       data: {
-        name: 'Project #1',
+        title: 'Project #1',
         authorId: AUTHOR_ID,
       },
     })
