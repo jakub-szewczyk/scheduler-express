@@ -210,3 +210,42 @@ export const updateIssueController = async (
     return res.status(500).end()
   }
 }
+
+type DeleteIssueControllerRequest = WithAuthProp<
+  Request<{
+    projectId: string
+    boardId: string
+    statusId: string
+    issueId: string
+  }>
+>
+
+type DeleteIssueControllerResponse = Response<IssueResponse>
+
+export const deleteIssueController = async (
+  req: DeleteIssueControllerRequest,
+  res: DeleteIssueControllerResponse
+) => {
+  try {
+    const issue = await prismaClient.issue.delete({
+      select: issueSelect,
+      where: {
+        id: req.params.issueId,
+        status: {
+          id: req.params.statusId,
+          board: {
+            id: req.params.boardId,
+            project: {
+              id: req.params.projectId,
+              authorId: req.auth.userId!,
+            },
+          },
+        },
+      },
+    })
+    return res.json(issue)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}

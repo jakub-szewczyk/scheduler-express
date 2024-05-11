@@ -5371,3 +5371,203 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
     })
   })
 })
+
+describe('DELETE /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:issueId', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+        boards: {
+          create: {
+            title: 'Board #1',
+            statuses: { create: STATUS },
+          },
+        },
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const [board, status] = await Promise.all([
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const issue = await prismaClient.issue.create({
+      select: issueSelect,
+      data: {
+        ...ISSUE,
+        status: {
+          connect: {
+            id: status!.id,
+          },
+        },
+      },
+    })
+    const res = await req
+      .delete(
+        `/api/projects/abc/boards/${board!.id}/statuses/${status!.id}/issues/${issue!.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: board!.id,
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: status!.id,
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: issue!.id,
+        msg: 'Issue not found',
+        path: 'issueId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid board id', async () => {
+    const [project, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const issue = await prismaClient.issue.create({
+      select: issueSelect,
+      data: { ...ISSUE, statusId: status!.id },
+    })
+    const res = await req
+      .delete(
+        `/api/projects/${project!.id}/boards/abc/statuses/${status!.id}/issues/${issue!.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Board not found',
+        path: 'boardId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: status!.id,
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: issue!.id,
+        msg: 'Issue not found',
+        path: 'issueId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid status id', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const issue = await prismaClient.issue.create({
+      select: issueSelect,
+      data: { ...ISSUE, statusId: status!.id },
+    })
+    const res = await req
+      .delete(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/abc/issues/${issue!.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Status not found',
+        path: 'statusId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: issue!.id,
+        msg: 'Issue not found',
+        path: 'issueId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid issue id', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const res = await req
+      .delete(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/abc`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Issue not found',
+        path: 'issueId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('deletes an issue', async () => {
+    const [project, board, status] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
+      prismaClient.status.findFirst(),
+    ])
+    const issue = await prismaClient.issue.create({
+      select: issueSelect,
+      data: {
+        ...ISSUE,
+        statusId: status!.id,
+      },
+    })
+    const res = await req
+      .delete(
+        `/api/projects/${project!.id}/boards/${board!.id}/statuses/${status!.id}/issues/${issue!.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+    expect(res.status).toEqual(200)
+    expect(res.body).toMatchObject({
+      ...issue,
+      createdAt: issue.createdAt.toISOString(),
+    })
+  })
+})

@@ -1,12 +1,14 @@
 import { Router } from 'express'
 import {
   createIssueController,
+  deleteIssueController,
   getIssueController,
   getIssuesController,
   updateIssueController,
 } from '../controllers/issue'
 import {
   createIssueValidator,
+  deleteIssueValidator,
   getIssueValidator,
   getIssuesValidator,
   updateIssueValidator,
@@ -315,6 +317,80 @@ router.put(
   '/:projectId/boards/:boardId/statuses/:statusId/issues/:issueId',
   updateIssueValidator,
   updateIssueController
+)
+
+/**
+ * @openapi
+ * /api/projects/{projectId}/boards/{boardId}/statuses/{statusId}/issues/{issueId}:
+ *   delete:
+ *     security:
+ *       - bearerAuth: []
+ *     tags:
+ *       - Issue
+ *     summary: Delete issue
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         schema:
+ *           type: string
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
+ *         required: true
+ *       - in: path
+ *         name: boardId
+ *         schema:
+ *           type: string
+ *           example: 06f750b2-8815-461e-8b7f-f42e96ab973c
+ *         required: true
+ *       - in: path
+ *         name: statusId
+ *         schema:
+ *           type: string
+ *           example: 080434b9-5677-4879-a293-eb82a2d29e1e
+ *         required: true
+ *       - in: path
+ *         name: issueId
+ *         schema:
+ *           type: string
+ *           example: 36681b55-a2a9-4e72-b7b5-225bd515cb4a
+ *         required: true
+ *     responses:
+ *       200:
+ *         description: Returns deleted issue
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *               $ref: '#/components/schemas/Issue'
+ *       404:
+ *         description: Issue not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   type:
+ *                     type: string
+ *                     example: field
+ *                   value:
+ *                     type: string
+ *                     example: 36681b55-a2a9-4e72-b7b5-225bd515cb4a
+ *                   msg:
+ *                     type: string
+ *                     example: Issue not found
+ *                   path:
+ *                     type: string
+ *                     example: issueId
+ *                   location:
+ *                     type: string
+ *                     example: params
+ */
+router.delete(
+  '/:projectId/boards/:boardId/statuses/:statusId/issues/:issueId',
+  deleteIssueValidator,
+  deleteIssueController
 )
 
 export default router

@@ -6,8 +6,6 @@ Express REST API v2.0.0
 
 ### Refactor
 
-- Issues module.
-
 - Note's content module.
 
 ### Test
