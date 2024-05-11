@@ -265,6 +265,13 @@ router.put(
   updateNoteController
 )
 
+// TODO: Implement endpoint
+// router.patch(
+//   '/:projectId/notes/:noteId/content',
+//   updateNoteContentValidator,
+//   updateNoteContentController
+// )
+
 /**
  * @openapi
  * /api/projects/{projectId}/notes/{noteId}:

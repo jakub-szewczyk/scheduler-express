@@ -94,7 +94,7 @@ const seed = async () => {
           })
         ),
       ])
-      /* const issues = */ await Promise.all([
+      await Promise.all([
         ...RANKS.map((_, index, array) =>
           prismaClient.issue.create({
             data: {
@@ -107,7 +107,7 @@ const seed = async () => {
           })
         ),
       ])
-      /* const notes = */ await Promise.all([
+      await Promise.all([
         ...Array(100)
           .fill(null)
           .map((_, index, array) =>
