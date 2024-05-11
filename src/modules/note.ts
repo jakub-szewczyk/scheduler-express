@@ -1,15 +1,14 @@
-import { Prisma } from '@prisma/client'
+import { Note, Prisma } from '@prisma/client'
 
-export const NOTE: Prisma.NoteCreateWithoutProjectInput = {
-  name: 'Note #1',
-  editorState: Prisma.JsonNull,
+export const NOTE: Pick<Note, 'title' | 'description'> = {
+  title: 'Note #1',
+  description:
+    "Edit your note's title and description. Manage your content within it.",
 }
 
-export const noteData = ({
-  name,
-  editorState,
-}: Prisma.NoteCreateWithoutProjectInput) =>
-  Prisma.validator<Prisma.NoteCreateWithoutProjectInput>()({
-    name,
-    editorState,
-  })
+export const noteSelect = {
+  id: true,
+  createdAt: true,
+  title: true,
+  description: true,
+} satisfies Prisma.NoteSelect

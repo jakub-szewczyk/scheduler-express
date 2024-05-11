@@ -1,23 +1,48 @@
 import { WithAuthProp } from '@clerk/clerk-sdk-node'
-import { validationResult } from 'express-validator'
-import prismaClient from '../client'
+import {
+  Prisma,
+  PushSubscription as PrismaPushSubscription,
+} from '@prisma/client'
 import { Request, Response } from 'express'
-import { Prisma } from '@prisma/client'
+import prismaClient from '../client'
+import { pushSubscriptionSelect } from '../modules/pushSubscription'
 
-export const pushSubscriptionController = async (
-  req: WithAuthProp<
-    Request<object, object, ReturnType<PushSubscription['toJSON']>>
-  >,
-  res: Response
+type CreatePushSubscriptionControllerRequest = WithAuthProp<
+  Request<
+    { projectId: string; scheduleId: string; eventId: string },
+    object,
+    ReturnType<PushSubscription['toJSON']>
+  >
+>
+
+type CreatePushSubscriptionControllerResponse = Response<
+  Pick<PrismaPushSubscription, 'entity'>
+>
+
+export const createPushSubscriptionController = async (
+  req: CreatePushSubscriptionControllerRequest,
+  res: CreatePushSubscriptionControllerResponse
 ) => {
-  const result = validationResult(req)
-  if (!result.isEmpty())
-    return res.status(400).json({ message: result.array()[0].msg })
   try {
     const pushSubscription = await prismaClient.pushSubscription.create({
+      select: pushSubscriptionSelect,
       data: {
-        authorId: req.auth.userId!,
-        pushSubscription: req.body as Prisma.JsonObject,
+        entity: req.body as Prisma.JsonObject,
+        notification: {
+          connect: {
+            id: req.event!.notification.id,
+            event: {
+              id: req.params.eventId,
+              schedule: {
+                id: req.params.scheduleId,
+                project: {
+                  id: req.params.projectId,
+                  authorId: req.auth.userId!,
+                },
+              },
+            },
+          },
+        },
       },
     })
     return res.status(201).json(pushSubscription)

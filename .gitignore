@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
 
 # Tests
 coverage
@@ -25,6 +27,4 @@ coverage
 *.njsproj
 *.sln
 *.sw?
-
-# Custom
-.env
+cspell.json

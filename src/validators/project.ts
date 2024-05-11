@@ -1,5 +1,6 @@
 import { body, param, query } from 'express-validator'
 import prismaClient from '../client'
+import { validationMiddleware } from '../middlewares/validation'
 
 export const getProjectsValidator = [
   query('page', 'Page number must be a non-negative integer')
@@ -10,33 +11,38 @@ export const getProjectsValidator = [
     .optional(),
   query(
     'createdAt',
-    'Invalid value was provided for sorting projects by creation date.'
+    'Invalid value was provided for sorting projects by creation date'
   )
     .isIn(['ASC', 'DESC'])
     .optional(),
+  validationMiddleware,
 ]
 
-export const getProjectValidator = param('projectId').notEmpty()
+export const getProjectValidator = [
+  param('projectId').notEmpty(),
+  validationMiddleware,
+]
 
 export const createProjectValidator = [
-  body('name', 'You have to give your project a unique name')
+  body('title', 'You have to give your project a unique title')
     .trim()
     .notEmpty()
-    .custom(async (name: string, { req }) => {
+    .custom(async (title: string, { req }) => {
       const project = await prismaClient.project.findUnique({
         where: {
-          name_authorId: {
-            name,
+          title_authorId: {
+            title,
             authorId: req.auth.userId,
           },
         },
       })
       if (project)
         throw new Error(
-          'This name has already been used by one of your projects'
+          'This title has already been used by one of your projects'
         )
     }),
   body('description').trim().optional(),
+  validationMiddleware,
 ]
 
 export const updateProjectValidator = [
@@ -49,30 +55,32 @@ export const updateProjectValidator = [
         },
       })
     } catch (error) {
+      req.statusCode = 404
       throw new Error('Project not found')
     }
   }),
-  body('name', 'You have to give your project a unique name')
+  body('title', 'You have to give your project a unique title')
     .trim()
     .notEmpty()
-    .custom(async (name: string, { req }) => {
+    .custom(async (title: string, { req }) => {
       const project = await prismaClient.project.findFirst({
         where: {
           id: { not: req.params!.projectId },
-          name,
+          title,
           authorId: req.auth.userId,
         },
       })
       if (project)
         throw new Error(
-          'This name has already been used by one of your projects'
+          'This title has already been used by one of your projects'
         )
     }),
   body('description').trim().optional(),
+  validationMiddleware,
 ]
 
-export const deleteProjectValidator = param('projectId')
-  .custom(async (projectId: string, { req }) => {
+export const deleteProjectValidator = [
+  param('projectId').custom(async (projectId: string, { req }) => {
     try {
       await prismaClient.project.findUniqueOrThrow({
         where: {
@@ -81,14 +89,9 @@ export const deleteProjectValidator = param('projectId')
         },
       })
     } catch (error) {
+      req.statusCode = 404
       throw new Error('Project not found')
     }
-  })
-  .custom(async (_, { req }) => {
-    const projectCount = await prismaClient.project.count({
-      where: {
-        authorId: req.auth.userId,
-      },
-    })
-    if (projectCount === 1) throw new Error('At least one project is required')
-  })
+  }),
+  validationMiddleware,
+]

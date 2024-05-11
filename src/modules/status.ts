@@ -1,23 +1,16 @@
 import { Prisma, Status } from '@prisma/client'
-import { ISSUES, issuesData } from './issue'
+import { LexoRank } from 'lexorank'
 
-export const STATUSES: Prisma.StatusCreateManyBoardInput[] = [
-  { index: 0, title: 'todo' },
-  { index: 1, title: 'on hold' },
-  { index: 2, title: 'in progress' },
-  { index: 3, title: 'done' },
-]
+export const STATUS: Pick<Status, 'title' | 'description' | 'rank'> = {
+  title: 'Status #1',
+  description:
+    "Edit your status' title and description. Manage your issues within it.",
+  rank: LexoRank.middle().format(),
+}
 
-export const statusData = ({ index, title }: Pick<Status, 'index' | 'title'>) =>
-  Prisma.validator<Prisma.StatusCreateWithoutBoardInput>()({
-    index,
-    title,
-    issues: {
-      createMany: {
-        data: issuesData(ISSUES),
-      },
-    },
-  })
-
-export const statusesData = (statuses: Pick<Status, 'index' | 'title'>[]) =>
-  Prisma.validator<Prisma.StatusCreateManyBoardInput[]>()(statuses)
+export const statusSelect = {
+  id: true,
+  createdAt: true,
+  title: true,
+  description: true,
+} satisfies Prisma.StatusSelect
