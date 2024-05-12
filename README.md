@@ -1,12 +1,8 @@
 # Scheduler
 
-Express REST API v2.0.0
+Express REST API v2.1.0
 
 ## Todo
-
-### Refactor
-
-- Note's content module.
 
 ### Test
 
@@ -15,7 +11,3 @@ Express REST API v2.0.0
 - Notification cron job.
 
 - Exclude non-testable files from coverage report.
-
-### Other
-
-- Document all endpoints.

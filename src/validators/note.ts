@@ -118,6 +118,39 @@ export const updateNoteValidator = [
   validationMiddleware,
 ]
 
+export const updateNoteContentValidator = [
+  param('projectId').custom(async (projectId: string, { req }) => {
+    try {
+      await prismaClient.project.findUniqueOrThrow({
+        where: {
+          id: projectId,
+          authorId: req.auth.userId,
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Project not found')
+    }
+  }),
+  param('noteId').custom(async (noteId: string, { req }) => {
+    try {
+      await prismaClient.note.findFirstOrThrow({
+        where: {
+          id: noteId,
+          project: {
+            id: req.params!.projectId,
+            authorId: req.auth.userId,
+          },
+        },
+      })
+    } catch (error) {
+      req.statusCode = 404
+      throw new Error('Note not found')
+    }
+  }),
+  validationMiddleware,
+]
+
 export const deleteNoteValidator = [
   param('projectId').custom(async (projectId: string, { req }) => {
     try {

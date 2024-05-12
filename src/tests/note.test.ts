@@ -450,6 +450,7 @@ describe('GET /projects/:projectId/notes/:noteId', () => {
     expect(res.body).toStrictEqual({
       ...note,
       createdAt: note.createdAt.toISOString(),
+      content: null,
     })
   })
 
@@ -768,6 +769,107 @@ describe('PUT /projects/:projectId/notes/:noteId', () => {
       title: 'Note #2',
       createdAt: note.createdAt.toISOString(),
     })
+  })
+})
+
+describe('PATCH /projects/:projectId/notes/:noteId/content', () => {
+  beforeEach(async () => {
+    console.log('⏳[test]: seeding database...')
+    await prismaClient.project.create({
+      data: {
+        title: 'Project #1',
+        authorId: AUTHOR_ID,
+      },
+    })
+    console.log('✅[test]: seeding finished')
+  })
+
+  it('returns 404 Not Found in case of invalid project id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const note = await prismaClient.note.create({
+      select: noteSelect,
+      data: {
+        title: 'Note #1',
+        content: Prisma.JsonNull,
+        projectId: project.id,
+      },
+    })
+    const res = await req
+      .patch(`/api/projects/abc/notes/${note.id}/content`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        metadata: 'Draft.js',
+        markdown: '# Scheduler',
+      })
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Project not found',
+        path: 'projectId',
+        location: 'params',
+      },
+      {
+        type: 'field',
+        value: note.id,
+        msg: 'Note not found',
+        path: 'noteId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it('returns 404 Not Found in case of invalid note id', async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const res = await req
+      .patch(`/api/projects/${project.id}/notes/abc/content`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send({
+        metadata: 'Draft.js',
+        markdown: '# Scheduler',
+      })
+    expect(res.status).toEqual(404)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'abc',
+        msg: 'Note not found',
+        path: 'noteId',
+        location: 'params',
+      },
+    ])
+  })
+
+  it("updates note's content", async () => {
+    const project = (await prismaClient.project.findFirst())!
+    const note = await prismaClient.note.create({
+      select: noteSelect,
+      data: {
+        title: 'Note #1',
+        content: Prisma.JsonNull,
+        projectId: project.id,
+      },
+    })
+    const PAYLOAD = {
+      metadata: 'Draft.js',
+      markdown: '# Scheduler',
+    }
+    const res = await req
+      .patch(`/api/projects/${project.id}/notes/${note.id}/content`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(PAYLOAD)
+    expect(res.status).toEqual(204)
+    expect(res.body).toStrictEqual({})
+    expect(
+      (await prismaClient.note.findUnique({
+        select: { content: true },
+        where: { id: note.id },
+      }))!.content
+    ).toStrictEqual(PAYLOAD)
   })
 })
 

@@ -4,6 +4,7 @@ import {
   deleteNoteController,
   getNoteController,
   getNotesController,
+  updateNoteContentController,
   updateNoteController,
 } from '../controllers/note'
 import {
@@ -11,6 +12,7 @@ import {
   deleteNoteValidator,
   getNoteValidator,
   getNotesValidator,
+  updateNoteContentValidator,
   updateNoteValidator,
 } from '../validators/note'
 
@@ -133,7 +135,7 @@ router.get('/:projectId/notes', getNotesValidator, getNotesController)
  *             schema:
  *               type: object
  *               properties:
- *               $ref: '#/components/schemas/Note'
+ *               $ref: '#/components/schemas/NoteWithContent'
  *       404:
  *         description: Note not found
  */
@@ -265,12 +267,44 @@ router.put(
   updateNoteController
 )
 
-// TODO: Implement endpoint
-// router.patch(
-//   '/:projectId/notes/:noteId/content',
-//   updateNoteContentValidator,
-//   updateNoteContentController
-// )
+/**
+ * @openapi
+ * /api/projects/{projectId}/notes/{noteId}/content:
+ *   patch:
+ *     security:
+ *       - bearerAuth: []
+ *     tags:
+ *       - Note
+ *     summary: Update note's content
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         schema:
+ *           type: string
+ *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
+ *         required: true
+ *       - in: path
+ *         name: noteId
+ *         schema:
+ *           type: string
+ *           example: e3e6f9dc-6f32-4fb5-8da2-c7bfa29dc120
+ *         required: true
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/NoteContentBody'
+ *     responses:
+ *       204:
+ *         description: No Content
+ *       404:
+ *         description: Note not found
+ */
+router.patch(
+  '/:projectId/notes/:noteId/content',
+  updateNoteContentValidator,
+  updateNoteContentController
+)
 
 /**
  * @openapi

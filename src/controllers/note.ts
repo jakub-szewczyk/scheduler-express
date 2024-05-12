@@ -81,7 +81,7 @@ export const getNoteController = async (
 ) => {
   try {
     const note = await prismaClient.note.findUnique({
-      select: noteSelect,
+      select: { ...noteSelect, content: true },
       where: {
         id: req.params.noteId,
         project: {
@@ -154,6 +154,34 @@ export const updateNoteController = async (
       },
     })
     return res.json(note)
+  } catch (error) {
+    console.error(error)
+    return res.status(500).end()
+  }
+}
+
+type UpdateNoteContentControllerRequest = WithAuthProp<
+  Request<{ projectId: string; noteId: string }, object, object>
+>
+
+type UpdateNoteContentControllerResponse = Response
+
+export const updateNoteContentController = async (
+  req: UpdateNoteContentControllerRequest,
+  res: UpdateNoteContentControllerResponse
+) => {
+  try {
+    await prismaClient.note.update({
+      where: {
+        id: req.params.noteId,
+        project: {
+          id: req.params.projectId,
+          authorId: req.auth.userId!,
+        },
+      },
+      data: { content: req.body },
+    })
+    return res.status(204).end()
   } catch (error) {
     console.error(error)
     return res.status(500).end()
