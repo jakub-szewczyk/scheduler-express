@@ -418,6 +418,30 @@
  * @openapi
  * components:
  *   schemas:
+ *     NoteWithContent:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: e3e6f9dc-6f32-4fb5-8da2-c7bfa29dc120
+ *         createdAt:
+ *           type: string
+ *           example: 2024-03-29T06:33:22.911Z
+ *         title:
+ *           type: string
+ *           example: 'Note #1'
+ *         description:
+ *           type: string
+ *           example: Edit your note's title and description. Manage your content within it.
+ *         content:
+ *           type: null
+ *           example: null
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
  *     NoteBody:
  *       type: object
  *       required:

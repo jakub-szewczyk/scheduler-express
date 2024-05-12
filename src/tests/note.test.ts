@@ -450,6 +450,7 @@ describe('GET /projects/:projectId/notes/:noteId', () => {
     expect(res.body).toStrictEqual({
       ...note,
       createdAt: note.createdAt.toISOString(),
+      content: null,
     })
   })
 

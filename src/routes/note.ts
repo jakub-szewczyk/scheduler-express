@@ -135,7 +135,7 @@ router.get('/:projectId/notes', getNotesValidator, getNotesController)
  *             schema:
  *               type: object
  *               properties:
- *               $ref: '#/components/schemas/Note'
+ *               $ref: '#/components/schemas/NoteWithContent'
  *       404:
  *         description: Note not found
  */

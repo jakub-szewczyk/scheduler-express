@@ -75,14 +75,13 @@ type GetNoteControllerRequest = WithAuthProp<
 
 type GetNoteControllerResponse = Response<NoteResponse>
 
-// TODO: Include note's content in the response body
 export const getNoteController = async (
   req: GetNoteControllerRequest,
   res: GetNoteControllerResponse
 ) => {
   try {
     const note = await prismaClient.note.findUnique({
-      select: noteSelect,
+      select: { ...noteSelect, content: true },
       where: {
         id: req.params.noteId,
         project: {
