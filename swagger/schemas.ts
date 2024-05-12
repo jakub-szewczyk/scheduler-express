@@ -430,3 +430,10 @@
  *           type: string
  *           example: Edit your note's title and description. Manage your content within it.
  */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     NoteContentBody: {}
+ */
