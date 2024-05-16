@@ -1,14 +1,20 @@
 services:
-  # scheduler-dev:
-  #   build:
-  #     context: .
-  #   environment:
-  #     NODE_ENV: development
-  #   ports:
-  #     - 3000:3000
-  #   depends_on:
-  #     postgres-dev:
-  #       condition: service_healthy
+  scheduler-dev:
+    build:
+      context: .
+    container_name: scheduler-dev
+    env_file:
+      - .env.dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://scheduler-dev:scheduler-dev@postgres-dev:5432/scheduler-dev
+    ports:
+      - 3000:3000
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+    volumes:
+      - ./src:/usr/src/app/src
   postgres-dev:
     image: postgres
     restart: always
