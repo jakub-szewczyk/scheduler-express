@@ -1,14 +1,21 @@
 services:
-  # scheduler-dev:
-  #   build:
-  #     context: .
-  #   environment:
-  #     NODE_ENV: development
-  #   ports:
-  #     - 3000:3000
-  #   depends_on:
-  #     postgres-dev:
-  #       condition: service_healthy
+  scheduler-dev:
+    build:
+      context: .
+      target: dev
+    container_name: scheduler-dev
+    env_file:
+      - .env.dev
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgres://scheduler-dev:scheduler-dev@postgres-dev:5432/scheduler-dev
+    ports:
+      - 3000:3000
+    depends_on:
+      postgres-dev:
+        condition: service_healthy
+    volumes:
+      - ./src:/usr/src/app/src
   postgres-dev:
     image: postgres
     restart: always
@@ -17,8 +24,8 @@ services:
       - scheduler-dev:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=scheduler-dev
-      - POSTGRES_DB=scheduler-dev
       - POSTGRES_PASSWORD=scheduler-dev
+      - POSTGRES_DB=scheduler-dev
     ports:
       - 5555:5432
     healthcheck:
@@ -26,6 +33,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
   postgres-test:
     image: postgres
     restart: always
@@ -34,10 +42,46 @@ services:
       - scheduler-test:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=scheduler-test
-      - POSTGRES_DB=scheduler-test
       - POSTGRES_PASSWORD=scheduler-test
+      - POSTGRES_DB=scheduler-test
     ports:
       - 5556:5432
+    healthcheck:
+      test: ['CMD', 'pg_isready']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scheduler-prod:
+    build:
+      context: .
+      target: prod
+    container_name: scheduler-prod
+    env_file:
+      - .env.prod
+    environment:
+      - NODE_ENV=production
+    ports:
+      - 3000:3000
+    depends_on:
+      postgres-prod:
+        condition: service_healthy
+  postgres-prod:
+    image: postgres
+    restart: always
+    container_name: postgres-prod
+    volumes:
+      - scheduler-prod:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
+    env_file:
+      - .env.prod
+    environment:
+      - POSTGRES_USER=scheduler-prod
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - POSTGRES_DB=scheduler-prod
+    ports:
+      - 5432:5432
     healthcheck:
       test: ['CMD', 'pg_isready']
       interval: 10s
@@ -46,3 +90,7 @@ services:
 volumes:
   scheduler-dev:
   scheduler-test:
+  scheduler-prod:
+secrets:
+  postgres_password:
+    file: secrets/postgres_password.txt
