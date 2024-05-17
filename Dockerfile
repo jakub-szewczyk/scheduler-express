@@ -57,5 +57,6 @@ RUN npm ci --omit=dev
 
 COPY --from=prod-build /usr/src/app/dist ./dist
 COPY --from=prod-build /usr/src/app/prisma ./prisma
+COPY --from=prod-build /usr/src/app/swagger ./swagger
 
 CMD npx prisma migrate deploy && npx prisma generate && npm start
