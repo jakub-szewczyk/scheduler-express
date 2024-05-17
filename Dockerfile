@@ -24,6 +24,24 @@ COPY . .
 
 CMD npx prisma migrate deploy && npx prisma generate && npm run dev
 
+FROM base as prod-build
+
+ENV NODE_ENV production
+ENV HUSKY 0
+
+USER node
+
+WORKDIR /usr/src/app
+
+COPY package*.json ./
+COPY prisma/schema.prisma prisma/migrations ./prisma/
+
+RUN npm ci --include=dev
+
+COPY . .
+
+RUN npm run build
+
 FROM base as prod
 
 ENV NODE_ENV production
@@ -33,10 +51,11 @@ USER node
 
 WORKDIR /usr/src/app
 
-COPY package.json package-lock.json ./
+COPY package*.json ./
 
 RUN npm ci --omit=dev
 
-COPY . .
+COPY --from=prod-build /usr/src/app/dist ./dist
+COPY --from=prod-build /usr/src/app/prisma ./prisma
 
 CMD npx prisma migrate deploy && npx prisma generate && npm start
