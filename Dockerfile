@@ -2,7 +2,11 @@
 
 ARG NODE_VERSION=20.11.1
 
-FROM node:${NODE_VERSION}-alpine
+FROM node:${NODE_VERSION}-alpine as base
+
+EXPOSE 3000
+
+FROM base as dev
 
 ENV NODE_ENV development
 ENV HUSKY 0
@@ -18,8 +22,21 @@ RUN --mount=type=bind,source=package.json,target=package.json \
 
 COPY . .
 
-RUN npx prisma generate
+CMD npx prisma migrate deploy && npx prisma generate && npm run dev
 
-EXPOSE 3000
+FROM base as prod
 
-CMD  npm run dev
+ENV NODE_ENV production
+ENV HUSKY 0
+
+USER node
+
+WORKDIR /usr/src/app
+
+COPY package.json package-lock.json ./
+
+RUN npm ci --omit=dev
+
+COPY . .
+
+CMD npx prisma migrate deploy && npx prisma generate && npm start
