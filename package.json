@@ -20,7 +20,8 @@
     "lint": "eslint --max-warnings=0 src",
     "prettify": "prettier ./src/**/*.ts --write",
     "commit": "commit",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "release": "dotenv -e .env.prod -- release-it"
   },
   "author": "",
   "license": "ISC",
@@ -64,6 +65,7 @@
     "nodemon": "^3.1.0",
     "prettier": "^3.2.5",
     "prisma": "^5.11.0",
+    "release-it": "^17.2.1",
     "supertest": "^6.3.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.2",
