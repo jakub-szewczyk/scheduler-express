@@ -19,4 +19,4 @@ jobs:
           platforms: linux/amd64,linux/arm64/v8
           push: true
           target: prod
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}:${{ github.ref_name }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.ref_name }}
