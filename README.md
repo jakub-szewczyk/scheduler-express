@@ -1,6 +1,10 @@
 # Scheduler
 
-Express REST API v2.1.0
+Express REST API ![GitHub Release](https://img.shields.io/github/v/release/jakub-szewczyk/scheduler-express) ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/jakub-szewczyk/scheduler-express)
+
+## Resources
+
+- [OpenAPI Specification](https://scheduler-express.jakubszewczyk.com.pl/api-docs/)
 
 ## Todo
 
