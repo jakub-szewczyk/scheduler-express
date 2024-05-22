@@ -3,6 +3,7 @@
     "publish": false
   },
   "git": {
+    "pushArgs": "--follow-tags",
     "commitMessage": "chore: release v${version}"
   },
   "github": {
