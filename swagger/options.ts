@@ -9,7 +9,5 @@ export const options: swaggerJSDoc.Options = {
       version,
     },
   },
-  apis: [
-    process.env.NODE_ENV === 'development' ? './src/**/*.ts' : './dist/**/*.js',
-  ],
+  apis: [process.env.NODE_ENV === 'development' ? '**/*.ts' : './dist/**/*.js'],
 }

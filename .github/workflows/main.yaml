@@ -20,3 +20,23 @@ jobs:
           push: true
           target: prod
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.ref_name }}
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      VERSION: ${{ github.ref_name }}
+    steps:
+      - run: |
+          mkdir ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/key
+          cat >> ~/.ssh/config << END
+          Host github
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/github
+            StrictHostKeyChecking no
+          END
+      - run: ssh github 'cd /docker/scheduler-express && echo $VERSION > .env && sudo docker compose up -d scheduler-prod'
