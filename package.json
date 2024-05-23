@@ -1,6 +1,6 @@
 {
   "name": "scheduler-server",
-  "version": "2.1.8",
+  "version": "2.1.9",
   "prisma": {
     "seed": "npx ts-node prisma/seed.ts"
   },
