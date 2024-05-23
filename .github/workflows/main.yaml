@@ -40,4 +40,4 @@ jobs:
             IdentityFile ~/.ssh/github
             StrictHostKeyChecking no
           END
-      - run: ssh -i ~/.ssh/github github 'cd /docker/scheduler-express && echo $VERSION > .env && sudo docker compose up -d scheduler-prod'
+      - run: ssh -i ~/.ssh/github github 'cd /docker/scheduler-express && echo VERSION=$VERSION > .env && sudo docker compose up -d scheduler-prod'
