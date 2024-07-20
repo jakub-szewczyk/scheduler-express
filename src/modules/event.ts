@@ -18,4 +18,5 @@ export const eventSelect = {
   description: true,
   startsAt: true,
   endsAt: true,
+  color: true,
 } satisfies Prisma.EventSelect

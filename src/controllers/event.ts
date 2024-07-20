@@ -119,7 +119,7 @@ type CreateEventControllerRequest = WithAuthProp<
   Request<
     { projectId: string; scheduleId: string },
     object,
-    Pick<Event, 'title' | 'description' | 'startsAt' | 'endsAt'>
+    Pick<Event, 'title' | 'description' | 'startsAt' | 'endsAt' | 'color'>
   >
 >
 
@@ -137,6 +137,7 @@ export const createEventController = async (
         description: req.body.description || null,
         startsAt: req.body.startsAt,
         endsAt: req.body.endsAt,
+        color: req.body.color,
         schedule: {
           connect: {
             id: req.params.scheduleId,
@@ -159,7 +160,7 @@ type UpdateEventControllerRequest = WithAuthProp<
   Request<
     { projectId: string; scheduleId: string; eventId: string },
     object,
-    Pick<Event, 'title' | 'description' | 'startsAt' | 'endsAt'>
+    Pick<Event, 'title' | 'description' | 'startsAt' | 'endsAt' | 'color'>
   >
 >
 
@@ -187,6 +188,7 @@ export const updateEventController = async (
         description: req.body.description,
         startsAt: req.body.startsAt,
         endsAt: req.body.endsAt,
+        color: req.body.color,
       },
     })
     return res.json(event)

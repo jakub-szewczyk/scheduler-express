@@ -34,6 +34,13 @@ model Schedule {
   @@unique([title, projectId])
 }
 
+enum Color {
+  BLUE
+  ORANGE
+  PURPLE
+  TEAL
+}
+
 model Event {
   id           String        @id @default(uuid())
   createdAt    DateTime      @default(now())
@@ -42,6 +49,7 @@ model Event {
   description  String?
   startsAt     DateTime
   endsAt       DateTime
+  color        Color         @default(BLUE)
   notification Notification?
   schedule     Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
   scheduleId   String

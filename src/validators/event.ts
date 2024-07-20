@@ -1,3 +1,4 @@
+import { Color } from '@prisma/client'
 import { body, param, query } from 'express-validator'
 import prismaClient from '../client'
 import { validationMiddleware } from '../middlewares/validation'
@@ -122,6 +123,9 @@ export const createEventValidator = [
       if (new Date(endsAt).getTime() < new Date(req.body.startsAt).getTime())
         throw new Error('End date cannot precede the start date')
     }),
+  body('color', "Invalid value was provided for the event's color")
+    .isIn(Object.values(Color))
+    .optional(),
   validationMiddleware,
 ]
 
@@ -208,6 +212,9 @@ export const updateEventValidator = [
       if (new Date(endsAt).getTime() < new Date(req.body.startsAt).getTime())
         throw new Error('End date cannot precede the start date')
     }),
+  body('color', "Invalid value was provided for the event's color")
+    .isIn(Object.values(Color))
+    .optional(),
   validationMiddleware,
 ]
 

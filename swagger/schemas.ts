@@ -109,6 +109,10 @@
  *         endsAt:
  *           type: string
  *           example: 2024-04-03T03:51:13.040Z
+ *         color:
+ *           type: string
+ *           enum: [BLUE, ORANGE, PURPLE, TEAL]
+ *           example: BLUE
  */
 
 /**
@@ -134,6 +138,10 @@
  *         endsAt:
  *           type: string
  *           example: 2024-04-03T03:51:13.040Z
+ *         color:
+ *           type: string
+ *           enum: [BLUE, ORANGE, PURPLE, TEAL]
+ *           example: BLUE
  */
 
 /**
