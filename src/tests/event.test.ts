@@ -1,4 +1,4 @@
-import { Event } from '@prisma/client'
+import { Color, Event } from '@prisma/client'
 import { omit } from 'ramda'
 import supertest from 'supertest'
 import { beforeEach, describe, expect, it, test } from 'vitest'
@@ -1031,6 +1031,58 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events', () => {
       endsAt: EVENT.endsAt.toISOString(),
     })
   })
+
+  test('`color` field in request body being an enum', async () => {
+    const [project, schedule] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.schedule.findFirst(),
+    ])
+    const payload = {
+      ...EVENT,
+      color: 'WHITE',
+      startsAt: EVENT.startsAt.toISOString(),
+      endsAt: EVENT.endsAt.toISOString(),
+    }
+    const res = await req
+      .post(`/api/projects/${project!.id}/schedules/${schedule!.id}/events`)
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'WHITE',
+        msg: "Invalid value was provided for the event's color",
+        path: 'color',
+        location: 'body',
+      },
+    ])
+    await Object.values(Color).reduce(
+      (promise, color, index) =>
+        promise.then(async () => {
+          const payload = {
+            ...EVENT,
+            title: `Event #${index + 1}`,
+            startsAt: EVENT.startsAt.toISOString(),
+            endsAt: EVENT.endsAt.toISOString(),
+            color,
+          }
+          const res = await req
+            .post(
+              `/api/projects/${project!.id}/schedules/${schedule!.id}/events`
+            )
+            .set('Accept', 'application/json')
+            .set('Authorization', BEARER_TOKEN)
+            .send(payload)
+          expect(res.status).toEqual(201)
+          expect(res.body).toHaveProperty('id')
+          expect(res.body).toHaveProperty('createdAt')
+          expect(res.body).toMatchObject(payload)
+        }),
+      Promise.resolve()
+    )
+  })
 })
 
 describe('PUT /projects/:projectId/schedules/:scheduleId/events/:eventId', () => {
@@ -1551,6 +1603,74 @@ describe('PUT /projects/:projectId/schedules/:scheduleId/events/:eventId', () =>
       startsAt: EVENT.startsAt.toISOString(),
       endsAt: EVENT.endsAt.toISOString(),
     })
+  })
+
+  test('`color` field in request body being an enum', async () => {
+    const [project, schedule] = await Promise.all([
+      prismaClient.project.findFirst(),
+      prismaClient.schedule.findFirst(),
+    ])
+    const event = await prismaClient.event.create({
+      select: eventSelect,
+      data: {
+        title: 'Event #1',
+        startsAt: '2024-04-02T13:07:37.603Z',
+        endsAt: '2024-04-03T03:51:13.040Z',
+        schedule: {
+          connect: {
+            id: schedule!.id,
+            projectId: project!.id,
+          },
+        },
+      },
+    })
+    const payload = {
+      ...EVENT,
+      color: 'WHITE',
+      startsAt: EVENT.startsAt.toISOString(),
+      endsAt: EVENT.endsAt.toISOString(),
+    }
+    const res = await req
+      .put(
+        `/api/projects/${project!.id}/schedules/${schedule!.id}/events/${event!.id}`
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', BEARER_TOKEN)
+      .send(payload)
+    expect(res.status).toEqual(400)
+    expect(res.body).toStrictEqual([
+      {
+        type: 'field',
+        value: 'WHITE',
+        msg: "Invalid value was provided for the event's color",
+        path: 'color',
+        location: 'body',
+      },
+    ])
+    await Object.values(Color).reduce(
+      (promise, color, index) =>
+        promise.then(async () => {
+          const payload = {
+            ...EVENT,
+            title: `Event #${index + 1}`,
+            startsAt: EVENT.startsAt.toISOString(),
+            endsAt: EVENT.endsAt.toISOString(),
+            color,
+          }
+          const res = await req
+            .put(
+              `/api/projects/${project!.id}/schedules/${schedule!.id}/events/${event!.id}`
+            )
+            .set('Accept', 'application/json')
+            .set('Authorization', BEARER_TOKEN)
+            .send(payload)
+          expect(res.status).toEqual(200)
+          expect(res.body).toHaveProperty('id')
+          expect(res.body).toHaveProperty('createdAt')
+          expect(res.body).toMatchObject(payload)
+        }),
+      Promise.resolve()
+    )
   })
 })
 
