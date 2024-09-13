@@ -178,6 +178,7 @@
  *     NotificationBody:
  *       type: object
  *       required:
+ *         - title
  *         - startsAt
  *       properties:
  *         title:
