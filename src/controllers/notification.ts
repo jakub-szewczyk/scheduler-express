@@ -46,7 +46,9 @@ type CreateNotificationControllerRequest = WithAuthProp<
   Request<
     { projectId: string; scheduleId: string; eventId: string },
     object,
-    Pick<Notification, 'title' | 'description' | 'startsAt'>
+    Pick<Notification, 'title' | 'description' | 'startsAt'> & {
+      isActive?: Notification['isActive']
+    }
   >
 >
 
@@ -63,6 +65,7 @@ export const createNotificationController = async (
         title: req.body.title,
         description: req.body.description,
         startsAt: req.body.startsAt,
+        isActive: req.body.isActive,
         event: {
           connect: {
             id: req.params.eventId,
@@ -88,7 +91,9 @@ type UpdateNotificationControllerRequest = WithAuthProp<
   Request<
     { projectId: string; scheduleId: string; eventId: string },
     object,
-    Pick<Notification, 'title' | 'description' | 'startsAt' | 'isActive'>
+    Pick<Notification, 'title' | 'description' | 'startsAt'> & {
+      isActive?: Notification['isActive']
+    }
   >
 >
 
