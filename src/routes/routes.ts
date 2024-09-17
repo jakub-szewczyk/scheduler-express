@@ -19,8 +19,6 @@ router.use('/projects', eventRoutes)
 
 router.use('/projects', notificationRoutes)
 
-router.use('/projects', pushSubscriptionRoutes)
-
 router.use('/projects', boardRoutes)
 
 router.use('/projects', statusRoutes)
@@ -28,5 +26,7 @@ router.use('/projects', statusRoutes)
 router.use('/projects', issueRoutes)
 
 router.use('/projects', noteRoutes)
+
+router.use('/push-subscriptions', pushSubscriptionRoutes)
 
 export default router

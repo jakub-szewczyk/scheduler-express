@@ -8,11 +8,7 @@ import prismaClient from '../client'
 import { pushSubscriptionSelect } from '../modules/pushSubscription'
 
 type CreatePushSubscriptionControllerRequest = WithAuthProp<
-  Request<
-    { projectId: string; scheduleId: string; eventId: string },
-    object,
-    ReturnType<PushSubscription['toJSON']>
-  >
+  Request<object, object, ReturnType<PushSubscription['toJSON']>>
 >
 
 type CreatePushSubscriptionControllerResponse = Response<
@@ -28,21 +24,7 @@ export const createPushSubscriptionController = async (
       select: pushSubscriptionSelect,
       data: {
         entity: req.body as Prisma.JsonObject,
-        notification: {
-          connect: {
-            id: req.event!.notification.id,
-            event: {
-              id: req.params.eventId,
-              schedule: {
-                id: req.params.scheduleId,
-                project: {
-                  id: req.params.projectId,
-                  authorId: req.auth.userId!,
-                },
-              },
-            },
-          },
-        },
+        authorId: req.auth.userId!,
       },
     })
     return res.status(201).json(pushSubscription)

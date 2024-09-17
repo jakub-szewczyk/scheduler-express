@@ -6,32 +6,13 @@ const router = Router()
 
 /**
  * @openapi
- * /api/projects/{projectId}/schedules/{scheduleId}/events/{eventId}/notification/push-subscriptions:
+ * /api/push-subscriptions:
  *   post:
  *     security:
  *       - bearerAuth: []
  *     tags:
  *       - PushSubscription
  *     summary: Create push subscription
- *     parameters:
- *       - in: path
- *         name: projectId
- *         schema:
- *           type: string
- *           example: a8d2a211-83bc-4354-bf2d-9bc603c82668
- *         required: true
- *       - in: path
- *         name: scheduleId
- *         schema:
- *           type: string
- *           example: 44bc0029-14b2-4dd4-a538-99fbac92ef48
- *         required: true
- *       - in: path
- *         name: eventId
- *         schema:
- *           type: string
- *           example: 4a6e7431-6ef3-42d2-b608-70cdd2fe21bf
- *         required: true
  *     requestBody:
  *       required: true
  *       content:
@@ -70,7 +51,7 @@ const router = Router()
  *                     example: body
  */
 router.post(
-  '/:projectId/schedules/:scheduleId/events/:eventId/notification/push-subscriptions',
+  '/',
   createPushSubscriptionValidator,
   createPushSubscriptionController
 )

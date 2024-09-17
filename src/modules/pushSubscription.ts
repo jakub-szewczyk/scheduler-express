@@ -32,7 +32,19 @@ export const registerNotifications = async () => {
             id: true,
             title: true,
             description: true,
-            pushSubscriptions: { select: { entity: true } },
+            event: {
+              select: {
+                schedule: {
+                  select: {
+                    project: {
+                      select: {
+                        authorId: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
           where: {
             startsAt: {
@@ -42,8 +54,14 @@ export const registerNotifications = async () => {
             isSent: false,
           },
         })
-        notifications.forEach((notification) =>
-          notification.pushSubscriptions.forEach(async (pushSubscription) => {
+        notifications.forEach(async (notification) => {
+          const pushSubscriptions =
+            await prismaClient.pushSubscription.findMany({
+              where: {
+                authorId: notification.event.schedule.project.authorId,
+              },
+            })
+          pushSubscriptions.forEach(async (pushSubscription) => {
             try {
               await webpush.sendNotification(
                 pushSubscription.entity as unknown as PushSubscription,
@@ -66,7 +84,7 @@ export const registerNotifications = async () => {
               console.error(error)
             }
           })
-        )
+        })
       }, 60000),
     (60 - new Date().getSeconds()) * 1000
   )

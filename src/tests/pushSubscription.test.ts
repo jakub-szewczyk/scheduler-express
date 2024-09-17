@@ -19,7 +19,7 @@ const BEARER_TOKEN = `Bearer ${JWT_TOKEN}`
 
 const req = supertest(app)
 
-describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notification/push-subscriptions', () => {
+describe('POST /push-subscriptions', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
     await prismaClient.project.create({
@@ -44,122 +44,9 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
     console.log('✅[test]: seeding finished')
   })
 
-  it('returns 404 Not Found in case of invalid project id', async () => {
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
-    const res = await req
-      .post(
-        `/api/projects/abc/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send(PUSH_SUBSCRIPTION)
-    expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual([
-      {
-        type: 'field',
-        value: 'abc',
-        msg: 'Project not found',
-        path: 'projectId',
-        location: 'params',
-      },
-      {
-        type: 'field',
-        value: schedule.id,
-        msg: 'Schedule not found',
-        path: 'scheduleId',
-        location: 'params',
-      },
-      {
-        type: 'field',
-        value: event.id,
-        msg: 'Event not found',
-        path: 'eventId',
-        location: 'params',
-      },
-      {
-        type: 'field',
-        value: event.id,
-        msg: 'A notification for the specified event has not yet been created',
-        path: 'eventId',
-        location: 'params',
-      },
-    ])
-  })
-
-  it('returns 404 Not Found in case of invalid schedule id', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
-    const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/abc/events/${event.id}/notification/push-subscriptions`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send(PUSH_SUBSCRIPTION)
-    expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual([
-      {
-        type: 'field',
-        value: 'abc',
-        msg: 'Schedule not found',
-        path: 'scheduleId',
-        location: 'params',
-      },
-      {
-        type: 'field',
-        value: event.id,
-        msg: 'Event not found',
-        path: 'eventId',
-        location: 'params',
-      },
-      {
-        type: 'field',
-        value: event.id,
-        msg: 'A notification for the specified event has not yet been created',
-        path: 'eventId',
-        location: 'params',
-      },
-    ])
-  })
-
-  it('returns 404 Not Found in case of invalid event id', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/abc/notification/push-subscriptions`
-      )
-      .set('Accept', 'application/json')
-      .set('Authorization', BEARER_TOKEN)
-      .send(PUSH_SUBSCRIPTION)
-    expect(res.status).toEqual(404)
-    expect(res.body).toStrictEqual([
-      {
-        type: 'field',
-        value: 'abc',
-        msg: 'Event not found',
-        path: 'eventId',
-        location: 'params',
-      },
-      {
-        type: 'field',
-        value: 'abc',
-        msg: 'A notification for the specified event has not yet been created',
-        path: 'eventId',
-        location: 'params',
-      },
-    ])
-  })
-
   it('creates a push subscription', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
     const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
+      .post(`/api/push-subscriptions`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send(PUSH_SUBSCRIPTION)
@@ -170,13 +57,8 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
   })
 
   test('`endpoint` field in request body being required', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
     const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
+      .post(`/api/push-subscriptions`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send(omit(['endpoint'], PUSH_SUBSCRIPTION))
@@ -198,13 +80,8 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
   })
 
   test('`endpoint` field in request body being a valid url', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
     const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
+      .post(`/api/push-subscriptions`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({ ...omit(['endpoint'], PUSH_SUBSCRIPTION), endpoint: 'abc' })
@@ -221,13 +98,8 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
   })
 
   test('`expirationTime` field in request body being optional', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
     const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
+      .post(`/api/push-subscriptions`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send(PUSH_SUBSCRIPTION)
@@ -238,13 +110,8 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
   })
 
   test('`expirationTime` field in request body following ISO 8601 standard', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
     const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
+      .post(`/api/push-subscriptions`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({ ...PUSH_SUBSCRIPTION, expirationTime: 'abc' })
@@ -261,13 +128,8 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
   })
 
   test('`keys` field in request body being required', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
     const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
+      .post(`/api/push-subscriptions`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send(omit(['keys'], PUSH_SUBSCRIPTION))
@@ -301,13 +163,8 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
   })
 
   test('`keys` field in request body being required', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
     const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
+      .post(`/api/push-subscriptions`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send(omit(['keys'], PUSH_SUBSCRIPTION))
@@ -341,13 +198,8 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
   })
 
   test('`keys` field in request body being an object', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
     const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
+      .post(`/api/push-subscriptions`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({ ...PUSH_SUBSCRIPTION, keys: 'abc' })
@@ -364,13 +216,8 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
   })
 
   test('`keys.p256dh` field in request body being required', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
     const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
+      .post(`/api/push-subscriptions`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({
@@ -391,13 +238,8 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
   })
 
   test('`keys.auth` field in request body being required', async () => {
-    const project = (await prismaClient.project.findFirst())!
-    const schedule = (await prismaClient.schedule.findFirst())!
-    const event = (await prismaClient.event.findFirst())!
     const res = await req
-      .post(
-        `/api/projects/${project.id}/schedules/${schedule.id}/events/${event.id}/notification/push-subscriptions`
-      )
+      .post(`/api/push-subscriptions`)
       .set('Accept', 'application/json')
       .set('Authorization', BEARER_TOKEN)
       .send({

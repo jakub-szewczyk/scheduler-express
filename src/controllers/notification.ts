@@ -124,6 +124,13 @@ export const updateNotificationController = async (
         description: req.body.description || null,
         startsAt: req.body.startsAt,
         isActive: req.body.isActive,
+        /**
+         * TODO:
+         * Disallow updating `startsAt` to past dates.
+         */
+        ...(new Date(req.body.startsAt).getTime() >= new Date().getTime() && {
+          isSent: false,
+        }),
       },
     })
     return res.json(notification)
