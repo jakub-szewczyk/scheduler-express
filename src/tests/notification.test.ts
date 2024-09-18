@@ -34,7 +34,7 @@ describe('GET /projects/:projectId/schedules/:scheduleId/events/:eventId/notific
                 startsAt: '2024-04-02T13:07:37.603Z',
                 endsAt: '2024-04-03T03:51:13.040Z',
                 notification: {
-                  create: NOTIFICATION,
+                  create: { ...NOTIFICATION, authorId: AUTHOR_ID },
                 },
               },
             },
@@ -237,6 +237,7 @@ describe('POST /projects/:projectId/schedules/:scheduleId/events/:eventId/notifi
     await prismaClient.notification.create({
       data: {
         ...NOTIFICATION,
+        authorId: AUTHOR_ID,
         eventId: event.id,
       },
     })
@@ -431,7 +432,7 @@ describe('PUT /projects/:projectId/schedules/:scheduleId/events/:eventId/notific
               create: {
                 ...EVENT,
                 notification: {
-                  create: NOTIFICATION,
+                  create: { ...NOTIFICATION, authorId: AUTHOR_ID },
                 },
               },
             },
@@ -777,7 +778,7 @@ describe('PATCH /projects/:projectId/schedules/:scheduleId/events/:eventId/notif
               create: {
                 ...EVENT,
                 notification: {
-                  create: NOTIFICATION,
+                  create: { ...NOTIFICATION, authorId: AUTHOR_ID },
                 },
               },
             },
@@ -1006,7 +1007,7 @@ describe('DELETE /projects/:projectId/schedules/:scheduleId/events/:eventId/noti
               create: {
                 ...EVENT,
                 notification: {
-                  create: NOTIFICATION,
+                  create: { ...NOTIFICATION, authorId: AUTHOR_ID },
                 },
               },
             },

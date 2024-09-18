@@ -67,6 +67,7 @@ const seed = async () => {
           title: 'Notification #1',
           startsAt: faker.date.recent().toISOString(),
           eventId: events[0].id,
+          authorId,
         },
       })
       const boards = await Promise.all([

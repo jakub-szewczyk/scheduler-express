@@ -66,6 +66,7 @@ model Notification {
   startsAt    DateTime
   isActive    Boolean  @default(true)
   isSent      Boolean  @default(false)
+  authorId    String
   event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId     String   @unique
 }

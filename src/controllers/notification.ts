@@ -66,6 +66,7 @@ export const createNotificationController = async (
         description: req.body.description,
         startsAt: req.body.startsAt,
         isActive: req.body.isActive,
+        authorId: req.auth.userId!,
         event: {
           connect: {
             id: req.params.eventId,
@@ -124,10 +125,6 @@ export const updateNotificationController = async (
         description: req.body.description || null,
         startsAt: req.body.startsAt,
         isActive: req.body.isActive,
-        /**
-         * TODO:
-         * Disallow updating `startsAt` to past dates.
-         */
         ...(new Date(req.body.startsAt).getTime() >= new Date().getTime() && {
           isSent: false,
         }),

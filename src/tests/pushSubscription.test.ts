@@ -33,7 +33,7 @@ describe('POST /push-subscriptions', () => {
               create: {
                 ...EVENT,
                 notification: {
-                  create: NOTIFICATION,
+                  create: { ...NOTIFICATION, authorId: AUTHOR_ID },
                 },
               },
             },
