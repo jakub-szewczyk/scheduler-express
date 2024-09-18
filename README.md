@@ -8,9 +8,9 @@ Express REST API ![GitHub Release](https://img.shields.io/github/v/release/jakub
 
 ## Todo
 
-### Test
+- Remove unused push subscriptions.
 
-- Entity ownership.
+### Test
 
 - Notification cron job.
 
