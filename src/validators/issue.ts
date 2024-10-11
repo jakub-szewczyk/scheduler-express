@@ -184,6 +184,7 @@ const neighborValidation = body(['prevIssueId', 'nextIssueId']).custom(
             },
           },
         },
+        orderBy: { rank: 'asc' },
       })
       if (!prevIssue || !nextIssue) {
         req.statusCode = 404
