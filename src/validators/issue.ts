@@ -201,6 +201,16 @@ const neighborValidation = body(['prevIssueId', 'nextIssueId']).custom(
             gt: prevIssue.rank,
             lt: nextIssue.rank,
           },
+          status: {
+            id: req.body.statusId || req.params!.statusId,
+            board: {
+              id: req.params!.boardId,
+              project: {
+                id: req.params!.projectId,
+                authorId: req.auth.userId,
+              },
+            },
+          },
         },
         orderBy: { rank: 'asc' },
       })
