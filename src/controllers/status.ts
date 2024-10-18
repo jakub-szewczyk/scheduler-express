@@ -173,10 +173,12 @@ export const updateStatusController = async (
       data: {
         title: req.body.title,
         description: req.body.description,
-        rank: generateRank({
-          prevRank: req.prevStatusRank,
-          nextRank: req.nextStatusRank,
-        }).format(),
+        ...((req.body.prevStatusId || req.body.nextStatusId) && {
+          rank: generateRank({
+            prevRank: req.prevStatusRank,
+            nextRank: req.nextStatusRank,
+          }).format(),
+        }),
       },
     })
     return res.json(status)
