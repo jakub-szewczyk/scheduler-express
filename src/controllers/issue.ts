@@ -196,10 +196,12 @@ export const updateIssueController = async (
       data: {
         title: req.body.title,
         description: req.body.description,
-        rank: generateRank({
-          prevRank: req.prevIssueRank,
-          nextRank: req.nextIssueRank,
-        }).format(),
+        ...((req.body.prevIssueId || req.body.nextIssueId) && {
+          rank: generateRank({
+            prevRank: req.prevIssueRank,
+            nextRank: req.nextIssueRank,
+          }).format(),
+        }),
         priority: req.body.priority,
         ...(req.body.statusId && { statusId: req.body.statusId }),
       },
