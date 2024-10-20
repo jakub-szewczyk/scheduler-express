@@ -75,6 +75,7 @@ const itMovesAnIssueToTheBeginningOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '2',
@@ -82,6 +83,7 @@ const itMovesAnIssueToTheBeginningOfAnotherStatus = async ({
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '3',
@@ -89,6 +91,7 @@ const itMovesAnIssueToTheBeginningOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '4',
@@ -96,6 +99,7 @@ const itMovesAnIssueToTheBeginningOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '5',
@@ -103,6 +107,7 @@ const itMovesAnIssueToTheBeginningOfAnotherStatus = async ({
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '6',
@@ -110,6 +115,7 @@ const itMovesAnIssueToTheBeginningOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '7',
@@ -117,6 +123,7 @@ const itMovesAnIssueToTheBeginningOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '8',
@@ -124,6 +131,7 @@ const itMovesAnIssueToTheBeginningOfAnotherStatus = async ({
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '9',
@@ -131,6 +139,7 @@ const itMovesAnIssueToTheBeginningOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
       ],
     })
@@ -262,6 +271,7 @@ const itMovesAnIssueInBetweenTheIssuesOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '2',
@@ -269,6 +279,7 @@ const itMovesAnIssueInBetweenTheIssuesOfAnotherStatus = async ({
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '3',
@@ -276,6 +287,7 @@ const itMovesAnIssueInBetweenTheIssuesOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '4',
@@ -283,6 +295,7 @@ const itMovesAnIssueInBetweenTheIssuesOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '5',
@@ -290,6 +303,7 @@ const itMovesAnIssueInBetweenTheIssuesOfAnotherStatus = async ({
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '6',
@@ -297,6 +311,7 @@ const itMovesAnIssueInBetweenTheIssuesOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '7',
@@ -304,6 +319,7 @@ const itMovesAnIssueInBetweenTheIssuesOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '8',
@@ -311,6 +327,7 @@ const itMovesAnIssueInBetweenTheIssuesOfAnotherStatus = async ({
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '9',
@@ -318,6 +335,7 @@ const itMovesAnIssueInBetweenTheIssuesOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
       ],
     })
@@ -448,6 +466,7 @@ const itMovesAnIssueToTheEndOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '2',
@@ -455,6 +474,7 @@ const itMovesAnIssueToTheEndOfAnotherStatus = async ({
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '3',
@@ -462,6 +482,7 @@ const itMovesAnIssueToTheEndOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '4',
@@ -469,6 +490,7 @@ const itMovesAnIssueToTheEndOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '5',
@@ -476,6 +498,7 @@ const itMovesAnIssueToTheEndOfAnotherStatus = async ({
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '6',
@@ -483,6 +506,7 @@ const itMovesAnIssueToTheEndOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '7',
@@ -490,6 +514,7 @@ const itMovesAnIssueToTheEndOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '8',
@@ -497,6 +522,7 @@ const itMovesAnIssueToTheEndOfAnotherStatus = async ({
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '9',
@@ -504,6 +530,7 @@ const itMovesAnIssueToTheEndOfAnotherStatus = async ({
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
       ],
     })
@@ -584,7 +611,7 @@ const itMovesAnIssueToTheEndOfAnotherStatus = async ({
 describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
-    await prismaClient.project.create({
+    const project = await prismaClient.project.create({
       data: {
         title: 'Project #1',
         authorId: AUTHOR_ID,
@@ -595,23 +622,28 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
               create: {
                 title: 'Status #1',
                 rank: LexoRank.middle().format(),
-                issues: {
-                  createMany: {
-                    data: RANKS.map((_, index, array) => ({
-                      createdAt: new Date(
-                        Date.now() - index * 1000000
-                      ).toISOString(),
-                      title: `Issue #${array.length - index}`,
-                      rank: RANKS[index],
-                      priority: 'MEDIUM',
-                    })),
-                  },
-                },
               },
             },
           },
         },
       },
+      include: {
+        boards: {
+          include: {
+            statuses: true,
+          },
+        },
+      },
+    })
+    await prismaClient.issue.createMany({
+      data: RANKS.map((_, index, array) => ({
+        createdAt: new Date(Date.now() - index * 1000000).toISOString(),
+        title: `Issue #${array.length - index}`,
+        rank: RANKS[index],
+        priority: 'MEDIUM',
+        statusId: project.boards[0].statuses[0].id,
+        boardId: project.boards[0].id,
+      })),
     })
     console.log('✅[test]: seeding finished')
   })
@@ -1020,7 +1052,7 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues', (
 describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:issueId', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
-    await prismaClient.project.create({
+    const project = await prismaClient.project.create({
       data: {
         title: 'Project #1',
         authorId: AUTHOR_ID,
@@ -1028,15 +1060,18 @@ describe('GET /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           create: {
             title: 'Board #1',
             statuses: {
-              create: {
-                ...omit(['description'], STATUS),
-                issues: {
-                  create: ISSUE,
-                },
-              },
+              create: { ...omit(['description'], STATUS) },
             },
           },
         },
+      },
+      include: { boards: { include: { statuses: true } } },
+    })
+    await prismaClient.issue.create({
+      data: {
+        ...ISSUE,
+        statusId: project.boards[0].statuses[0].id,
+        boardId: project.boards[0].id,
       },
     })
     console.log('✅[test]: seeding finished')
@@ -1246,6 +1281,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
       data: {
         ...ISSUE,
         status: { connect: { id: status!.id } },
+        board: { connect: { id: board!.id } },
       },
     })
     const res = await req
@@ -1284,6 +1320,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
       data: {
         ...ISSUE,
         status: { connect: { id: status!.id } },
+        board: { connect: { id: board!.id } },
       },
     })
     const res = await req
@@ -1330,6 +1367,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
       data: {
         ...ISSUE,
         status: { connect: { id: status!.id } },
+        board: { connect: { id: board!.id } },
       },
     })
     const res = await req
@@ -1377,6 +1415,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
       data: {
         ...ISSUE,
         status: { connect: { id: status!.id } },
+        board: { connect: { id: board!.id } },
       },
     })
     const nextIssue = await prismaClient.issue.create({
@@ -1385,6 +1424,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
         rank: LexoRank.parse(ISSUE.rank).genNext().format(),
         title: 'Issue #3',
         status: { connect: { id: status!.id } },
+        board: { connect: { id: board!.id } },
       },
     })
     const res = await req
@@ -1441,6 +1481,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '2',
@@ -1448,6 +1489,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().genNext().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '3',
@@ -1455,6 +1497,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().genNext().genNext().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '4',
@@ -1462,6 +1505,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().genNext().genNext().genNext().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '5',
@@ -1474,6 +1518,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
             .format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
       ],
     })
@@ -1508,6 +1553,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '2',
@@ -1515,6 +1561,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().genNext().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '3',
@@ -1522,6 +1569,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().genNext().genNext().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '4',
@@ -1529,6 +1577,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().genNext().genNext().genNext().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '5',
@@ -1541,6 +1590,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
             .format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
       ],
     })
@@ -1571,6 +1621,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '2',
@@ -1578,6 +1629,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().genNext().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '3',
@@ -1585,6 +1637,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().genNext().genNext().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '4',
@@ -1592,6 +1645,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
           rank: LexoRank.middle().genNext().genNext().genNext().format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
         {
           id: '5',
@@ -1604,6 +1658,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
             .format(),
           priority: 'MEDIUM',
           statusId: status!.id,
+          boardId: board!.id,
         },
       ],
     })
@@ -1761,6 +1816,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
       data: {
         ...ISSUE,
         status: { connect: { id: status!.id } },
+        board: { connect: { id: board!.id } },
       },
     })
     const payload = omit(['rank'], ISSUE)
@@ -1856,7 +1912,7 @@ describe('POST /projects/:projectId/boards/:boardId/statuses/:statusId/issues', 
 describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:issueId', () => {
   beforeEach(async () => {
     console.log('⏳[test]: seeding database...')
-    await prismaClient.project.create({
+    const project = await prismaClient.project.create({
       data: {
         title: 'Project #1',
         authorId: AUTHOR_ID,
@@ -1866,56 +1922,61 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
             statuses: {
               create: {
                 ...STATUS,
-                issues: {
-                  createMany: {
-                    data: [
-                      {
-                        id: '1',
-                        title: 'Issue #1',
-                        rank: LexoRank.middle().format(),
-                        priority: 'MEDIUM',
-                      },
-                      {
-                        id: '2',
-                        title: 'Issue #2',
-                        rank: LexoRank.middle().genNext().format(),
-                        priority: 'MEDIUM',
-                      },
-                      {
-                        id: '3',
-                        title: 'Issue #3',
-                        rank: LexoRank.middle().genNext().genNext().format(),
-                        priority: 'MEDIUM',
-                      },
-                      {
-                        id: '4',
-                        title: 'Issue #4',
-                        rank: LexoRank.middle()
-                          .genNext()
-                          .genNext()
-                          .genNext()
-                          .format(),
-                        priority: 'MEDIUM',
-                      },
-                      {
-                        id: '5',
-                        title: 'Issue #5',
-                        rank: LexoRank.middle()
-                          .genNext()
-                          .genNext()
-                          .genNext()
-                          .genNext()
-                          .format(),
-                        priority: 'MEDIUM',
-                      },
-                    ],
-                  },
-                },
               },
             },
           },
         },
       },
+      include: { boards: { include: { statuses: true } } },
+    })
+    await prismaClient.issue.createMany({
+      data: [
+        {
+          id: '1',
+          title: 'Issue #1',
+          rank: LexoRank.middle().format(),
+          priority: 'MEDIUM',
+          statusId: project.boards[0].statuses[0].id,
+          boardId: project.boards[0].id,
+        },
+        {
+          id: '2',
+          title: 'Issue #2',
+          rank: LexoRank.middle().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: project.boards[0].statuses[0].id,
+          boardId: project.boards[0].id,
+        },
+        {
+          id: '3',
+          title: 'Issue #3',
+          rank: LexoRank.middle().genNext().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: project.boards[0].statuses[0].id,
+          boardId: project.boards[0].id,
+        },
+        {
+          id: '4',
+          title: 'Issue #4',
+          rank: LexoRank.middle().genNext().genNext().genNext().format(),
+          priority: 'MEDIUM',
+          statusId: project.boards[0].statuses[0].id,
+          boardId: project.boards[0].id,
+        },
+        {
+          id: '5',
+          title: 'Issue #5',
+          rank: LexoRank.middle()
+            .genNext()
+            .genNext()
+            .genNext()
+            .genNext()
+            .format(),
+          priority: 'MEDIUM',
+          statusId: project.boards[0].statuses[0].id,
+          boardId: project.boards[0].id,
+        },
+      ],
     })
     console.log('✅[test]: seeding finished')
   })
@@ -4647,6 +4708,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '2',
@@ -4654,6 +4716,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '3',
@@ -4661,6 +4724,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '4',
@@ -4668,6 +4732,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '5',
@@ -4675,6 +4740,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '6',
@@ -4682,6 +4748,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '7',
@@ -4689,6 +4756,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '8',
@@ -4696,6 +4764,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '9',
@@ -4703,6 +4772,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
       ],
     })
@@ -4793,6 +4863,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '2',
@@ -4800,6 +4871,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '3',
@@ -4807,6 +4879,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '4',
@@ -4814,6 +4887,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '5',
@@ -4821,6 +4895,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '6',
@@ -4828,6 +4903,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '7',
@@ -4835,6 +4911,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '8',
@@ -4842,6 +4919,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '9',
@@ -4849,6 +4927,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
       ],
     })
@@ -4939,6 +5018,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '2',
@@ -4946,6 +5026,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '3',
@@ -4953,6 +5034,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '4',
@@ -4960,6 +5042,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '5',
@@ -4967,6 +5050,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '6',
@@ -4974,6 +5058,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '7',
@@ -4981,6 +5066,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '8',
@@ -4988,6 +5074,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '9',
@@ -4995,6 +5082,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
       ],
     })
@@ -5256,6 +5344,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '2',
@@ -5263,6 +5352,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '3',
@@ -5270,6 +5360,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '1',
+          boardId: board!.id,
         },
         {
           id: '4',
@@ -5277,6 +5368,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '5',
@@ -5284,6 +5376,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '6',
@@ -5291,6 +5384,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '2',
+          boardId: board!.id,
         },
         {
           id: '7',
@@ -5298,6 +5392,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genPrev().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '8',
@@ -5305,6 +5400,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: ISSUE.rank,
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
         {
           id: '9',
@@ -5312,6 +5408,7 @@ describe('PUT /projects/:projectId/boards/:boardId/statuses/:statusId/issues/:is
           rank: LexoRank.parse(ISSUE.rank).genNext().format(),
           priority: 'MEDIUM',
           statusId: '3',
+          boardId: board!.id,
         },
       ],
     })
@@ -5404,6 +5501,7 @@ describe('DELETE /projects/:projectId/boards/:boardId/statuses/:statusId/issues/
             id: status!.id,
           },
         },
+        board: { connect: { id: board!.id } },
       },
     })
     const res = await req
@@ -5446,13 +5544,14 @@ describe('DELETE /projects/:projectId/boards/:boardId/statuses/:statusId/issues/
   })
 
   it('returns 404 Not Found in case of invalid board id', async () => {
-    const [project, status] = await Promise.all([
+    const [project, board, status] = await Promise.all([
       prismaClient.project.findFirst(),
+      prismaClient.board.findFirst(),
       prismaClient.status.findFirst(),
     ])
     const issue = await prismaClient.issue.create({
       select: issueSelect,
-      data: { ...ISSUE, statusId: status!.id },
+      data: { ...ISSUE, statusId: status!.id, boardId: board!.id },
     })
     const res = await req
       .delete(
@@ -5494,7 +5593,7 @@ describe('DELETE /projects/:projectId/boards/:boardId/statuses/:statusId/issues/
     ])
     const issue = await prismaClient.issue.create({
       select: issueSelect,
-      data: { ...ISSUE, statusId: status!.id },
+      data: { ...ISSUE, statusId: status!.id, boardId: board!.id },
     })
     const res = await req
       .delete(
@@ -5556,6 +5655,7 @@ describe('DELETE /projects/:projectId/boards/:boardId/statuses/:statusId/issues/
       data: {
         ...ISSUE,
         statusId: status!.id,
+        boardId: board!.id,
       },
     })
     const res = await req

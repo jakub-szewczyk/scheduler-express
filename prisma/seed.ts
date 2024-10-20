@@ -104,6 +104,7 @@ const seed = async () => {
               rank: RANKS[index],
               priority: 'MEDIUM',
               statusId: statuses[0].id,
+              boardId: statuses[0].boardId,
             },
           })
         ),

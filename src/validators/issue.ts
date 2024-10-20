@@ -281,7 +281,6 @@ export const createIssueValidator = [
         where: {
           title,
           status: {
-            id: req.params!.statusId,
             board: {
               id: req.params!.boardId,
               project: {
@@ -405,7 +404,6 @@ export const updateIssueValidator = [
           id: { not: req.params!.issueId },
           title,
           status: {
-            id: req.params!.statusId,
             board: {
               id: req.params!.boardId,
               projectId: req.params!.projectId,

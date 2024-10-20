@@ -154,6 +154,7 @@ export const createIssueController = async (
             },
           },
         },
+        board: { connect: { id: req.params.boardId } },
       },
     })
     return res.status(201).json(issue)
