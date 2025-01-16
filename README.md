@@ -6,6 +6,8 @@ Express REST API ![GitHub Release](https://img.shields.io/github/v/release/jakub
 
 - [OpenAPI Specification](https://scheduler-express.jakubszewczyk.com.pl/api-docs/)
 
+  [![localhost_3000_api-docs_](https://github.com/user-attachments/assets/5d0d3d8d-1b9a-44ec-9b45-6332ef99ab24)](https://scheduler-express.jakubszewczyk.com.pl/api-docs/)
+
 ## Todo
 
 - Remove unused push subscriptions.
